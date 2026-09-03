@@ -17,12 +17,24 @@ float KD = DEFAULT_KD;
 // Include header files AFTER config.h
 #include "src/filters/filter_selector.h"        // Filter selection (choose ONE)
 #include "src/control/motor_control.h"
+#ifdef USE_KALMAN_FILTER
 #include "src/filters/kalman_filter.h"
+#endif
+#ifdef USE_MAHONY_FILTER
 #include "src/filters/mahony_filter.h"
+#endif
+#ifdef USE_MADGWICK_FILTER
 #include "src/filters/madgwick_filter.h"
+#endif
+#ifdef USE_COMPLEMENTARY_FILTER
 #include "src/filters/complementary_filter.h"
+#endif
+#ifdef USE_COMPLEMENTARY_QUATERNION_FILTER
 #include "src/filters/complementary_quaternion_filter.h"
+#endif
+#ifdef USE_EKF_FILTER
 #include "src/filters/ekf_filter.h"
+#endif
 #include "src/control/pid_controller.h"
 #if ENABLE_CASCADE_PID
 #include "src/control/cascade_pid_controller.h"  // Cascade PID with unified gains
