@@ -44,12 +44,6 @@
   
   #define I2C_SDA 23
   #define I2C_SCL 19
-  
-
-  // I2C pins FOR BALANCING_ROBOT
-  
-  // #define I2C_SDA 21
-  // #define I2C_SCL 22
 
   // ADC battery pin
   #define BATTERY_PIN 34
