@@ -1,7 +1,7 @@
 #ifndef CASCADE_PID_CONTROLLER_H
 #define CASCADE_PID_CONTROLLER_H
 
-#include "config/config.h"
+#include "../config/config.h"
 
 /*
  * ===== CASCADE PID CONTROLLER =====

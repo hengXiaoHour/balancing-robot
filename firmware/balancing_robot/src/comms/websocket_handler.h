@@ -3,7 +3,7 @@
 
 #include <WebServer.h>
 #include <WebSocketsServer.h>
-#include "config/config.h"
+#include "../config/config.h"
 
 // ===== External Variables =====
 // Global variables from BALANCING_ROBOT.ino
