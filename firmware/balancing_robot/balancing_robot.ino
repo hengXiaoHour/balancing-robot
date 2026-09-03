@@ -329,7 +329,7 @@ void updateBatteryMonitoring() {
 }
 // ===== BALANCING ROBOT MODE FUNCTIONS===="
 
-inline void toggleMotorTest() {
+void toggleMotorTest() {  // NOTE: non-inline — called from serial_commands.cpp (separate TU)
   Serial.println("[MODE] Motor test command is disabled in BALANCING_ROBOT mode");
 }
 
