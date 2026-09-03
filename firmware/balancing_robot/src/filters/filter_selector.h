@@ -26,7 +26,7 @@
 #endif
 
 // ===== FILTER STATUS STRING =====
-const char* getActiveFilterName() {
+inline const char* getActiveFilterName() {
   #ifdef USE_KALMAN_FILTER
     return "Kalman Filter";
   #elif defined(USE_MAHONY_FILTER)
