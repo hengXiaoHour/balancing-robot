@@ -1,7 +1,7 @@
 #ifndef PID_CONTROLLER_H
 #define PID_CONTROLLER_H
 
-#include "config.h"  // For BOARD_ESP32C3 check
+#include "config/config.h"  // For BOARD_ESP32C3 check
 
 // ===== Single PID Controller State Variables =====
 // Shared reference

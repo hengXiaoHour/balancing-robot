@@ -2,7 +2,7 @@
 #define MPU6500_SPI_CUSTOM_H
 
 #include <SPI.h>
-#include "board.h"
+#include "config/board.h"
 
 // MPU6500 register addresses
 #define MPU6500_REG_PWR_MGMT_1    0x6B

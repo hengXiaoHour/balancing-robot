@@ -4,7 +4,7 @@
 
 #include <Wire.h>
 #include <Preferences.h>
-#include "config.h"  // Load all configuration parameters
+#include "config/config.h"  // Load all configuration parameters
 
 // Preference storage
 Preferences prefs;

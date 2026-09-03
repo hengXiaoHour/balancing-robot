@@ -23,15 +23,15 @@
 
 #if IMU_SENSOR_PROFILE == IMU_SENSOR_MPU6050
   #define IMU_USE_MPU6500_SPI 0
-  #include "MPU6050_Custom.h"
+  #include "../MPU6050_Custom.h"
   using IMU_Custom = MPU6050_Custom;
 #elif IMU_SENSOR_PROFILE == IMU_SENSOR_MPU6500_SPI
   #define IMU_USE_MPU6500_SPI 1
-  #include "MPU6500_SPI_Custom.h"
+  #include "../MPU6500_SPI_Custom.h"
   using IMU_Custom = MPU6500_SPI_Custom;
 #elif IMU_SENSOR_PROFILE == IMU_SENSOR_MPU6500_I2C
   #define IMU_USE_MPU6500_SPI 0
-  #include "MPU6500_I2C_Custom.h"
+  #include "../MPU6500_I2C_Custom.h"
   using IMU_Custom = MPU6500_I2C_Custom;
 #else
   #error "Invalid IMU_SENSOR_PROFILE. Use 1, 2, or 3."
