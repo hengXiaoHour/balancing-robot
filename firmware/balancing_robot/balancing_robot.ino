@@ -4,7 +4,7 @@
 
 #include <Wire.h>
 #include <Preferences.h>
-#include "config/config.h"  // Load all configuration parameters
+#include "src/config/config.h"  // Load all configuration parameters
 
 // Preference storage
 Preferences prefs;
@@ -15,20 +15,20 @@ float KI = DEFAULT_KI;
 float KD = DEFAULT_KD;
 
 // Include header files AFTER config.h
-#include "filters/filter_selector.h"        // Filter selection (choose ONE)
-#include "control/motor_control.h"
-#include "filters/kalman_filter.h"
-#include "filters/mahony_filter.h"
-#include "filters/madgwick_filter.h"
-#include "filters/complementary_filter.h"
-#include "filters/complementary_quaternion_filter.h"
-#include "filters/ekf_filter.h"
-#include "control/pid_controller.h"
+#include "src/filters/filter_selector.h"        // Filter selection (choose ONE)
+#include "src/control/motor_control.h"
+#include "src/filters/kalman_filter.h"
+#include "src/filters/mahony_filter.h"
+#include "src/filters/madgwick_filter.h"
+#include "src/filters/complementary_filter.h"
+#include "src/filters/complementary_quaternion_filter.h"
+#include "src/filters/ekf_filter.h"
+#include "src/control/pid_controller.h"
 #if ENABLE_CASCADE_PID
-#include "control/cascade_pid_controller.h"  // Cascade PID with unified gains
+#include "src/control/cascade_pid_controller.h"  // Cascade PID with unified gains
 #endif
-#include "sensors/calibration.h"
-#include "utils/timing.h"
+#include "src/sensors/calibration.h"
+#include "src/utils/timing.h"
 
 // ===== Battery Low Voltage Monitoring =====
 #define LOW_VOLTAGE_THRESHOLD 3.5f  // Voltage threshold for low battery detection
@@ -41,10 +41,10 @@ enum BatteryState {
 bool throttle_gate_ready = false;  // Throttle gating for ESP-NOW
 float last_throttle = 0.0f;        // Previous throttle value for ESP-NOW gating
 
-#include "comms/serial_commands.h"
-#include "comms/wifi_ota.h"  // WiFi + OTA support
-#include "comms/websocket_handler.h"  // WebSocket server and communication
-#include "comms/esp_now_handler.h"  // ESP-NOW controller communication
+#include "src/comms/serial_commands.h"
+#include "src/comms/wifi_ota.h"  // WiFi + OTA support
+#include "src/comms/websocket_handler.h"  // WebSocket server and communication
+#include "src/comms/esp_now_handler.h"  // ESP-NOW controller communication
 
 // External variables from ESP-NOW handler
 extern volatile bool espnow_connected;
