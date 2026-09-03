@@ -20,7 +20,6 @@
 // ===== PID CONTROLLER CONFIGURATION =====
 // SELECT CONTROL MODE: Uncomment ONE of the following
 #define ENABLE_CASCADE_PID 0  // Cascade (outer angle + inner rate) PID
-// #define ENABLE_CASCADE_PID 0    // Single angle PID (original mode)
 
 // Default PID Tuning Values (used in SINGLE angle PID mode)
 #define DEFAULT_KP 200.0   // Proportional gain (main correction)
@@ -92,21 +91,6 @@
 
 // ===== AXIS INVERSION (NOT USED: Roll disabled) =====
 #define ROLL_AXIS_INVERT 0
-
-// ===== BAROMETER CONFIGURATION (DISABLED) =====
-#define BARO_REF_BUFFER_SAMPLES 1
-#define BARO_REF_MIN_SAMPLES 1
-#define BARO_REF_OUTLIER_SIGMA 1.0f
-#define BARO_SEA_LEVEL_PRESSURE_PA 101325.0f
-#define BARO_UPDATE_MS 100
-#define BARO_LPF_ALPHA 0.1f
-#define ALT_ACCEL_DEADZONE_MPS2 0.2f
-#define ALT_FUSION_BARO_WEIGHT 0.5f
-
-// Altitude hold constants (NOT USED)
-#define ALT_HOLD_KP 0.0f
-#define ALT_HOLD_KI 0.0f
-#define ALT_HOLD_KD 0.0f
 
 // ===== CALIBRATION CONFIGURATION =====
 // Failsafe Settings

@@ -134,12 +134,6 @@ float KP_Yaw = DEFAULT_KP;
 float KI_Yaw = DEFAULT_KI;
 float KD_Yaw = DEFAULT_KD;
 
-// ALTITUDE HOLD PID (DISABLED - Stub)
-float alt_kp = ALT_HOLD_KP;
-float alt_ki = ALT_HOLD_KI;
-float alt_kd = ALT_HOLD_KD;
-float altitude_target_m = 0.0f;
-
 // Cascaded control
 float vel_x = 0.0f;
 float vel_y = 0.0f;
@@ -934,11 +928,6 @@ void savePIDToPreferences() {
   prefs.putFloat("KI_Yaw", KI_Yaw);
   prefs.putFloat("KD_Yaw", KD_Yaw);
 
-  // Save altitude hold PID gains
-  prefs.putFloat("ALT_KP", alt_kp);
-  prefs.putFloat("ALT_KI", alt_ki);
-  prefs.putFloat("ALT_KD", alt_kd);
-
   #if ENABLE_CASCADE_PID
   // Save cascade pitch angle loop gains
   prefs.putFloat("cpa_kp", cascade_pitch_angle_kp);
@@ -987,10 +976,6 @@ void resetPIDToDefaults() {
   yaw_rate_target = 0.0f;
   pitch_rate_target = 0.0f;
   roll_rate_target = 0.0f;
-
-  alt_kp = ALT_HOLD_KP;
-  alt_ki = ALT_HOLD_KI;
-  alt_kd = ALT_HOLD_KD;
 
   #if ENABLE_CASCADE_PID
   // Reset cascade gains to compile-time defaults
@@ -1041,11 +1026,6 @@ void loadPIDFromPreferences() {
   KP_Yaw = prefs.getFloat("KP_Yaw", DEFAULT_KP);
   KI_Yaw = prefs.getFloat("KI_Yaw", DEFAULT_KI);
   KD_Yaw = prefs.getFloat("KD_Yaw", DEFAULT_KD);
-
-  // Load altitude hold PID gains with defaults
-  alt_kp = prefs.getFloat("ALT_KP", ALT_HOLD_KP);
-  alt_ki = prefs.getFloat("ALT_KI", ALT_HOLD_KI);
-  alt_kd = prefs.getFloat("ALT_KD", ALT_HOLD_KD);
 
   #if ENABLE_CASCADE_PID
   // Load cascade pitch angle loop gains
