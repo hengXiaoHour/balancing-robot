@@ -15,14 +15,14 @@ float KI = DEFAULT_KI;
 float KD = DEFAULT_KD;
 
 // Include header files AFTER config.h
-#include "filter_selector.h"        // Filter selection (choose ONE)
+#include "filters/filter_selector.h"        // Filter selection (choose ONE)
 #include "motor_control.h"
-#include "kalman_filter.h"
-#include "mahony_filter.h"
-#include "madgwick_filter.h"
-#include "complementary_filter.h"
-#include "complementary_quaternion_filter.h"
-#include "ekf_filter.h"
+#include "filters/kalman_filter.h"
+#include "filters/mahony_filter.h"
+#include "filters/madgwick_filter.h"
+#include "filters/complementary_filter.h"
+#include "filters/complementary_quaternion_filter.h"
+#include "filters/ekf_filter.h"
 #include "pid_controller.h"
 #if ENABLE_CASCADE_PID
 #include "cascade_pid_controller.h"  // Cascade PID with unified gains
