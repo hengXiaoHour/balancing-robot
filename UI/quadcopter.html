@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 QUADCOPTER Control</title>
+  <link rel="stylesheet" href="https://unpkg.com/uplot/dist/uPlot.min.css" />
+  <script src="https://unpkg.com/uplot/dist/uPlot.iife.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(255, 51, 51, 0.5); }
+      50% { opacity: 0.6; box-shadow: 0 0 12px rgba(255, 51, 51, 0.8); }
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      overflow: hidden;
+    }
+    .container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      background: #2a2a2a;
+      padding: 10px 20px;
+      text-align: center;
+      border-bottom: 2px solid #444;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      flex: 1;
+      margin: 0;
+    }
+    .connection-status {
+      padding: 5px 15px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .connection-status.connected {
+      background: #4CAF50;
+      color: white;
+    }
+    .connection-status.disconnected {
+      background: #d0534f;
+      color: white;
+    }
+    
+    /* Battery indicator */
+    .battery-indicator {
+      display: flex;
+      align-items: center;
+      padding: 4px 10px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      border: 1px solid #444;
+      gap: 6px;
+      min-height: 28px;
+      cursor: help;
+      transition: all 0.3s ease;
+    }
+    .battery-indicator:hover {
+      border-color: #ffcc00;
+      box-shadow: 0 0 8px rgba(255, 204, 0, 0.3);
+    }
+    .battery-indicator svg {
+      filter: drop-shadow(0 0 2px rgba(255, 204, 0, 0.5));
+      transition: filter 0.3s ease;
+    }
+    .battery-indicator:hover svg {
+      filter: drop-shadow(0 0 4px rgba(255, 204, 0, 0.8));
+    }
+    
+    .ip-input-container {
+      position: absolute;
+      top: 10px;
+      left: 110px;
+    }
+    .ip-input-container input {
+      padding: 5px 10px;
+      border: 1px solid #666;
+      background: #333;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .ip-input-container button {
+      padding: 5px 10px;
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 5px;
+    }
+    .ip-input-container button:hover {
+      background: #0052a3;
+    }
+    .content {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      padding: 0;
+      min-width: 0;
+    }
+    .sidebar {
+      width: 100px;
+      background: #1a1a1a;
+      border-right: 2px solid #444;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      min-width: 100px;
+      flex-shrink: 0;
+      transition: transform 280ms ease, width 280ms ease, opacity 200ms ease;
+    }
+    .sidebar-resizer {
+      width: 4px;
+      background: #444;
+      cursor: col-resize;
+      user-select: none;
+      transition: background 0.3s;
+    }
+    .sidebar-resizer:hover {
+      background: #0066cc;
+    }
+    /* Collapsed sidebar (hidden under MENU) */
+    .sidebar.collapsed {
+      transform: translateX(-110%);
+      width: 0 !important;
+      padding: 0 !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .menu-toggle-container {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      z-index: 40;
+    }
+    .menu-toggle {
+      background: #0066cc;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+    .menu-toggle:active { transform: translateY(1px); }
+    .sidebar-button {
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 14px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      transition: all 0.3s ease;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    .sidebar-button:hover {
+      background: #0052a3;
+      transform: scale(1.05);
+    }
+    .sidebar-button.active {
+      background: #00cc66;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      min-width: 0;
+      overflow: auto;
+    }
+    .panel {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 15px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+    .status-panel {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 15px;
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      max-height: calc(100vh - 120px);
+      min-height: 0;
+    }
+    .status-panel.active {
+      display: flex;
+    }
+    .joysticks-container {
+      display: flex;
+      gap: 20px;
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+    }
+    .joysticks-container.hidden {
+      display: none;
+    }
+    .panel h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      text-transform: uppercase;
+      color: #0066cc;
+    }
+    .joystick-container {
+      flex: 1;
+      position: relative;
+      background: #1a1a1a;
+      border-radius: 8px;
+    }
+    .joystick {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      touch-action: none;
+      display: block;
+    }
+    .controls-bottom {
+      display: flex;
+      gap: 6px;
+    }
+    button.control-btn {
+      flex: 1;
+      padding: 8px;
+      background: #d0534f;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    button.control-btn:hover {
+      background: #e0635f;
+    }
+    button.control-btn.armed {
+      background: #4CAF50;
+    }
+    button.control-btn.armed:hover {
+      background: #5CBF60;
+    }
+    .status {
+      font-size: 12px;
+      padding: 8px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      border: 1px solid #333;
+    }
+    .telemetry {
+      font-size: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      flex: 0 0 auto;
+      overflow-y: auto;
+      max-height: 280px;
+      padding-bottom: 5px;
+    }
+    .telemetry-item {
+      background: #0a0a0a;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 2px solid #0066cc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+    }
+    .telemetry-item strong {
+      color: #0066cc;
+    }
+    #serialConsole {
+      background: #0a0a0a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      color: #00ff00;
+      overflow-y: auto;
+      overflow-x: hidden;
+      line-height: 1.3;
+      flex: 1;
+      margin-top: 4px;
+      word-break: break-word;
+      white-space: pre-wrap;
+      min-height: 0;
+    }
+    .console-line {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .console-clear-btn {
+      background: #555;
+      color: white;
+      border: none;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+    .console-clear-btn:hover {
+      background: #666;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+    #angleChart {
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      max-width: 100%;
+    }
+    .u-wrap {
+      background: #1a1a1a;
+    }
+    .u-title {
+      color: #0066cc;
+      font-size: 12px;
+    }
+    .u-legend {
+      background: transparent;
+      border-color: #444;
+    }
+    .u-legend-label {
+      color: #0066cc;
+      font-size: 10px;
+    }
+    .u-axis {
+      color: #0066cc;
+    }
+    .u-grid {
+      stroke: rgba(100, 100, 100, 0.2);
+    }
+    .graph-title-bar {
+      padding: 8px;
+      background: #1a3a52;
+      border-bottom: 1px solid #0066cc;
+      cursor: move;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 0 0 auto;
+    }
+    .graph-title-bar:active {
+      background: #0052a3;
+    }
+    .graph-title-bar h3 {
+      margin: 0;
+      color: #0066cc;
+      flex: 0 0 auto;
+      font-size: 13px;
+      cursor: grab;
+    }
+    .graph-title-bar h3:active {
+      cursor: grabbing;
+    }
+    .graph-minimize-btn {
+      background: none;
+      border: none;
+      color: #0066cc;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .graph-minimize-btn:hover {
+      color: #0099ff;
+    }
+    .graph-resize-handle {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 20px;
+      height: 20px;
+      cursor: nwse-resize;
+      background: linear-gradient(135deg, transparent 50%, #0066cc 50%);
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+    .graph-resize-handle:hover {
+      opacity: 1;
+    }
+    input[type="checkbox"] {
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+    }
+    .error-message {
+      color: #ff6b6b;
+      font-size: 12px;
+      padding: 8px;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 4px;
+      border: 1px solid #ff6b6b;
+      display: none;
+    }
+    .error-message.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="ip-input-container">
+    <input type="text" id="espIpInput" placeholder="192.168.x.x" value="192.168.100.159">
+    <button onclick="connectToESP32()">Connect</button>
+  </div>
+
+  <!-- Menu toggle button (collapses/expands sidebar) -->
+  <div class="menu-toggle-container">
+    <button id="menuToggleBtn" class="menu-toggle" aria-pressed="false" title="Toggle Menu" onclick="toggleMenu()">MENU</button>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <div style="flex: 1;"></div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <div id="batteryIndicator" class="battery-indicator" title="Battery Voltage">
+          <svg width="28" height="16" viewBox="0 0 28 16" style="fill: #ffcc00; stroke: #ffcc00; stroke-width: 1;">
+            <!-- Battery body -->
+            <rect x="2" y="2" width="20" height="12" rx="1" fill="none"/>
+            <!-- Battery terminal -->
+            <rect x="23" y="5" width="3" height="6" fill="none"/>
+            <!-- Battery fill (will be updated) -->
+            <rect id="batteryFill" x="4" y="4" width="16" height="8" fill="#ffcc00" rx="0.5"/>
+          </svg>
+          <span id="batteryVoltage" style="font-size: 10px; margin-left: 4px; color: #ffcc00; font-weight: bold; min-width: 45px;">-- V</span>
+        </div>
+        <button id="armBtn" class="connection-status" style="background: #ff6600; cursor: pointer; border: none; font-weight: bold;" onclick="toggleArm()">DISARMED</button>
+        <div id="connectionStatus" class="connection-status disconnected">DISCONNECTED</div>
+      </div>
+    </div>
+
+    <div id="errorMessage" class="error-message"></div>
+
+    <div class="content">
+      <!-- Left Sidebar (Resizable) -->
+      <div class="sidebar" id="sidebar">
+        <button id="controlBtn" class="sidebar-button active" onclick="toggleControlPanel()">CONTROL</button>
+        <button id="statusBtn" class="sidebar-button" onclick="toggleStatusPanel()">STATUS</button>
+        <button id="sensorsBtn" class="sidebar-button" onclick="toggleSensorsPanel()">SENSORS</button>
+        <button id="pidBtn" class="sidebar-button" onclick="togglePidPanel()">PID TUNE</button>
+        <button id="graphBtn" class="sidebar-button" onclick="toggleGraphPanel()">GRAPH</button>
+        <button id="settingsBtn" class="sidebar-button" onclick="toggleSettingsPanel()">SETTINGS</button>
+      </div>
+      
+      <!-- Sidebar Resize Handle -->
+      <div id="sidebarResizer" class="sidebar-resizer"></div>
+
+      <!-- Main Content Area -->
+      <div class="main-content">
+        <!-- Joysticks View (Default) -->
+        <div class="joysticks-container" id="joysticksView">
+          <div class="panel">
+            <h3>Throttle / Yaw</h3>
+            <div class="joystick-container">
+              <canvas id="joystick1" class="joystick"></canvas>
+            </div>
+            <div class="status">
+              Throttle: <span id="throttle-val">0</span>%<br/>
+              Yaw: <span id="yaw-val">0</span>°/s
+            </div>
+          </div>
+          
+          <div class="panel">
+            <h3>Roll / Pitch</h3>
+            <div class="joystick-container">
+              <canvas id="joystick2" class="joystick"></canvas>
+            </div>
+            <div class="status">
+              Roll: <span id="roll-val">0</span>°<br/>
+              Pitch: <span id="pitch-val">0</span>°
+            </div>
+          </div>
+        </div>
+
+        <!-- Status View (Hidden by default) -->
+        <div id="statusPanel" class="status-panel">
+          <h3 style="margin: 0 0 10px 0; color: #0066cc;">Status & Telemetry</h3>
+          <div class="telemetry">
+            <div class="telemetry-item"><strong>Armed:</strong> <span id="telem-armed" style="color: #ff6600;">--</span></div>
+            <div class="telemetry-item"><strong>Vbat:</strong> <span id="telem-vbat">--</span>V</div>
+            <div class="telemetry-item"><strong>Loop Rate:</strong> <span id="telem-loop">--</span>Hz</div>
+            <div class="telemetry-item" style="border-top: 1px solid #444; padding-top: 6px; margin-top: 6px;"><strong>Filter:</strong> <span id="telem-filter">--</span></div>
+            <div class="telemetry-item"><strong>PID [P,R]:</strong> <span id="telem-pid">[--,--]</span></div>
+            <div class="telemetry-item"><strong>Motors [0,1,2,3]:</strong> <span id="telem-motors">[--,--,--,--]</span></div>
+            <div class="telemetry-item"><strong>Throttle:</strong> <span id="telem-throttle">--%</span></div>
+            <div class="telemetry-item" style="border-top: 1px solid #444; padding-top: 6px; margin-top: 6px;"><strong>Filter Time:</strong> <span id="telem-filter-time">--</span>µs</div>
+            <div class="telemetry-item"><strong>Avg Filter Time:</strong> <span id="telem-avg-filter-time">--</span>µs</div>
+            <div class="telemetry-item"><strong>Free Heap:</strong> <span id="telem-heap">--</span>B</div>
+            <div class="telemetry-item"><strong>CPU Load:</strong> <span id="telem-cpu">--%</span></div>
+          </div>
+          <div style="flex: 1; margin-top: 10px; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
+            <div style="font-size: 10px; color: #0066cc; margin-bottom: 2px; flex: 0 0 auto;"><strong>Serial Console</strong></div>
+            <div id="serialConsole"></div>
+            <button class="console-clear-btn" onclick="clearConsole()">Clear</button>
+          </div>
+        </div>
+
+        <!-- Sensors View (Angles + Calibration) -->
+        <div id="sensorsPanel" class="status-panel">
+          <h3 style="margin: 0 0 10px 0; color: #0066cc;">Flight Instruments</h3>
+          
+          <!-- Attitude Indicator and Compass -->
+          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <!-- Level Indicator (Attitude) -->
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+              <canvas id="attitudeCanvas" width="180" height="180" style="background: #0a0a0a; border: 2px solid #0066cc; border-radius: 50%; max-width: 100%;"></canvas>
+              <div style="font-size: 10px; color: #0066cc; margin-top: 4px;">Attitude</div>
+            </div>
+            
+            <!-- Compass -->
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+              <canvas id="compassCanvas" width="180" height="180" style="background: #0a0a0a; border: 2px solid #0066cc; border-radius: 50%; max-width: 100%;"></canvas>
+              <div style="font-size: 10px; color: #0066cc; margin-top: 4px;">Compass (Yaw)</div>
+            </div>
+          </div>
+
+          <!-- Numeric Values - Single Combined Box (fills panel width, evenly spaced) -->
+          <div class="telemetry-item" style="font-size: 16px; padding: 12px 16px; display: flex; gap: 16px; align-items: center; justify-content: space-between; margin-bottom: 10px; width: 100%; box-sizing: border-box; white-space: normal;">
+            <div style="flex: 1; text-align: left; padding-left: 8px;"><strong>Roll:</strong> <span id="sensor-roll">--</span>°</div>
+            <div style="flex: 1; text-align: center;"><strong>Pitch:</strong> <span id="sensor-pitch">--</span>°</div>
+            <div style="flex: 1; text-align: right; padding-right: 8px;"><strong>Yaw:</strong> <span id="sensor-yaw">--</span>°</div>
+          </div>
+
+          <h3 style="margin: 15px 0 10px 0; color: #0066cc;">Calibration</h3>
+          <div style="font-size: 12px; margin-bottom: 8px;">
+            <strong style="color: #0066cc;">Status:</strong>
+            <div id="calibStatus" style="margin-top: 4px; font-size: 11px; color: #aaa;">Ready</div>
+            <div id="calibInstructions" style="margin-top: 6px; font-size: 11px; color: #0066cc; font-style: italic;"></div>
+          </div>
+          <div id="calibButtons" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="calibGyroBtn" class="control-btn" style="flex: 1; font-size: 12px; padding: 8px;" onclick="startGyroCalibration()">Calibrate Gyro</button>
+            <button id="calibAccelBtn" class="control-btn" style="flex: 1; font-size: 12px; padding: 8px;" onclick="startAccelCalibration()">Calibrate Accel</button>
+          </div>
+          <div id="calibNextBtn" style="display: none; margin-top: 8px;">
+            <button class="control-btn" style="width: 100%; font-size: 12px; padding: 8px;" onclick="nextCalibrationStep()">Next Step</button>
+          </div>
+          <div id="calibAbortBtn" style="display: none; margin-top: 8px;">
+            <button class="control-btn" style="width: 100%; background: #666; font-size: 12px; padding: 8px;" onclick="abortCalibration()">Abort</button>
+          </div>
+
+          <h3 style="margin: 15px 0 10px 0; color: #0066cc;">Trim Adjustments</h3>
+          <div style="font-size: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <label style="color: #0066cc; flex: 0 0 80px;">Trim Pitch:</label>
+              <input type="number" id="trim-pitch-input" step="0.1" min="-45" max="45" style="flex: 1; padding: 4px; font-size: 11px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendTrimValue('trim_pitch', this.value)">
+              <span style="color: #aaa; flex: 0 0 25px;">°</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <label style="color: #0066cc; flex: 0 0 80px;">Trim Roll:</label>
+              <input type="number" id="trim-roll-input" step="0.1" min="-45" max="45" style="flex: 1; padding: 4px; font-size: 11px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendTrimValue('trim_roll', this.value)">
+              <span style="color: #aaa; flex: 0 0 25px;">°</span>
+            </div>
+          </div>
+
+          <h3 style="margin: 15px 0 10px 0; color: #0066cc;">Reset Functions</h3>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="control-btn" style="flex: 1; background: #d9534f; font-size: 11px; padding: 6px;" onclick="resetPID()">Reset PID</button>
+            <button class="control-btn" style="flex: 1; background: #d9534f; font-size: 11px; padding: 6px;" onclick="resetCalibration()">Reset Calibration</button>
+            <button class="control-btn" style="flex: 1; background: #0066cc; font-size: 11px; padding: 6px;" onclick="loadStateFromDevice()">Load State</button>
+          </div>
+        </div>
+
+        <!-- PID Tuning Panel -->
+        <div id="pidPanel" class="status-panel" style="flex-direction: column; overflow: hidden; padding: 10px;">
+      <h3 style="margin: 0 0 8px 0; color: #0066cc; flex: 0 0 auto; font-size: 14px;">PID Tuning</h3>
+      
+      <div style="flex: 0 1 auto; display: flex; flex-direction: column; gap: 6px;">
+        <!-- Pitch PID -->
+        <div style="background: #1a1a1a; padding: 6px; border-radius: 3px; border: 1px solid #0066cc; flex: 0 0 auto;">
+          <h4 style="color: #00ff00; margin: 0 0 4px 0; font-size: 10px;">PITCH</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; font-size: 9px;">
+            <div>
+              <label style="color: #0066cc; display: block; margin-bottom: 2px;">P:</label>
+              <input type="number" id="pid-pitch-p" step="0.001" min="0" style="width: 100%; padding: 2px; font-size: 9px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendPidValue('pitch_p', this.value)">
+            </div>
+            <div>
+              <label style="color: #0066cc; display: block; margin-bottom: 2px;">I:</label>
+              <input type="number" id="pid-pitch-i" step="0.001" min="0" style="width: 100%; padding: 2px; font-size: 9px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendPidValue('pitch_i', this.value)">
+            </div>
+            <div>
+              <label style="color: #0066cc; display: block; margin-bottom: 2px;">D:</label>
+              <input type="number" id="pid-pitch-d" step="0.001" min="0" style="width: 100%; padding: 2px; font-size: 9px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendPidValue('pitch_d', this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Roll PID -->
+        <div style="background: #1a1a1a; padding: 6px; border-radius: 3px; border: 1px solid #0066cc; flex: 0 0 auto;">
+          <h4 style="color: #00ff00; margin: 0 0 4px 0; font-size: 10px;">ROLL</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; font-size: 9px;">
+            <div>
+              <label style="color: #0066cc; display: block; margin-bottom: 2px;">P:</label>
+              <input type="number" id="pid-roll-p" step="0.001" min="0" style="width: 100%; padding: 2px; font-size: 9px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendPidValue('roll_p', this.value)">
+            </div>
+            <div>
+              <label style="color: #0066cc; display: block; margin-bottom: 2px;">I:</label>
+              <input type="number" id="pid-roll-i" step="0.001" min="0" style="width: 100%; padding: 2px; font-size: 9px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendPidValue('roll_i', this.value)">
+            </div>
+            <div>
+              <label style="color: #0066cc; display: block; margin-bottom: 2px;">D:</label>
+              <input type="number" id="pid-roll-d" step="0.001" min="0" style="width: 100%; padding: 2px; font-size: 9px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendPidValue('roll_d', this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Yaw PID -->
+        <div style="background: #1a1a1a; padding: 6px; border-radius: 3px; border: 1px solid #0066cc; flex: 0 0 auto;">
+          <h4 style="color: #00ff00; margin: 0 0 4px 0; font-size: 10px;">YAW</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; font-size: 9px;">
+            <div>
+              <label style="color: #0066cc; display: block; margin-bottom: 2px;">P:</label>
+              <input type="number" id="pid-yaw-p" step="0.001" min="0" style="width: 100%; padding: 2px; font-size: 9px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendPidValue('yaw_p', this.value)">
+            </div>
+            <div>
+              <label style="color: #0066cc; display: block; margin-bottom: 2px;">I:</label>
+              <input type="number" id="pid-yaw-i" step="0.001" min="0" style="width: 100%; padding: 2px; font-size: 9px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendPidValue('yaw_i', this.value)">
+            </div>
+            <div>
+              <label style="color: #0066cc; display: block; margin-bottom: 2px;">D:</label>
+              <input type="number" id="pid-yaw-d" step="0.001" min="0" style="width: 100%; padding: 2px; font-size: 9px; background: #0a0a0a; color: #00ff00; border: 1px solid #444;" onchange="sendPidValue('yaw_d', this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <button class="control-btn" style="width: 100%; background: #666; flex: 0 0 auto; margin-top: 8px; padding: 6px; font-size: 10px;" onclick="savePidValues()">SAVE</button>
+        </div>
+
+        <!-- Settings Panel (Fixed Box in Container) -->
+        <div id="settingsPanel" class="status-panel" style="flex-direction: column; overflow: hidden; padding: 10px;">
+          <h3 style="margin: 0 0 8px 0; color: #0066cc; flex: 0 0 auto; font-size: 14px;">Joystick Settings</h3>
+          
+          <div id="settingsContent" style="flex: 0 1 auto; display: flex; flex-direction: column; gap: 8px;">
+            <!-- Max Roll/Pitch Angle -->
+            <div style="background: #1a1a1a; padding: 8px; border-radius: 3px; border: 1px solid #0066cc; flex: 0 0 auto;">
+              <label style="color: #00ff00; margin: 0 0 6px 0; font-size: 11px; display: block;">Max Roll/Pitch Angle: <span id="maxAngleValue" style="color: #0066cc; font-weight: bold;">10°</span></label>
+              <input type="range" id="maxAngleSlider" min="5" max="45" value="10" 
+                     style="width: 100%; cursor: pointer; margin-bottom: 4px;" 
+                     oninput="updateMaxAngle(this.value)">
+              <div style="font-size: 9px; color: #888;">Range: 5° - 45°</div>
+            </div>
+
+            <!-- Reset Button -->
+            <button onclick="resetSettings()" style="background: #1a1a1a; color: #0066cc; border: 1px solid #0066cc; padding: 6px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold; flex: 0 0 auto;">
+              RESET TO DEFAULTS
+            </button>
+
+            <!-- Info -->
+            <div style="font-size: 9px; color: #888; padding: 6px; background: #0a0a0a; border-radius: 3px; border: 1px solid #333;">
+              <strong>Note:</strong> These settings only affect Web UI joystick input. Saved locally in browser.
+            </div>
+          </div>
+        </div>
+
+        <!-- Graph Panel (Fixed Box in Container) -->
+        <div id="graphPanel" class="status-panel" style="flex-direction: column; overflow: hidden; padding: 10px;">
+          <h3 style="margin: 0 0 8px 0; color: #0066cc; flex: 0 0 auto; font-size: 14px;">Angle Graphs</h3>
+          
+          <div id="graphContent" style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; width: 100%; margin-bottom: 8px;">
+            <div id="angleChart" style="width: 100%; height: 100%;"></div>
+          </div>
+          
+          <div style="flex: 0 0 auto; display: flex; gap: 10px; flex-wrap: wrap; font-size: 9px; color: #0066cc;">
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" id="rollCheck" checked onchange="toggleDataset(0)"> <span style="color: #ff6b6b;">●</span> Roll
+            </label>
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" id="pitchCheck" checked onchange="toggleDataset(1)"> <span style="color: #4ade80;">●</span> Pitch
+            </label>
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" id="yawCheck" onchange="toggleDataset(2)"> <span style="color: #60a5fa;">●</span> Yaw
+            </label>
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" id="setpointCheck" checked onchange="toggleDataset(3)"> <span style="color: #888;">-</span> Setpoint (0°)
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin-left: 12px;">
+              <input type="checkbox" id="autoZoomCheck" checked style="vertical-align: middle;"> Auto Zoom
+            </label>
+          </div>
+        </div>
+      </div>
+
+    <!-- Calibration Panel (Separate Modal) -->
+    <div id="calibrationPanel" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #2a2a2a; border: 2px solid #0066cc; border-radius: 8px; padding: 20px; z-index: 1000; width: 400px; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+      <h3 style="color: #0066cc; margin-top: 0;">Calibration</h3>
+      <div style="font-size: 12px; margin-bottom: 8px;">
+        <strong style="color: #0066cc;">Status:</strong>
+        <div id="calibStatus" style="margin-top: 4px; font-size: 11px; color: #aaa;">Ready</div>
+        <div id="calibInstructions" style="margin-top: 6px; font-size: 11px; color: #0066cc; font-style: italic;"></div>
+      </div>
+      <div id="calibButtons" style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button id="calibGyroBtn" class="control-btn" style="flex: 1; font-size: 12px; padding: 8px;" onclick="startGyroCalibration()">Calibrate Gyro</button>
+        <button id="calibAccelBtn" class="control-btn" style="flex: 1; font-size: 12px; padding: 8px;" onclick="startAccelCalibration()">Calibrate Accel</button>
+      </div>
+      <div id="calibNextBtn" style="display: none; margin-top: 8px;">
+        <button class="control-btn" style="width: 100%; font-size: 12px; padding: 8px;" onclick="nextCalibrationStep()">Next Step</button>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <div id="calibAbortBtn" style="display: none; flex: 1;">
+          <button class="control-btn" style="width: 100%; background: #666; font-size: 12px; padding: 8px;" onclick="abortCalibration()">Abort</button>
+        </div>
+        <button class="control-btn" style="flex: 1; background: #666; font-size: 12px; padding: 8px;" onclick="closeCalibrationPanel()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize with saved IP or default
+    let espIP = localStorage.getItem('espIP') || '192.168.100.159';
+    let ws = null;
+    let isConnected = false;
+    let reconnectTimer = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 999;  // Keep retrying indefinitely
+    let reconnectDelay = 1000;  // Start with 1 second
+    const maxReconnectDelay = 5000;  // Max 5 seconds between attempts
+    let consoleLines = [];  // Store console messages
+    const maxConsoleLines = 100;  // Keep last 100 lines
+    
+    // Local state to maintain even when disconnected
+    let localState = {
+      roll: 0,
+      pitch: 0,
+      yaw: 0,
+      throttle: 0,
+      armed: false
+    };
+
+    let state = {
+      roll: 0,
+      pitch: 0,
+      yaw: 0,
+      throttle: 0,
+      armed: false
+    };
+
+    // Flag to prevent sync conflicts when user clicks arm button
+    let userJustToggledArm = false;
+    const ARM_TOGGLE_DEBOUNCE = 200;  // ms to ignore sync updates after user click
+
+    // Joystick Settings (customizable)
+    let maxRollPitchAngle = 10;  // Default ±10 degrees
+    const LOCAL_STORAGE_KEY = 'quadcopter_ui_settings';
+
+    // Load settings from localStorage
+    function loadSettings() {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
+        const settings = JSON.parse(saved);
+        if (settings.maxAngle !== undefined) {
+          maxRollPitchAngle = settings.maxAngle;
+          document.getElementById('maxAngleSlider').value = maxRollPitchAngle;
+          document.getElementById('maxAngleValue').textContent = maxRollPitchAngle + '°';
+        }
+      }
+    }
+
+    // Save settings to localStorage
+    function saveSettings() {
+      const settings = { maxAngle: maxRollPitchAngle };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings));
+    }
+
+    function updateMaxAngle(value) {
+      maxRollPitchAngle = parseFloat(value);
+      document.getElementById('maxAngleValue').textContent = maxRollPitchAngle + '°';
+      saveSettings();
+    }
+
+    function resetSettings() {
+      maxRollPitchAngle = 10;
+      document.getElementById('maxAngleSlider').value = 10;
+      document.getElementById('maxAngleValue').textContent = '10°';
+      saveSettings();
+      alert('Settings reset to defaults');
+    }
+
+    // Set initial IP in input field
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('espIpInput').value = espIP;
+      // Load UI settings from localStorage
+      loadSettings();
+      // Auto-connect on load
+      setTimeout(connectToESP32, 500);
+      // Initialize canvas drawings
+      drawAttitude(0, 0);
+      drawCompass(0);
+      // Initialize sidebar resize functionality
+      initSidebarResize();
+    });
+
+    // Sidebar Resize Functionality
+    function initSidebarResize() {
+      const sidebar = document.getElementById('sidebar');
+      const resizer = document.getElementById('sidebarResizer');
+      let isResizing = false;
+
+      // Load saved width from localStorage
+      const savedWidth = localStorage.getItem('sidebarWidth');
+      if (savedWidth) {
+        sidebar.style.width = savedWidth + 'px';
+      }
+
+      resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.body.style.cursor = 'col-resize';
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        const newWidth = e.clientX - sidebar.getBoundingClientRect().left;
+        
+        // Constrain width between min and max
+        if (newWidth >= 80 && newWidth <= 200) {
+          sidebar.style.width = newWidth + 'px';
+          localStorage.setItem('sidebarWidth', newWidth);
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        isResizing = false;
+        document.body.style.cursor = 'default';
+      });
+    }
+
+    // Draw Attitude Indicator (Level Indicator)
+    function drawAttitude(roll, pitch) {
+      const canvas = document.getElementById('attitudeCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const size = Math.min(canvas.width, canvas.height);
+      const center = size / 2;
+      const radius = size / 2 - 10;
+
+      // Clear canvas
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, size, size);
+
+      // Draw background circle
+      ctx.strokeStyle = '#0066cc';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(center, center, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Save context state
+      ctx.save();
+
+      // Translate to center and apply rotations
+      ctx.translate(center, center);
+      ctx.rotate((roll * Math.PI) / 180);
+
+      // Draw sky (blue)
+      ctx.fillStyle = '#1a3a52';
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw horizon line with pitch offset
+      const pitchOffset = (pitch * radius) / 90;
+      ctx.strokeStyle = '#0066cc';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-radius, -pitchOffset);
+      ctx.lineTo(radius, -pitchOffset);
+      ctx.stroke();
+
+      // Draw pitch grid lines
+      ctx.strokeStyle = '#0066cc';
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.3;
+      for (let i = -80; i <= 80; i += 10) {
+        const offset = (i * radius) / 90;
+        ctx.beginPath();
+        ctx.moveTo(-radius / 3, -offset);
+        ctx.lineTo(radius / 3, -offset);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // Restore context
+      ctx.restore();
+
+      // Draw center crosshair
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(center - 15, center);
+      ctx.lineTo(center + 15, center);
+      ctx.moveTo(center, center - 15);
+      ctx.lineTo(center, center + 15);
+      ctx.stroke();
+
+      // Draw roll indicator marks
+      ctx.strokeStyle = '#0066cc';
+      ctx.lineWidth = 1;
+      for (let i = -90; i <= 90; i += 10) {
+        const angle = (i * Math.PI) / 180;
+        const x1 = center + (radius - 15) * Math.cos(angle);
+        const y1 = center - (radius - 15) * Math.sin(angle);
+        const x2 = center + radius * Math.cos(angle);
+        const y2 = center - radius * Math.sin(angle);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+    }
+
+    // Draw Compass (Yaw Indicator)
+    function drawCompass(yaw) {
+      const canvas = document.getElementById('compassCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const size = Math.min(canvas.width, canvas.height);
+      const center = size / 2;
+      const radius = size / 2 - 10;
+
+      // Clear canvas
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, size, size);
+
+      // Draw compass circle
+      ctx.strokeStyle = '#0066cc';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(center, center, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Draw compass rose
+      ctx.save();
+      ctx.translate(center, center);
+
+      // Draw cardinal directions
+      ctx.fillStyle = '#0066cc';
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const directions = ['N', 'E', 'S', 'W'];
+      const angles = [0, 90, 180, 270];
+
+      directions.forEach((dir, i) => {
+        const angle = (angles[i] * Math.PI) / 180;
+        const x = (radius - 25) * Math.sin(angle);
+        const y = -(radius - 25) * Math.cos(angle);
+        ctx.save();
+        ctx.fillText(dir, x, y);
+        ctx.restore();
+      });
+
+      // Draw degree marks
+      ctx.strokeStyle = '#0066cc';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 360; i += 10) {
+        const angle = (i * Math.PI) / 180;
+        const x1 = (radius - 5) * Math.sin(angle);
+        const y1 = -(radius - 5) * Math.cos(angle);
+        const x2 = (radius - 15) * Math.sin(angle);
+        const y2 = -(radius - 15) * Math.cos(angle);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+
+      // Draw heading needle (rotated by yaw)
+      ctx.save();
+      ctx.translate(center, center);
+      ctx.rotate((yaw * Math.PI) / 180);
+
+      // Draw needle
+      ctx.fillStyle = '#00ff00';
+      ctx.beginPath();
+      ctx.moveTo(0, -radius + 20);
+      ctx.lineTo(-8, radius - 20);
+      ctx.lineTo(8, radius - 20);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+
+      // Draw center dot
+      ctx.fillStyle = '#00ff00';
+      ctx.beginPath();
+      ctx.arc(center, center, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Display current heading
+      ctx.fillStyle = '#0066cc';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${yaw.toFixed(0)}°`, center, size - 8);
+    }
+
+    function addConsoleMessage(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      const line = `[${timestamp}] ${message}`;
+      consoleLines.push(line);
+      
+      // Keep only last maxConsoleLines
+      if (consoleLines.length > maxConsoleLines) {
+        consoleLines.shift();
+      }
+      
+      // Update console display
+      const consoleEl = document.getElementById('serialConsole');
+      consoleEl.innerHTML = consoleLines.map(l => `<div class="console-line">${escapeHtml(l)}</div>`).join('');
+      consoleEl.scrollTop = consoleEl.scrollHeight;  // Auto-scroll to bottom
+    }
+
+    function clearConsole() {
+      consoleLines = [];
+      document.getElementById('serialConsole').innerHTML = '';
+    }
+
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function setConnectionStatus(connected) {
+      isConnected = connected;
+      const statusEl = document.getElementById('connectionStatus');
+      if (connected) {
+        statusEl.textContent = '✓ CONNECTED';
+        statusEl.className = 'connection-status connected';
+        hideError();
+      } else {
+        statusEl.textContent = '⟳ RECONNECTING...';
+        statusEl.className = 'connection-status disconnected';
+        showError(`Connecting to ${espIP} on port 81...`);
+      }
+    }
+
+    function updateBatteryIndicator(voltage) {
+      // Update voltage text
+      document.getElementById('batteryVoltage').textContent = voltage.toFixed(2) + ' V';
+      
+      // Determine color based on voltage (1S LiPo: 3.7V max, 2.8V min safe)
+      const maxVoltage = 3.7;
+      const minVoltage = 2.8;
+      const percentage = Math.max(0, Math.min(100, ((voltage - minVoltage) / (maxVoltage - minVoltage)) * 100));
+      
+      // Update battery fill width
+      const batteryFill = document.getElementById('batteryFill');
+      batteryFill.style.width = (percentage * 0.8) + '%';  // 80% of battery width for visual space
+      
+      // Change color based on voltage level
+      let fillColor = '#00ff00';  // Green - good
+      let glowColor = 'rgba(0, 255, 0, 0.5)';
+      
+      if (percentage < 20) {
+        fillColor = '#ff3333';  // Red - critical
+        glowColor = 'rgba(255, 51, 51, 0.8)';
+      } else if (percentage < 40) {
+        fillColor = '#ffcc00';  // Yellow - low
+        glowColor = 'rgba(255, 204, 0, 0.6)';
+      } else if (percentage < 70) {
+        fillColor = '#99ff00';  // Light green - moderate
+        glowColor = 'rgba(153, 255, 0, 0.5)';
+      }
+      
+      batteryFill.setAttribute('fill', fillColor);
+      
+      // Update SVG stroke color
+      const batteryIcon = document.querySelector('.battery-indicator svg');
+      batteryIcon.style.stroke = fillColor;
+      batteryIcon.style.fill = fillColor;
+      
+      // Update text color
+      document.getElementById('batteryVoltage').style.color = fillColor;
+      
+      // Add pulsing animation if critical
+      if (percentage < 20) {
+        document.getElementById('batteryIndicator').style.animation = 'pulse 1s infinite';
+      } else {
+        document.getElementById('batteryIndicator').style.animation = 'none';
+      }
+    }
+
+    function showError(message) {
+      const errorEl = document.getElementById('errorMessage');
+      errorEl.textContent = '⚠ ' + message;
+      errorEl.classList.add('show');
+    }
+
+    function hideError() {
+      const errorEl = document.getElementById('errorMessage');
+      errorEl.classList.remove('show');
+    }
+
+    function connectToESP32() {
+      const ipInput = document.getElementById('espIpInput').value.trim();
+      if (!ipInput) {
+        showError('Please enter an IP address');
+        return;
+      }
+
+      espIP = ipInput;
+      localStorage.setItem('espIP', espIP);  // Save IP to localStorage
+      console.log('Connecting to ESP32 at:', espIP);
+      
+      // Clear existing reconnect timer
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectAttempts = 0;
+      reconnectDelay = 1000;
+      
+      attemptConnection();
+    }
+    
+    function attemptConnection() {
+      try {
+        // Use WebSocket to avoid CORS issues
+        ws = new WebSocket(`ws://${espIP}:81`);
+        
+        ws.onopen = () => {
+          console.log('✓ WebSocket connected to ESP32');
+          setConnectionStatus(true);
+          reconnectAttempts = 0;  // Reset counter on successful connection
+          reconnectDelay = 1000;  // Reset delay
+          
+          // Resend current state after connection
+          if (isConnected) {
+            setTimeout(sendCommand, 100);  // Small delay to ensure WS is ready
+          }
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            // ===== CONSOLE MESSAGE =====
+            if (data.console !== undefined) {
+              addConsoleMessage(data.console);
+              return;
+            }
+            
+            // ===== STATE BROADCAST (Auto-fill PID and calibration inputs) =====
+            if (data.pitch_p !== undefined) {
+              // This is a state broadcast, update all inputs
+              document.getElementById('pid-pitch-p').value = data.pitch_p;
+              document.getElementById('pid-pitch-i').value = data.pitch_i || 0;
+              document.getElementById('pid-pitch-d').value = data.pitch_d || 0;
+              
+              document.getElementById('pid-roll-p').value = data.roll_p || 0;
+              document.getElementById('pid-roll-i').value = data.roll_i || 0;
+              document.getElementById('pid-roll-d').value = data.roll_d || 0;
+              
+              document.getElementById('pid-yaw-p').value = data.yaw_p || 0;
+              document.getElementById('pid-yaw-i').value = data.yaw_i || 0;
+              document.getElementById('pid-yaw-d').value = data.yaw_d || 0;
+              
+              document.getElementById('trim-pitch-input').value = data.trim_pitch || 0;
+              document.getElementById('trim-roll-input').value = data.trim_roll || 0;
+              
+              console.log('✓ State loaded from device');
+              return;
+            }
+            
+            // ===== TELEMETRY DATA =====
+            // Update flight status and angles
+            if (data.armed !== undefined) {
+              const armedEl = document.getElementById('telem-armed');
+              armedEl.textContent = (data.armed ? 'YES' : 'NO');
+              armedEl.style.color = data.armed ? '#00ff00' : '#ff6600';
+              
+              // ===== SYNC ARM BUTTON STATE WITH ESP32 =====
+              // If ESP32 disarmed us (failsafe), update UI button to reflect real state
+              // BUT: Don't sync if user just clicked arm button (debounce race condition)
+              if (data.armed !== state.armed && !userJustToggledArm) {
+                state.armed = data.armed;
+                const btn = document.getElementById('armBtn');
+                btn.textContent = state.armed ? 'DISARM' : 'ARM';
+                btn.classList.toggle('armed', state.armed);
+                
+                // Log failsafe event to user
+                if (!data.armed && localState.armed) {
+                  console.warn('[FAILSAFE] ESP32 forced disarm - button reset to ARM');
+                  addConsoleMessage('[FAILSAFE] ESP32 forced disarm due to unsafe angle - click ARM to retry');
+                }
+                
+                localState.armed = state.armed;
+              }
+            }
+            
+            // Update sensor angles in SENSORS panel
+            let roll = 0, pitch = 0, yaw = 0;
+            if (data.roll !== undefined) {
+              roll = data.roll;
+              document.getElementById('sensor-roll').textContent = data.roll.toFixed(1);
+            }
+            if (data.pitch !== undefined) {
+              pitch = data.pitch;
+              document.getElementById('sensor-pitch').textContent = data.pitch.toFixed(1);
+            }
+            if (data.yaw !== undefined) {
+              yaw = data.yaw;
+              document.getElementById('sensor-yaw').textContent = data.yaw.toFixed(1);
+            }
+            // Update attitude and compass displays
+            drawAttitude(roll, pitch);
+            drawCompass(yaw);
+            
+            // Add data to graph
+            addGraphDataPoint(roll, pitch, yaw);
+            
+            // Update power and performance (only if included in message)
+            if (data.battery !== undefined) {
+              document.getElementById('telem-vbat').textContent = data.battery.toFixed(2);
+              // Update battery indicator in header
+              updateBatteryIndicator(data.battery);
+            }
+            if (data.loop_rate !== undefined) document.getElementById('telem-loop').textContent = data.loop_rate.toFixed(0);
+            if (data.throttle !== undefined) document.getElementById('telem-throttle').textContent = data.throttle.toFixed(0);
+            
+            // Update computational/filter metrics (only if included)
+            if (data.filter !== undefined) document.getElementById('telem-filter').textContent = data.filter;
+            if (data.filter_time !== undefined) document.getElementById('telem-filter-time').textContent = data.filter_time.toFixed(0);
+            if (data.avg_filter_time !== undefined) document.getElementById('telem-avg-filter-time').textContent = data.avg_filter_time.toFixed(0);
+            if (data.cpu_load !== undefined) document.getElementById('telem-cpu').textContent = data.cpu_load.toFixed(1);
+            if (data.heap_free !== undefined) document.getElementById('telem-heap').textContent = data.heap_free.toFixed(0);
+            
+            // Update control outputs (only if included)
+            if (data.pid_pitch !== undefined && data.pid_roll !== undefined) {
+              document.getElementById('telem-pid').textContent = `[${data.pid_pitch.toFixed(0)},${data.pid_roll.toFixed(0)}]`;
+            }
+            if (data.motor0 !== undefined && data.motor1 !== undefined && data.motor2 !== undefined && data.motor3 !== undefined) {
+              document.getElementById('telem-motors').textContent = `[${data.motor0.toFixed(0)},${data.motor1.toFixed(0)},${data.motor2.toFixed(0)},${data.motor3.toFixed(0)}]`;
+            }
+          } catch (e) {
+            console.error('Failed to parse message:', e);
+          }
+        };
+        
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          setConnectionStatus(false);
+        };
+        
+        ws.onclose = () => {
+          console.log('WebSocket disconnected, attempting to reconnect...');
+          setConnectionStatus(false);
+          scheduleReconnect();
+        };
+      } catch (e) {
+        setConnectionStatus(false);
+        console.error('Connection error:', e);
+        scheduleReconnect();
+      }
+    }
+    
+    function scheduleReconnect() {
+      if (reconnectAttempts >= maxReconnectAttempts) {
+        console.log('Max reconnect attempts reached, waiting for manual reconnect');
+        return;
+      }
+      
+      reconnectAttempts++;
+      reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay);  // Exponential backoff
+      console.log(`Reconnect attempt ${reconnectAttempts} in ${reconnectDelay.toFixed(0)}ms...`);
+      
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(attemptConnection, reconnectDelay);
+    }
+
+    function setupJoystick(canvasId, isLeftJoystick) {
+      const canvas = document.getElementById(canvasId);
+      const container = canvas.parentElement;
+      let maxDistance;
+      
+      function resizeCanvas() {
+        const rect = container.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        maxDistance = Math.min(canvas.width, canvas.height) / 2 - 30;
+        joystickX = canvas.width / 2;
+        joystickY = canvas.height / 2;
+        draw();
+      }
+      
+      const ctx = canvas.getContext('2d');
+      
+      let isDragging = false;
+      let joystickX = canvas.width / 2;
+      let joystickY = canvas.height / 2;
+      
+      resizeCanvas();
+      
+      // Add resize observer to redraw when container size changes
+      const resizeObserver = new ResizeObserver(() => {
+        resizeCanvas();
+      });
+      resizeObserver.observe(container);
+      
+      function draw() {
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw outer circle
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, maxDistance, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Draw center
+        ctx.fillStyle = '#888';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw joystick
+        ctx.fillStyle = isConnected ? '#0066cc' : '#666';
+        ctx.beginPath();
+        ctx.arc(joystickX, joystickY, 25, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw outline
+        ctx.strokeStyle = '#0099ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(joystickX, joystickY, 25, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      
+      function update(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        let x = clientX - rect.left - canvas.width / 2;
+        let y = clientY - rect.top - canvas.height / 2;
+        
+        const distance = Math.sqrt(x * x + y * y);
+        if (distance > maxDistance) {
+          const angle = Math.atan2(y, x);
+          x = Math.cos(angle) * maxDistance;
+          y = Math.sin(angle) * maxDistance;
+        }
+        
+        joystickX = canvas.width / 2 + x;
+        joystickY = canvas.height / 2 + y;
+        
+        // Convert to normalized values (-1 to 1)
+        const normX = x / maxDistance;
+        const normY = y / maxDistance;
+        
+        if (isLeftJoystick) {
+          // Left: Y = throttle (up/down), X = yaw (left/right)
+          state.throttle = Math.max(0, Math.min(1, (1 - normY) / 2));
+          state.yaw = normX * 360;  // ±360 deg/sec
+        } else {
+          // Right: X = roll, Y = pitch
+          state.roll = normX * maxRollPitchAngle;   // ±angle (customizable, default ±10°)
+          state.pitch = normY * maxRollPitchAngle; // ±angle (customizable, default ±10°)
+        }
+        
+        updateDisplay();
+        draw();
+      }
+      
+      function resetJoystick() {
+        isDragging = false;
+        joystickX = canvas.width / 2;
+        joystickY = canvas.height / 2;
+        
+        if (isLeftJoystick) {
+          state.throttle = 0;
+          state.yaw = 0;
+        } else {
+          state.roll = 0;
+          state.pitch = 0;
+        }
+        
+        updateDisplay();
+        draw();
+      }
+      
+      canvas.addEventListener('mousedown', (e) => { isDragging = true; update(e.clientX, e.clientY); });
+      canvas.addEventListener('mousemove', (e) => { if (isDragging) update(e.clientX, e.clientY); });
+      canvas.addEventListener('mouseup', () => { resetJoystick(); });
+      canvas.addEventListener('mouseleave', () => { if (isDragging) resetJoystick(); });
+      
+      // Touch support
+      canvas.addEventListener('touchstart', (e) => { isDragging = true; update(e.touches[0].clientX, e.touches[0].clientY); });
+      canvas.addEventListener('touchmove', (e) => { if (isDragging) update(e.touches[0].clientX, e.touches[0].clientY); });
+      canvas.addEventListener('touchend', () => { resetJoystick(); });
+      
+      draw();
+    }
+
+    function updateDisplay() {
+      document.getElementById('pitch-val').textContent = state.pitch.toFixed(1);
+      document.getElementById('roll-val').textContent = state.roll.toFixed(1);
+      document.getElementById('yaw-val').textContent = state.yaw.toFixed(0);
+      document.getElementById('throttle-val').textContent = (state.throttle * 100).toFixed(0);
+    }
+
+    function toggleArm() {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      state.armed = !state.armed;
+      const btn = document.getElementById('armBtn');
+      btn.textContent = state.armed ? 'DISARM' : 'ARM';
+      btn.classList.toggle('armed', state.armed);
+      
+      // When arming, set throttle to MIN_THROTTLE (40% = 0.4 in 0-1 range)
+      if (state.armed) {
+        state.throttle = 0.2;  // MIN_THROTTLE = 40%
+        updateDisplay();
+      } else {
+        // When disarming, reset throttle to 0
+        state.throttle = 0;
+        updateDisplay();
+      }
+      
+      // Set flag to prevent sync from conflicting with this user action
+      userJustToggledArm = true;
+      setTimeout(() => { userJustToggledArm = false; }, ARM_TOGGLE_DEBOUNCE);
+      
+      sendCommand();
+    }
+
+    function sendCommand() {
+      // Store locally even if not connected
+      localState.roll = state.roll;
+      localState.pitch = state.pitch;
+      localState.yaw = state.yaw;
+      localState.throttle = state.throttle;
+      localState.armed = state.armed;
+      
+      if (!isConnected || !ws || ws.readyState !== WebSocket.OPEN) {
+        console.log('Not connected, command buffered locally');
+        return;
+      }
+
+      const cmd = {
+        roll: state.roll,
+        pitch: state.pitch,
+        yaw: state.yaw,
+        throttle: state.throttle * 100,  // Convert 0-1 range to 0-100%
+        arm: state.armed
+      };
+      
+      try {
+        ws.send(JSON.stringify(cmd));
+      } catch (e) {
+        console.error('Failed to send command:', e);
+      }
+    }
+
+    function toggleControlPanel() {
+      const joysticksView = document.getElementById('joysticksView');
+      const statusPanel = document.getElementById('statusPanel');
+      const sensorsPanel = document.getElementById('sensorsPanel');
+      const pidPanel = document.getElementById('pidPanel');
+      const graphPanel = document.getElementById('graphPanel');
+      const controlBtn = document.getElementById('controlBtn');
+      const statusBtn = document.getElementById('statusBtn');
+      const sensorsBtn = document.getElementById('sensorsBtn');
+      const pidBtn = document.getElementById('pidBtn');
+      const graphBtn = document.getElementById('graphBtn');
+      
+      // Show joysticks, hide others
+      joysticksView.classList.remove('hidden');
+      statusPanel.classList.remove('active');
+      sensorsPanel.classList.remove('active');
+      pidPanel.classList.remove('active');
+      graphPanel.classList.remove('active');
+      settingsPanel.classList.remove('active');
+      controlBtn.classList.add('active');
+      statusBtn.classList.remove('active');
+      sensorsBtn.classList.remove('active');
+      pidBtn.classList.remove('active');
+      graphBtn.classList.remove('active');
+      document.getElementById('settingsBtn').classList.remove('active');
+    }
+
+    function toggleStatusPanel() {
+      const statusPanel = document.getElementById('statusPanel');
+      const joysticksView = document.getElementById('joysticksView');
+      const sensorsPanel = document.getElementById('sensorsPanel');
+      const pidPanel = document.getElementById('pidPanel');
+      const graphPanel = document.getElementById('graphPanel');
+      const statusBtn = document.getElementById('statusBtn');
+      const controlBtn = document.getElementById('controlBtn');
+      const sensorsBtn = document.getElementById('sensorsBtn');
+      const pidBtn = document.getElementById('pidBtn');
+      const graphBtn = document.getElementById('graphBtn');
+      
+      // Show status, hide others
+      statusPanel.classList.add('active');
+      joysticksView.classList.add('hidden');
+      sensorsPanel.classList.remove('active');
+      pidPanel.classList.remove('active');
+      graphPanel.classList.remove('active');
+      settingsPanel.classList.remove('active');
+      statusBtn.classList.add('active');
+      controlBtn.classList.remove('active');
+      sensorsBtn.classList.remove('active');
+      pidBtn.classList.remove('active');
+      graphBtn.classList.remove('active');
+      document.getElementById('settingsBtn').classList.remove('active');
+    }
+
+    function toggleSensorsPanel() {
+      const sensorsPanel = document.getElementById('sensorsPanel');
+      const joysticksView = document.getElementById('joysticksView');
+      const statusPanel = document.getElementById('statusPanel');
+      const pidPanel = document.getElementById('pidPanel');
+      const graphPanel = document.getElementById('graphPanel');
+      const sensorsBtn = document.getElementById('sensorsBtn');
+      const controlBtn = document.getElementById('controlBtn');
+      const statusBtn = document.getElementById('statusBtn');
+      const pidBtn = document.getElementById('pidBtn');
+      const graphBtn = document.getElementById('graphBtn');
+      
+      // Show sensors, hide others
+      sensorsPanel.classList.add('active');
+      joysticksView.classList.add('hidden');
+      statusPanel.classList.remove('active');
+      pidPanel.classList.remove('active');
+      graphPanel.classList.remove('active');
+      settingsPanel.classList.remove('active');
+      sensorsBtn.classList.add('active');
+      controlBtn.classList.remove('active');
+      statusBtn.classList.remove('active');
+      pidBtn.classList.remove('active');
+      graphBtn.classList.remove('active');
+      document.getElementById('settingsBtn').classList.remove('active');
+    }
+
+    function togglePidPanel() {
+      const pidPanel = document.getElementById('pidPanel');
+      const joysticksView = document.getElementById('joysticksView');
+      const statusPanel = document.getElementById('statusPanel');
+      const sensorsPanel = document.getElementById('sensorsPanel');
+      const graphPanel = document.getElementById('graphPanel');
+      const pidBtn = document.getElementById('pidBtn');
+      const controlBtn = document.getElementById('controlBtn');
+      const statusBtn = document.getElementById('statusBtn');
+      const sensorsBtn = document.getElementById('sensorsBtn');
+      const graphBtn = document.getElementById('graphBtn');
+      
+      // Show PID, hide others
+      pidPanel.classList.add('active');
+      joysticksView.classList.add('hidden');
+      statusPanel.classList.remove('active');
+      sensorsPanel.classList.remove('active');
+      graphPanel.classList.remove('active');
+      settingsPanel.classList.remove('active');
+      pidBtn.classList.add('active');
+      controlBtn.classList.remove('active');
+      statusBtn.classList.remove('active');
+      sensorsBtn.classList.remove('active');
+      graphBtn.classList.remove('active');
+      document.getElementById('settingsBtn').classList.remove('active');
+    }
+
+    function toggleGraphPanel() {
+      const graphPanel = document.getElementById('graphPanel');
+      const joysticksView = document.getElementById('joysticksView');
+      const statusPanel = document.getElementById('statusPanel');
+      const sensorsPanel = document.getElementById('sensorsPanel');
+      const pidPanel = document.getElementById('pidPanel');
+      const graphBtn = document.getElementById('graphBtn');
+      const controlBtn = document.getElementById('controlBtn');
+      const statusBtn = document.getElementById('statusBtn');
+      const sensorsBtn = document.getElementById('sensorsBtn');
+      const pidBtn = document.getElementById('pidBtn');
+      
+      // Show graph, hide others
+      graphPanel.classList.add('active');
+      joysticksView.classList.add('hidden');
+      statusPanel.classList.remove('active');
+      sensorsPanel.classList.remove('active');
+      pidPanel.classList.remove('active');
+      settingsPanel.classList.remove('active');
+      graphBtn.classList.add('active');
+      controlBtn.classList.remove('active');
+      statusBtn.classList.remove('active');
+      sensorsBtn.classList.remove('active');
+      pidBtn.classList.remove('active');
+      document.getElementById('settingsBtn').classList.remove('active');
+      
+      // Initialize graph if not already done
+      if (!window.angleChartInstance) {
+        // Wait for panel to be visible before initializing
+        setTimeout(() => {
+          initializeAngleChart();
+        }, 100);
+      } else {
+        // Trigger resize if chart already exists
+        const container = document.getElementById('angleChart');
+        if (container && window.angleChartInstance) {
+          window.angleChartInstance.setSize({ width: container.clientWidth, height: container.clientHeight });
+        }
+      }
+      // If sidebar is collapsed on mobile/initial, keep it collapsed
+      // (no action needed here)
+    }
+
+    // Toggle the left sidebar MENU
+    function toggleMenu() {
+      const sb = document.getElementById('sidebar');
+      const btn = document.getElementById('menuToggleBtn');
+      if (!sb) return;
+      const isCollapsed = sb.classList.toggle('collapsed');
+      if (btn) btn.setAttribute('aria-pressed', (!isCollapsed).toString());
+    }
+
+    function toggleSettingsPanel() {
+      const settingsPanel = document.getElementById('settingsPanel');
+      const joysticksView = document.getElementById('joysticksView');
+      const statusPanel = document.getElementById('statusPanel');
+      const sensorsPanel = document.getElementById('sensorsPanel');
+      const pidPanel = document.getElementById('pidPanel');
+      const graphPanel = document.getElementById('graphPanel');
+      const settingsBtn = document.getElementById('settingsBtn');
+      const controlBtn = document.getElementById('controlBtn');
+      const statusBtn = document.getElementById('statusBtn');
+      const sensorsBtn = document.getElementById('sensorsBtn');
+      const pidBtn = document.getElementById('pidBtn');
+      const graphBtn = document.getElementById('graphBtn');
+      
+      // Show settings, hide others
+      settingsPanel.classList.add('active');
+      joysticksView.classList.add('hidden');
+      statusPanel.classList.remove('active');
+      sensorsPanel.classList.remove('active');
+      pidPanel.classList.remove('active');
+      graphPanel.classList.remove('active');
+      settingsBtn.classList.add('active');
+      controlBtn.classList.remove('active');
+      statusBtn.classList.remove('active');
+      sensorsBtn.classList.remove('active');
+      pidBtn.classList.remove('active');
+      graphBtn.classList.remove('active');
+    }
+
+    function testServoSequence() {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      const cmd = { test_servo: true };
+      try {
+        ws.send(JSON.stringify(cmd));
+        addConsoleMessage(">>> TEST SERVO sequence initiated");
+        console.log('Test servo command sent');
+      } catch (e) {
+        console.error('Failed to send test servo command:', e);
+        setConnectionStatus(false);
+      }
+    }
+
+    function toggleCalibrationPanel() {
+      const panel = document.getElementById('calibrationPanel');
+      const btn = document.getElementById('calibBtn');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      btn.classList.toggle('active');
+    }
+
+    function closeCalibrationPanel() {
+      const panel = document.getElementById('calibrationPanel');
+      const btn = document.getElementById('calibBtn');
+      panel.style.display = 'none';
+      btn.classList.remove('active');
+    }
+
+    function updateCalibrationStatus(status) {
+      const statusEl = document.getElementById('calibStatus');
+      
+      // Check for completion
+      if (status === 'COMPLETE') {
+        statusEl.textContent = '✓ CALIBRATION COMPLETE!';
+        statusEl.style.color = '#4CAF50';
+        
+        // Re-enable buttons after 2 seconds
+        setTimeout(() => {
+          document.getElementById('calibGyroBtn').disabled = false;
+          document.getElementById('calibAccelBtn').disabled = false;
+          document.getElementById('calibNextBtn').style.display = 'none';
+          document.getElementById('calibAbortBtn').style.display = 'none';
+          statusEl.textContent = 'Ready';
+          statusEl.style.color = '#aaa';
+          document.getElementById('calibInstructions').textContent = '';
+        }, 2000);
+      } else if (status === 'IDLE') {
+        statusEl.textContent = 'Ready';
+        statusEl.style.color = '#aaa';
+      } else {
+        // Show live progress
+        statusEl.textContent = status;
+        statusEl.style.color = '#0066cc';
+      }
+    }
+
+    function startGyroCalibration() {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      const cmd = { calibrate_gyro: true };
+      try {
+        ws.send(JSON.stringify(cmd));
+        document.getElementById('calibGyroBtn').disabled = true;
+        document.getElementById('calibAccelBtn').disabled = true;
+        document.getElementById('calibNextBtn').style.display = 'none';
+        document.getElementById('calibAbortBtn').style.display = 'block';
+        document.getElementById('calibStatus').textContent = 'Gyro calibration in progress...';
+        document.getElementById('calibInstructions').textContent = 'Keep device LEVEL and ABSOLUTELY STILL. Auto-collecting samples...';
+      } catch (e) {
+        console.error('Failed to send command:', e);
+        setConnectionStatus(false);
+      }
+    }
+
+    function startAccelCalibration() {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      const cmd = { calibrate_accel: true };
+      try {
+        ws.send(JSON.stringify(cmd));
+        document.getElementById('calibGyroBtn').disabled = true;
+        document.getElementById('calibAccelBtn').disabled = true;
+        document.getElementById('calibNextBtn').style.display = 'block';
+        document.getElementById('calibAbortBtn').style.display = 'block';
+        document.getElementById('calibStatus').textContent = 'Accel calibration: STEP 1/6 - Level Position';
+        document.getElementById('calibStatus').style.color = '#0066cc';
+        document.getElementById('calibInstructions').textContent = 'Place device LEVEL and STILL. Click "Next Step" to record.';
+        console.log('Accel calibration started, Next button should be visible');
+      } catch (e) {
+        console.error('Failed to send command:', e);
+        setConnectionStatus(false);
+      }
+    }
+
+    function nextCalibrationStep() {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      const cmd = { calibrate_next: true };
+      try {
+        ws.send(JSON.stringify(cmd));
+      } catch (e) {
+        console.error('Failed to send command:', e);
+        setConnectionStatus(false);
+      }
+    }
+
+    function abortCalibration() {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      const cmd = { calibrate_abort: true };
+      try {
+        ws.send(JSON.stringify(cmd));
+        document.getElementById('calibGyroBtn').disabled = false;
+        document.getElementById('calibAccelBtn').disabled = false;
+        document.getElementById('calibNextBtn').style.display = 'none';
+        document.getElementById('calibAbortBtn').style.display = 'none';
+        document.getElementById('calibStatus').textContent = 'Calibration aborted. Ready.';
+        document.getElementById('calibInstructions').textContent = '';
+      } catch (e) {
+        console.error('Failed to send command:', e);
+        setConnectionStatus(false);
+      }
+    }
+
+    // PID Tuning Functions
+    function sendPidValue(param, value) {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      const cmd = { pid_tune: {} };
+      cmd.pid_tune[param] = parseFloat(value);
+      try {
+        ws.send(JSON.stringify(cmd));
+        addConsoleMessage(`>>> PID ${param} = ${value}`);
+      } catch (e) {
+        console.error('Failed to send PID value:', e);
+        setConnectionStatus(false);
+      }
+    }
+
+    function savePidValues() {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      const cmd = { pid_save: true };
+      try {
+        ws.send(JSON.stringify(cmd));
+        addConsoleMessage(">>> PID Values SAVED to EEPROM");
+      } catch (e) {
+        console.error('Failed to save PID values:', e);
+        setConnectionStatus(false);
+      }
+    }
+
+    // Trim adjustment functions
+    function sendTrimValue(param, value) {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      const cmd = {};
+      cmd[param] = parseFloat(value);
+      try {
+        ws.send(JSON.stringify(cmd));
+        addConsoleMessage(`>>> TRIM ${param} = ${value}°`);
+      } catch (e) {
+        console.error('Failed to send trim value:', e);
+        setConnectionStatus(false);
+      }
+    }
+
+    // Load state from device (requests ESP32 to broadcast current state)
+    function loadStateFromDevice() {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      const cmd = { load: true };
+      try {
+        ws.send(JSON.stringify(cmd));
+        addConsoleMessage(">>> Requesting state from device...");
+      } catch (e) {
+        console.error('Failed to send load command:', e);
+        setConnectionStatus(false);
+      }
+    }
+
+    // Reset PID to defaults
+    function resetPID() {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      if (confirm('Reset all PID values to defaults?')) {
+        const cmd = { reset_pid: true };
+        try {
+          ws.send(JSON.stringify(cmd));
+          addConsoleMessage(">>> PID Values RESET to defaults");
+        } catch (e) {
+          console.error('Failed to send reset command:', e);
+          setConnectionStatus(false);
+        }
+      }
+    }
+
+    // Reset calibration to defaults
+    function resetCalibration() {
+      if (!isConnected) {
+        showError('Not connected to ESP32');
+        return;
+      }
+      if (confirm('Reset all calibration data to defaults?')) {
+        const cmd = { reset_calibration: true };
+        try {
+          ws.send(JSON.stringify(cmd));
+          addConsoleMessage(">>> Calibration Data RESET to defaults");
+        } catch (e) {
+          console.error('Failed to send reset command:', e);
+          setConnectionStatus(false);
+        }
+      }
+    }
+
+    // Graph data arrays (max 100 samples)
+    const graphData = {
+      labels: [],
+      roll: [],
+      pitch: [],
+      yaw: [],
+      setpoint: [],
+      maxPoints: 100
+    };
+
+    function toggleDataset(datasetIndex) {
+      if (!window.angleChartInstance) return;
+      
+      // Series indices in uPlot: 0 is null (time axis), 1=Roll, 2=Pitch, 3=Yaw, 4=Setpoint
+      const seriesIndex = datasetIndex + 1;
+      const series = window.angleChartInstance.series[seriesIndex];
+      if (series) {
+        series.show = !series.show;
+        window.angleChartInstance.setData(window.angleChartInstance.data);
+      }
+    }
+
+    function addGraphDataPoint(roll, pitch, yaw) {
+      // For uPlot, we use timestamps (milliseconds) as the x-axis
+      const timestamp = Date.now();
+      graphData.labels.push(timestamp);
+      graphData.roll.push(parseFloat(roll) || 0);
+      graphData.pitch.push(parseFloat(pitch) || 0);
+      graphData.yaw.push(parseFloat(yaw) || 0);
+      // Track setpoint if provided globally, default to 0
+      const sp = (typeof window.graphSetpoint === 'number') ? window.graphSetpoint : 0;
+      graphData.setpoint.push(parseFloat(sp) || 0);
+      
+      // Keep only last 100 points
+      if (graphData.labels.length > graphData.maxPoints) {
+        graphData.labels.shift();
+        graphData.roll.shift();
+        graphData.pitch.shift();
+        graphData.yaw.shift();
+        graphData.setpoint.shift();
+      }
+      
+      // Update chart if it exists
+      if (window.angleChartInstance) {
+        // Build data snapshot
+        const data = [
+          graphData.labels.slice(),
+          graphData.roll.slice(),
+          graphData.pitch.slice(),
+          graphData.yaw.slice(),
+          graphData.setpoint.slice()
+        ];
+
+        // Auto-zoom: compute min/max across visible series and adjust Y scale
+        try {
+          const autoZoomCheckbox = document.getElementById('autoZoomCheck');
+          const autoZoom = autoZoomCheckbox ? autoZoomCheckbox.checked : true;
+
+          if (autoZoom) {
+            // Collect values from visible series only
+            let values = [];
+            const series = window.angleChartInstance.series || [];
+            // series indices: 1=Roll,2=Pitch,3=Yaw
+            const seriesMap = [graphData.roll, graphData.pitch, graphData.yaw];
+            for (let i = 1; i <= 3; i++) {
+              const s = series[i];
+              const arr = seriesMap[i - 1];
+              if (s && s.show && arr && arr.length) {
+                values = values.concat(arr);
+              }
+            }
+
+            if (values.length > 0) {
+              let min = Math.min.apply(null, values);
+              let max = Math.max.apply(null, values);
+              if (!isFinite(min) || !isFinite(max)) {
+                min = -10; max = 10;
+              }
+              if (min === max) {
+                min = min - 5;
+                max = max + 5;
+              } else {
+                const pad = Math.max(5, (max - min) * 0.12);
+                min = min - pad;
+                max = max + pad;
+              }
+
+              // Apply scale change; try both object and array forms for compatibility
+              try {
+                window.angleChartInstance.setScale('y', { min: min, max: max });
+              } catch (e) {
+                try {
+                  window.angleChartInstance.setScale('y', [min, max]);
+                } catch (e2) {
+                  // Fallback: update stored options and rely on setData redraw
+                  if (window.angleChartInstance.scales && window.angleChartInstance.scales.y) {
+                    window.angleChartInstance.scales.y.min = min;
+                    window.angleChartInstance.scales.y.max = max;
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Auto-zoom error:', e);
+        }
+
+        window.angleChartInstance.setData(data, true);
+        // Update floating labels to follow the latest data
+        try { updateChartLabels(); } catch (e) { console.warn('label update failed', e); }
+      }
+    }
+
+    // Update floating chart labels (position them according to current Y scale)
+    function updateChartLabels() {
+      const inst = window.angleChartInstance;
+      const container = document.getElementById('angleChart');
+      const labelsContainer = document.getElementById('chartLabels');
+      if (!inst || !container || !labelsContainer) return;
+
+      // Get current y-scale min/max
+      const yScale = (inst.scales && inst.scales.y) ? inst.scales.y : null;
+      let min = (yScale && typeof yScale.min === 'number') ? yScale.min : -180;
+      let max = (yScale && typeof yScale.max === 'number') ? yScale.max : 180;
+      if (!isFinite(min) || !isFinite(max) || min === max) { min = -10; max = 10; }
+
+      const height = container.clientHeight || 200;
+
+      const mapY = (v) => {
+        const ratio = (v - min) / (max - min);
+        // ratio 0 => bottom, 1 => top; compute top px
+        const topPx = (1 - ratio) * height;
+        return Math.min(Math.max(6, topPx), height - 6);
+      };
+
+      // values: take last entries
+      const vals = {
+        roll: (graphData.roll.length ? graphData.roll[graphData.roll.length - 1] : null),
+        pitch: (graphData.pitch.length ? graphData.pitch[graphData.pitch.length - 1] : null),
+        yaw: (graphData.yaw.length ? graphData.yaw[graphData.yaw.length - 1] : null),
+        setpoint: (graphData.setpoint.length ? graphData.setpoint[graphData.setpoint.length - 1] : null)
+      };
+
+      // colors (match series strokes)
+      const colors = { roll: '#ff6b6b', pitch: '#4ade80', yaw: '#60a5fa', setpoint: '#ffcc00' };
+
+      Object.keys(vals).forEach(key => {
+        const el = document.getElementById('label-' + key);
+        if (!el) return;
+        const v = vals[key];
+        if (v === null || v === undefined || Number.isNaN(v)) {
+          el.style.display = 'none';
+          return;
+        }
+
+        // If series is hidden, hide label (for setpoint, check checkbox)
+        if (key !== 'setpoint') {
+          const seriesIndex = { roll:1, pitch:2, yaw:3 }[key];
+          const series = inst.series && inst.series[seriesIndex];
+          if (series && series.show === false) { el.style.display = 'none'; return; }
+        } else {
+          const chk = document.getElementById('setpointCheck');
+          if (chk && !chk.checked) { el.style.display = 'none'; return; }
+        }
+
+        el.style.display = 'block';
+        el.style.top = mapY(v) + 'px';
+        el.style.borderLeft = '4px solid ' + (colors[key] || '#888');
+        el.innerText = (key === 'setpoint' ? 'Set:' : (key.charAt(0).toUpperCase() + key.slice(1) + ':')) + ' ' + v.toFixed(1);
+      });
+    }
+
+    function initializeAngleChart() {
+      const container = document.getElementById('angleChart');
+      if (!container) return;
+      
+      // Clear container
+      container.innerHTML = '';
+      
+      // Create data array for uPlot [timestamps, roll, pitch, yaw, setpoint]
+      const data = [
+        graphData.labels.slice(),
+        graphData.roll.slice(),
+        graphData.pitch.slice(),
+        graphData.yaw.slice(),
+        graphData.setpoint.slice()
+      ];
+      
+      // uPlot options
+      const opts = {
+        title: 'Angle Graphs',
+        width: container.clientWidth,
+        height: container.clientHeight,
+        series: [
+          {
+            label: 'Time',
+            value: (self, rawValue) => {
+              if (rawValue == null) return '--';
+              const date = new Date(rawValue);
+              return date.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+          },
+          {
+            label: 'Roll',
+            stroke: '#ff6b6b',
+            fill: 'rgba(255, 107, 107, 0.1)',
+            width: 2,
+            spanGaps: false,
+            show: true
+          },
+          {
+            label: 'Pitch',
+            stroke: '#4ade80',
+            fill: 'rgba(74, 222, 128, 0.1)',
+            width: 2,
+            spanGaps: false,
+            show: true
+          },
+          {
+            label: 'Yaw',
+            stroke: '#60a5fa',
+            fill: 'rgba(96, 165, 250, 0.1)',
+            width: 2,
+            spanGaps: false,
+            show: false
+          },
+          {
+            label: 'Setpoint (0°)',
+            stroke: '#ffcc00',
+            width: 2,
+            dash: [4, 4],
+            spanGaps: false,
+            show: true
+          }
+        ],
+        scales: {
+          x: {
+            time: false
+          },
+          y: {
+            auto: true,
+            range: [-180, 180]
+          }
+        },
+        axes: [
+          {
+            label: 'Time',
+            labelFont: '12px Arial',
+            labelSize: 30,
+            values: (self, ticks) => {
+              return ticks.map(rawValue => {
+                const date = new Date(rawValue);
+                return date.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+              });
+            },
+            stroke: '#ffffff',
+            font: '11px Arial',
+            grid: { stroke: '#ffffff', width: 0.5 }
+          },
+          {
+            label: 'Angle (°)',
+            labelFont: '12px Arial',
+            labelSize: 30,
+            values: (self, ticks) => ticks.map(v => v.toFixed(0) + '°'),
+            stroke: '#ffffff',
+            font: '11px Arial',
+            grid: { stroke: '#ffffff', width: 0.5 }
+          }
+        ],
+        legend: {
+          show: false
+        },
+        cursor: {
+          show: true,
+          x: true,
+          y: true
+        }
+      };
+      
+      window.angleChartInstance = new uPlot(opts, data, container);
+      
+      // Store reference to data for updates
+      window.angleChartInstance.data = data;
+      // Setup auto-zoom checkbox state and listener
+      try {
+        const autoZoomCheckbox = document.getElementById('autoZoomCheck');
+        window.angleChartAutoZoom = autoZoomCheckbox ? autoZoomCheckbox.checked : true;
+        if (autoZoomCheckbox) {
+          autoZoomCheckbox.addEventListener('change', () => {
+            window.angleChartAutoZoom = autoZoomCheckbox.checked;
+          });
+        }
+
+        // If auto-zoom is enabled at init, apply initial scale based on existing data
+        if (window.angleChartAutoZoom) {
+          const allVals = [].concat(graphData.roll, graphData.pitch, graphData.yaw).filter(v => typeof v === 'number');
+          if (allVals.length > 0) {
+            let min = Math.min.apply(null, allVals);
+            let max = Math.max.apply(null, allVals);
+            if (min === max) { min -= 5; max += 5; }
+            const pad = Math.max(5, (max - min) * 0.12);
+            min -= pad; max += pad;
+            try { window.angleChartInstance.setScale('y', { min: min, max: max }); } catch (e) {
+              try { window.angleChartInstance.setScale('y', [min, max]); } catch (e2) {
+                if (window.angleChartInstance.scales && window.angleChartInstance.scales.y) {
+                  window.angleChartInstance.scales.y.min = min;
+                  window.angleChartInstance.scales.y.max = max;
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Auto-zoom init error:', e);
+      }
+
+      // Create overlay labels container (shows rolling values at right edge)
+      try {
+        let labelsContainer = document.getElementById('chartLabels');
+        if (!labelsContainer) {
+          labelsContainer = document.createElement('div');
+          labelsContainer.id = 'chartLabels';
+          labelsContainer.style.position = 'absolute';
+          labelsContainer.style.right = '8px';
+          labelsContainer.style.top = '0';
+          labelsContainer.style.height = '100%';
+          labelsContainer.style.pointerEvents = 'none';
+          labelsContainer.style.width = '110px';
+          labelsContainer.style.zIndex = '20';
+          container.style.position = container.style.position || 'relative';
+          container.appendChild(labelsContainer);
+        }
+
+        const seriesKeys = ['roll', 'pitch', 'yaw', 'setpoint'];
+        seriesKeys.forEach(key => {
+          let el = document.getElementById('label-' + key);
+          if (!el) {
+            el = document.createElement('div');
+            el.id = 'label-' + key;
+            el.style.position = 'absolute';
+            el.style.right = '0';
+            el.style.padding = '2px 6px';
+            el.style.fontSize = '12px';
+            el.style.color = '#fff';
+            el.style.background = 'rgba(0,0,0,0.45)';
+            el.style.borderRadius = '3px';
+            el.style.transform = 'translateY(-50%)';
+            el.style.whiteSpace = 'nowrap';
+            el.style.pointerEvents = 'none';
+            labelsContainer.appendChild(el);
+          }
+        });
+      } catch (e) {
+        console.warn('Labels init error:', e);
+      }
+
+      // Add wheel-to-zoom when Auto Zoom is OFF
+      try {
+        const wheelHandler = (ev) => {
+          // Only handle when auto-zoom is disabled
+          if (window.angleChartAutoZoom) return;
+          ev.preventDefault();
+
+          const inst = window.angleChartInstance;
+          if (!inst) return;
+
+          // Determine current y min/max
+          const yScaleObj = inst.scales && inst.scales.y ? inst.scales.y : null;
+          let curMin = (yScaleObj && typeof yScaleObj.min === 'number') ? yScaleObj.min : -180;
+          let curMax = (yScaleObj && typeof yScaleObj.max === 'number') ? yScaleObj.max : 180;
+
+          // Prefer using latest setpoint as zoom center to avoid getting lost
+          let center = null;
+          if (graphData.setpoint && graphData.setpoint.length) {
+            const latestSP = graphData.setpoint[graphData.setpoint.length - 1];
+            if (typeof latestSP === 'number') center = latestSP;
+          }
+          // If no setpoint available, use pointer position to focus zoom
+          if (center === null) {
+            const rect = container.getBoundingClientRect();
+            const offsetY = Math.min(Math.max(0, ev.clientY - rect.top), rect.height);
+            const pointerRatio = 1 - (offsetY / rect.height); // invert since canvas y grows downwards
+            center = curMin + (curMax - curMin) * pointerRatio;
+          }
+
+          // Zoom factor per wheel notch
+          const zoomStep = 1.08;
+          const direction = ev.deltaY > 0 ? 1 : -1;
+          const factor = Math.pow(zoomStep, direction);
+
+          const newMin = center + (curMin - center) * factor;
+          const newMax = center + (curMax - center) * factor;
+
+          // Apply new scale with compatibility tries
+          try {
+            inst.setScale('y', { min: newMin, max: newMax });
+          } catch (e) {
+            try {
+              inst.setScale('y', [newMin, newMax]);
+            } catch (e2) {
+              if (inst.scales && inst.scales.y) {
+                inst.scales.y.min = newMin;
+                inst.scales.y.max = newMax;
+              }
+            }
+          }
+        };
+
+        // Passive false so we can preventDefault and stop page scroll
+        container.addEventListener('wheel', wheelHandler, { passive: false });
+      } catch (e) {
+        console.warn('Wheel zoom init error:', e);
+      }
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+      setupJoystick('joystick1', true);   // Left joystick (Throttle/Yaw)
+      setupJoystick('joystick2', false);  // Right joystick (Roll/Pitch)
+      
+      // Try to connect on load
+      connectToESP32();
+      
+      // Add test message to console
+      addConsoleMessage("System ready. Waiting for ESP32...");
+      // Collapse sidebar by default so users toggle MENU to open it
+      try { document.getElementById('sidebar').classList.add('collapsed'); } catch (e) {}
+    });
+    
+    // Send commands on timer (20 Hz)
+    setInterval(sendCommand, 50);
+  </script>
+</body>
+</html>
