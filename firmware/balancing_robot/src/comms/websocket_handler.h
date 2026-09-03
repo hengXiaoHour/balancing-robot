@@ -74,7 +74,7 @@ extern unsigned long lastPIDUpdateTime;
 extern void stopMotors();
 extern void savePIDToPreferences();
 extern void resetPIDToDefaults();
-extern const char* getActiveFilterName();
+#include "../filters/filter_selector.h"  // getActiveFilterName() + USE_* selection
 
 // ===== WebSocket Server (definitions in websocket_handler.cpp) =====
 extern WebServer webServer;
