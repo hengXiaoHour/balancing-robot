@@ -42,10 +42,10 @@ enum BatteryState {
 bool throttle_gate_ready = false;  // Throttle gating for ESP-NOW
 float last_throttle = 0.0f;        // Previous throttle value for ESP-NOW gating
 
-#include "serial_commands.h"
-#include "wifi_ota.h"  // WiFi + OTA support
-#include "websocket_handler.h"  // WebSocket server and communication
-#include "esp_now_handler.h"  // ESP-NOW controller communication
+#include "comms/serial_commands.h"
+#include "comms/wifi_ota.h"  // WiFi + OTA support
+#include "comms/websocket_handler.h"  // WebSocket server and communication
+#include "comms/esp_now_handler.h"  // ESP-NOW controller communication
 
 // External variables from ESP-NOW handler
 extern volatile bool espnow_connected;
