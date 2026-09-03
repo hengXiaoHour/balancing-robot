@@ -30,12 +30,7 @@ float KD = DEFAULT_KD;
 #include "src/sensors/calibration.h"
 #include "src/utils/timing.h"
 
-// ===== Battery Low Voltage Monitoring =====
-#define LOW_VOLTAGE_THRESHOLD 3.5f  // Voltage threshold for low battery detection
-enum BatteryState {
-  BATTERY_NORMAL,        // Normal operation
-  BATTERY_LOW_CONFIRMED  // Low battery detected - LED blinking
-};
+#include "src/sensors/battery_state.h"  // BatteryState enum + LOW_VOLTAGE_THRESHOLD
 
 // ESP-NOW throttle gating variables (declared before includes so esp_now_handler.h can use them)
 bool throttle_gate_ready = false;  // Throttle gating for ESP-NOW
