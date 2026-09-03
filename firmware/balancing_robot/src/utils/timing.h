@@ -1,10 +1,11 @@
 #ifndef TIMING_H
 #define TIMING_H
 
-// ===== GLOBAL LOOP TIMING VARIABLES =====
-volatile unsigned long loopTimeUs = 0;
-volatile unsigned long loopTimeMinUs = 1000000;
-volatile unsigned long loopTimeMaxUs = 0;
-volatile unsigned long loopOverrunCount = 0;
+// ===== GLOBAL LOOP TIMING VARIABLES (declarations) =====
+// Definitions live in timing.cpp. Included once via balancing_robot.ino.
+extern volatile unsigned long loopTimeUs;
+extern volatile unsigned long loopTimeMinUs;
+extern volatile unsigned long loopTimeMaxUs;
+extern volatile unsigned long loopOverrunCount;
 
 #endif
