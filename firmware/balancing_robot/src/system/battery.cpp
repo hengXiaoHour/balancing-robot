@@ -1,0 +1,118 @@
+#include "battery.h"
+
+// ===== BATTERY VOLTAGE MANAGEMENT FUNCTIONS =====
+void updateBatteryVoltage() {
+  int adc_raw = analogRead(BATTERY_PIN);
+  float raw_voltage = (adc_raw / (float)ADC_MAX) * ADC_REF_VOLTAGE * BATTERY_DIVIDER_RATIO;
+
+  if (!batteryFilterPrimed) {
+    for (int i = 0; i < BATTERY_SAMPLE_SIZE; i++) {
+      battery_samples[i] = raw_voltage;
+    }
+    battery_voltage_filtered = raw_voltage;
+    battery_voltage = raw_voltage;
+    lastValidBatteryRawVoltage = raw_voltage;
+    batteryFilterPrimed = true;
+    return;
+  }
+
+  float raw_delta = raw_voltage - lastValidBatteryRawVoltage;
+  float max_step_down = BATTERY_GLITCH_REJECT_V;
+  float max_step_up = BATTERY_GLITCH_REJECT_V * 2.0f;
+  if (raw_delta > max_step_up) {
+    raw_voltage = lastValidBatteryRawVoltage + max_step_up;
+  } else if (raw_delta < -max_step_down) {
+    raw_voltage = lastValidBatteryRawVoltage - max_step_down;
+  }
+  lastValidBatteryRawVoltage = raw_voltage;
+
+  battery_samples[battery_sample_index] = raw_voltage;
+  battery_sample_index = (battery_sample_index + 1) % BATTERY_SAMPLE_SIZE;
+
+  float voltage_sum = 0.0f;
+  for (int i = 0; i < BATTERY_SAMPLE_SIZE; i++) {
+    voltage_sum += battery_samples[i];
+  }
+  float voltage_average = voltage_sum / BATTERY_SAMPLE_SIZE;
+
+  battery_voltage_filtered = (BATTERY_LPF_ALPHA * voltage_average) + ((1.0f - BATTERY_LPF_ALPHA) * battery_voltage_filtered);
+  battery_voltage = battery_voltage_filtered;
+
+  if (debugMonitoring) {
+    static unsigned long lastDebugTime = 0;
+    if (millis() - lastDebugTime >= 1000 && millis() < 10000) {
+      Serial.print("[BATTERY DEBUG] Raw ADC: ");
+      Serial.print(adc_raw);
+      Serial.print(", Raw Voltage: ");
+      Serial.print(raw_voltage, 3);
+      Serial.print("V, Filtered: ");
+      Serial.print(battery_voltage, 3);
+      Serial.println("V");
+      lastDebugTime = millis();
+    }
+  }
+}
+
+void updateBatteryMonitoring() {
+  static unsigned long initStartTime = 0;
+  if (initStartTime == 0) initStartTime = millis();
+
+  if (battery_voltage < 3.0f || (millis() - initStartTime) < 2000) {
+    digitalWrite(LOW_VOLTAGE_LED_PIN, LED_OFF_LEVEL);
+    return;
+  }
+
+  static int lowVoltageCount = 0;
+
+  if (debugMonitoring) {
+    static unsigned long lastDebugTime = 0;
+    if (millis() - lastDebugTime >= 2000 && millis() < 30000) {
+      Serial.print("[LED DEBUG] ESP-NOW Connected: ");
+      Serial.print(espnow_connected ? "YES" : "NO");
+      Serial.print(", Battery State: ");
+      Serial.print(batteryState == BATTERY_NORMAL ? "NORMAL" : "LOW");
+      Serial.print(", LED should be: ");
+      if (batteryState == BATTERY_LOW_CONFIRMED) {
+        Serial.println("BLINKING");
+      } else if (espnow_connected) {
+        Serial.println("ON (connected)");
+      } else {
+        Serial.println("OFF (disconnected)");
+      }
+      lastDebugTime = millis();
+    }
+  }
+
+  switch (batteryState) {
+    case BATTERY_NORMAL:
+      pinMode(LOW_VOLTAGE_LED_PIN, OUTPUT);
+
+      if (espnow_connected) {
+        digitalWrite(LOW_VOLTAGE_LED_PIN, LED_ON_LEVEL);
+      } else {
+        digitalWrite(LOW_VOLTAGE_LED_PIN, LED_OFF_LEVEL);
+      }
+
+      if (battery_voltage <= LOW_VOLTAGE_THRESHOLD) {
+        lowVoltageCount++;
+        if (lowVoltageCount >= 5) {
+          batteryState = BATTERY_LOW_CONFIRMED;
+          Serial.println("[BATTERY] LOW BATTERY DETECTED! Voltage has been 3.3V or below for 100ms. LED will blink until battery changed.");
+          pinMode(LOW_VOLTAGE_LED_PIN, OUTPUT);
+          lowVoltageCount = 0;
+        }
+      } else {
+        lowVoltageCount = 0;
+      }
+      break;
+
+    case BATTERY_LOW_CONFIRMED:
+      unsigned long now = millis();
+      if (now - lastLEDBlink >= 500) {
+        ledState = !ledState;
+        digitalWrite(LOW_VOLTAGE_LED_PIN, ledState ? LED_ON_LEVEL : LED_OFF_LEVEL);
+        lastLEDBlink = now;
+      }
+      break;
+  }
+}
