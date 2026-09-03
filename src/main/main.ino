@@ -28,7 +28,6 @@ float KD = DEFAULT_KD;
 #include "control/cascade_pid_controller.h"  // Cascade PID with unified gains
 #endif
 #include "sensors/calibration.h"
-#include "pid_tuning.h"
 #include "utils/timing.h"
 
 // ===== Battery Low Voltage Monitoring =====
