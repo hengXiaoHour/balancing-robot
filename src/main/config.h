@@ -225,11 +225,11 @@
 #define ENABLE_SERIAL_COMMANDS_AND_STATUS 1  // Set to 1 to enable serial commands + status monitoring
                                              // Set to 0 to disable both (saves CPU, disables CLI)
 
-#define ENABLE_WEBSOCKET_CONTROL 0           // Set to 1 to enable WebSocket server for Web UI
+#define ENABLE_WEBSOCKET_CONTROL 1           // Set to 1 to enable WebSocket server for Web UI
                                              // Set to 0 to disable (saves CPU, disables Web UI)
                                              // NOTE: Cannot work with ESP-NOW (causes conflicts)
 
-#define ENABLE_ESPNOW 1                      // Set to 1 to enable ESP-NOW wireless controller
+#define ENABLE_ESPNOW 0                      // Set to 1 to enable ESP-NOW wireless controller
                                              // Set to 0 to disable (saves CPU, disables remote control)
                                              // NOTE: Can work alongside Serial monitoring
 
