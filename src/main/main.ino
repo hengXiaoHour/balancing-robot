@@ -16,16 +16,16 @@ float KD = DEFAULT_KD;
 
 // Include header files AFTER config.h
 #include "filters/filter_selector.h"        // Filter selection (choose ONE)
-#include "motor_control.h"
+#include "control/motor_control.h"
 #include "filters/kalman_filter.h"
 #include "filters/mahony_filter.h"
 #include "filters/madgwick_filter.h"
 #include "filters/complementary_filter.h"
 #include "filters/complementary_quaternion_filter.h"
 #include "filters/ekf_filter.h"
-#include "pid_controller.h"
+#include "control/pid_controller.h"
 #if ENABLE_CASCADE_PID
-#include "cascade_pid_controller.h"  // Cascade PID with unified gains
+#include "control/cascade_pid_controller.h"  // Cascade PID with unified gains
 #endif
 #include "sensors/calibration.h"
 #include "pid_tuning.h"
