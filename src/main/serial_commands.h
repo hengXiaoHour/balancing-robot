@@ -1,7 +1,7 @@
 #ifndef SERIAL_COMMANDS_H
 #define SERIAL_COMMANDS_H
 
-#include "i2c_scan.h"
+#include "utils/i2c_scan.h"
 
 // Forward declarations
 void startGyroCalibration();

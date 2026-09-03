@@ -29,7 +29,7 @@ float KD = DEFAULT_KD;
 #endif
 #include "calibration.h"
 #include "pid_tuning.h"
-#include "timing.h"
+#include "utils/timing.h"
 
 // ===== Battery Low Voltage Monitoring =====
 #define LOW_VOLTAGE_THRESHOLD 3.5f  // Voltage threshold for low battery detection
