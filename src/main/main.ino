@@ -27,7 +27,7 @@ float KD = DEFAULT_KD;
 #if ENABLE_CASCADE_PID
 #include "cascade_pid_controller.h"  // Cascade PID with unified gains
 #endif
-#include "calibration.h"
+#include "sensors/calibration.h"
 #include "pid_tuning.h"
 #include "utils/timing.h"
 
