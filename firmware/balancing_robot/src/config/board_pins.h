@@ -1,24 +1,24 @@
-#ifndef BOARD_H
-#define BOARD_H
+#ifndef BOARD_PINS_H
+#define BOARD_PINS_H
 
-// ===== BOARD SELECTION =====
-// Change ONLY this line:
-#define BOARD_PROFILE 2   // 1=ESP32, 2=ESP32-C3, 3=ESP32-S3
+// ===== BOARD PIN STORE =====
+// No user-editable lines here. The active board is chosen in settings.h
+// via ACTIVE_BOARD. This file only stores the per-board profiles.
 
-// Internal board IDs
+// Board IDs (match ACTIVE_BOARD values in settings.h)
 #define BOARD_PROFILE_ESP32 1
 #define BOARD_PROFILE_ESP32C3 2
 #define BOARD_PROFILE_ESP32S3 3
 
 // Compatibility board macros
-#if BOARD_PROFILE == BOARD_PROFILE_ESP32
+#if ACTIVE_BOARD == BOARD_PROFILE_ESP32
   #define BOARD_ESP32
-#elif BOARD_PROFILE == BOARD_PROFILE_ESP32C3
+#elif ACTIVE_BOARD == BOARD_PROFILE_ESP32C3
   #define BOARD_ESP32C3
-#elif BOARD_PROFILE == BOARD_PROFILE_ESP32S3
+#elif ACTIVE_BOARD == BOARD_PROFILE_ESP32S3
   #define BOARD_ESP32S3
 #else
-  #error "Invalid BOARD_PROFILE. Use 1, 2, or 3."
+  #error "Invalid ACTIVE_BOARD in settings.h. Use 1, 2, or 3."
 #endif
 
 #if defined(BOARD_ESP32)
@@ -61,7 +61,6 @@
   #define ADC_MAX 4095
   #define ADC_REF_VOLTAGE 3.3f
   #define BATTERY_SAMPLE_SIZE 8
-  #define BATTERY_LPF_ALPHA 0.1f
   #define BATTERY_GLITCH_REJECT_V 0.25f
 
   // SPI pins (if SPI sensor selected)
@@ -110,7 +109,6 @@
   #define ADC_MAX 4095
   #define ADC_REF_VOLTAGE 3.3f
   #define BATTERY_SAMPLE_SIZE 8
-  #define BATTERY_LPF_ALPHA 0.1f
   #define BATTERY_GLITCH_REJECT_V 0.25f
 
   // SPI pins (if SPI sensor selected)
@@ -159,7 +157,6 @@
   #define ADC_MAX 4095
   #define ADC_REF_VOLTAGE 3.3f
   #define BATTERY_SAMPLE_SIZE 32
-  #define BATTERY_LPF_ALPHA 0.01f
   #define BATTERY_GLITCH_REJECT_V 0.18f
 
   // SPI pins (your MPU6500 wiring)
