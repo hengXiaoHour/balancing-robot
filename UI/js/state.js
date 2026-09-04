@@ -9,6 +9,15 @@ if (!isFinite(maxRollPitchAngle)) maxRollPitchAngle = 10;
 
 var ws = null;
 var isConnected = false;
+// Link transport: 'ws' (Wi-Fi WebSocket :81) or 'serial' (USB Web Serial 115200).
+// Same stick semantics, same telemetry render — only the wire format differs
+// (JSON over WS, text CLI over serial). No firmware change required.
+var transport = localStorage.getItem('transport') || 'ws';
+if (transport !== 'serial') transport = 'ws';
+var serialPort = null, serialReader = null, serialWriter = null;
+var serialKeepReading = false, serialQueue = Promise.resolve();
+var lastSpSent = null, lastSrSent = null, lastYrSent = null, lastTSent = null;
+var lastArmSent = null, lastSerialStickMs = 0;
 var reconnectTimer = null;
 var reconnectAttempts = 0;
 var reconnectDelay = 1000;

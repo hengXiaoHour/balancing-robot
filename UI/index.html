@@ -185,11 +185,23 @@
         <div id="panel-setup" class="panel-view">
           <div class="card">
             <h3>CONNECTION</h3>
-            <div class="row-flex">
+            <div class="row-flex" style="margin-bottom: 8px;">
+              <label class="muted" for="transportSelect">Link:</label>
+              <select id="transportSelect" onchange="onTransportChange(this.value)">
+                <option value="ws">WI-FI (WEBSOCKET)</option>
+                <option value="serial">USB (SERIAL)</option>
+              </select>
+            </div>
+            <div class="row-flex" id="wsRow">
               <input type="text" id="espIpInput" placeholder="192.168.x.x" value="192.168.100.27" style="flex: 1; min-width: 140px;">
               <button class="control-btn" onclick="connectToESP32()">CONNECT</button>
               <button class="control-btn secondary" onclick="disconnectESP32()">DISCONNECT</button>
             </div>
+            <div class="row-flex" id="serialRow" style="display: none;">
+              <button class="control-btn" onclick="connectSerial()">CONNECT SERIAL</button>
+              <button class="control-btn secondary" onclick="disconnectSerial()">DISCONNECT</button>
+            </div>
+            <div class="muted" style="margin-top: 8px;">USB serial: Chrome/Edge, 115200 baud. Same stick, same telemetry, no Wi-Fi needed.</div>
           </div>
           <div class="card">
             <h3>STICK RANGE</h3>

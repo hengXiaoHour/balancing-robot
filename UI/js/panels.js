@@ -191,7 +191,7 @@ function drawCompass(yaw) {
 function startGyroCalibration() {
   if (!isConnected) { showError('Not connected to ESP32'); return; }
   try {
-    ws.send(JSON.stringify({ calibrate_gyro: true }));
+    deviceSend({ calibrate_gyro: true });
     document.getElementById('calibGyroBtn').disabled = true;
     document.getElementById('calibAccelBtn').disabled = true;
     document.getElementById('calibNextBtn').style.display = 'none';
@@ -203,7 +203,7 @@ function startGyroCalibration() {
 function startAccelCalibration() {
   if (!isConnected) { showError('Not connected to ESP32'); return; }
   try {
-    ws.send(JSON.stringify({ calibrate_accel: true }));
+    deviceSend({ calibrate_accel: true });
     document.getElementById('calibGyroBtn').disabled = true;
     document.getElementById('calibAccelBtn').disabled = true;
     document.getElementById('calibNextBtn').style.display = 'block';
@@ -214,13 +214,13 @@ function startAccelCalibration() {
 }
 function nextCalibrationStep() {
   if (!isConnected) { showError('Not connected to ESP32'); return; }
-  try { ws.send(JSON.stringify({ calib_next: true })); }
+  try { deviceSend({ calib_next: true }); }
   catch (e) { console.error('Failed to send command:', e); setConnectionStatus(false); }
 }
 function abortCalibration() {
   if (!isConnected) { showError('Not connected to ESP32'); return; }
   try {
-    ws.send(JSON.stringify({ calib_abort: true }));
+    deviceSend({ calib_abort: true });
     document.getElementById('calibGyroBtn').disabled = false;
     document.getElementById('calibAccelBtn').disabled = false;
     document.getElementById('calibNextBtn').style.display = 'none';
@@ -236,7 +236,7 @@ function sendPidValue(param, value) {
   var cmd = { pid_tune: {} };
   cmd.pid_tune[param] = parseFloat(value);
   try {
-    ws.send(JSON.stringify(cmd));
+    deviceSend(cmd);
     addConsoleMessage('>>> PID ' + param + ' = ' + value);
   } catch (e) { console.error('Failed to send PID value:', e); setConnectionStatus(false); }
 }
@@ -245,14 +245,14 @@ function sendTrimValue(param, value) {
   var cmd = {};
   cmd[param] = parseFloat(value);
   try {
-    ws.send(JSON.stringify(cmd));
+    deviceSend(cmd);
     addConsoleMessage('>>> TRIM ' + param + ' = ' + value + '\u00B0');
   } catch (e) { console.error('Failed to send trim value:', e); setConnectionStatus(false); }
 }
 function loadStateFromDevice() {
   if (!isConnected) { showError('Not connected to ESP32'); return; }
   try {
-    ws.send(JSON.stringify({ load: true }));
+    deviceSend({ load: true });
     addConsoleMessage('>>> Requesting state from device...');
   } catch (e) { console.error('Failed to send load command:', e); setConnectionStatus(false); }
 }
@@ -260,7 +260,7 @@ function resetPID() {
   if (!isConnected) { showError('Not connected to ESP32'); return; }
   if (confirm('Reset all PID values to defaults?')) {
     try {
-      ws.send(JSON.stringify({ reset_pid: true }));
+      deviceSend({ reset_pid: true });
       addConsoleMessage('>>> PID Values RESET to defaults');
     } catch (e) { console.error('Failed to send reset command:', e); setConnectionStatus(false); }
   }
@@ -269,7 +269,7 @@ function resetCalibration() {
   if (!isConnected) { showError('Not connected to ESP32'); return; }
   if (confirm('Reset all calibration data to defaults?')) {
     try {
-      ws.send(JSON.stringify({ reset_calibration: true }));
+      deviceSend({ reset_calibration: true });
       addConsoleMessage('>>> Calibration Data RESET to defaults');
     } catch (e) { console.error('Failed to send reset command:', e); setConnectionStatus(false); }
   }
@@ -367,6 +367,11 @@ window.addEventListener('load', function () {
   sizeStick();
   drawAttitude(0, 0);
   drawCompass(0);
-  connectToESP32();
-  addConsoleMessage('System ready. Waiting for ESP32...');
+  applyTransportUI();
+  if (transport === 'serial') {
+    addConsoleMessage('System ready. Pick USB serial in SETUP > CONNECTION.');
+  } else {
+    connectToESP32();
+    addConsoleMessage('System ready. Waiting for ESP32...');
+  }
 });
