@@ -32,12 +32,8 @@ function drawStick() {
   var w = stickCanvas.width, h = stickCanvas.height;
   var cx = w / 2, cy = h / 2;
   var linked = isConnected;
-  // NEBULA VOID instrument: black field, hairline plate frame
-  stickCtx.fillStyle = '#000000';
-  stickCtx.fillRect(0, 0, w, h);
-  stickCtx.strokeStyle = '#1E1E1E';
-  stickCtx.lineWidth = 1;
-  stickCtx.strokeRect(4.5, 4.5, w - 9, h - 9);
+  // NEBULA VOID instrument: naked field, no plate frame
+  stickCtx.clearRect(0, 0, w, h);
   // crosshair axes
   stickCtx.strokeStyle = '#3A3A3A';
   stickCtx.lineWidth = 1;
