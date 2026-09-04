@@ -143,19 +143,16 @@ function handleDeviceMessage(data) {
     addConsoleMessage('State loaded from device.');
     return;
   }
-  // ===== ARM / FAILSAFE SYNC =====
+  // ===== ARM / FAILSAFE SYNC (readonly pill, rendered via renderArm) =====
   if (data.armed !== undefined) {
-    var armedEl = document.getElementById('telem-armed');
-    armedEl.textContent = data.armed ? 'YES' : 'NO';
-    armedEl.style.color = data.armed ? '#00e5cc' : '#ff4d4d';
-    var armBtn = document.getElementById('armBtn');
-    armBtn.textContent = data.armed ? 'ARMED' : 'DISARMED';
-    armBtn.classList.toggle('armed', !!data.armed);
+    document.getElementById('telem-armed').textContent = data.armed ? 'YES' : 'NO';
+    document.getElementById('telem-armed').style.color = data.armed ? '#00e5cc' : '#ff4d4d';
     if (data.armed !== state.armed && !userJustToggledArm) {
       state.armed = data.armed;
-      console.warn('[FAILSAFE] ESP32 state change - button synced');
+      console.warn('[FAILSAFE] ESP32 state change - pill synced');
     }
     localState.armed = state.armed;
+    renderArm();
   }
   // ===== TELEMETRY =====
   var roll = 0, pitch = 0, yaw = 0;

@@ -18,6 +18,19 @@
   text-transform: uppercase;
 }
 .header h1 span { color: var(--red-hot); }
+.header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.viswa-mark { flex-shrink: 0; }
+.vehicle-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--teal);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 .header-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
 /* Status pills: flat mono uppercase, no fill rounding */
@@ -34,11 +47,9 @@
 .connection-status.connected { background: transparent; color: var(--teal); border-color: var(--teal); }
 .connection-status.disconnected { background: transparent; color: var(--muted); border-color: var(--ghost-border); }
 
-/* ARM: disarmed is ghost, armed is solid red */
-#armBtn { background: transparent; color: var(--muted); border: 1px solid var(--ghost-border); cursor: pointer; }
-#armBtn:hover { color: var(--text); border-color: var(--text); }
+/* ARM pill: readonly indicator (toggle lives on the CONTROL tab button) */
+#armBtn { background: transparent; color: var(--muted); border: 1px solid var(--ghost-border); cursor: default; }
 #armBtn.armed { background: var(--red); border-color: var(--red); color: #FFFFFF; }
-#armBtn.armed:hover { background: var(--red-hot); border-color: var(--red-hot); }
 
 #fullscreenBtn {
   background: transparent;
@@ -52,6 +63,7 @@
   letter-spacing: 0.16em;
 }
 #fullscreenBtn:hover { color: var(--text); border-color: var(--text); }
+#fullscreenBtn svg { display: block; }
 
 .battery-indicator {
   display: flex;

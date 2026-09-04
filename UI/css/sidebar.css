@@ -72,6 +72,7 @@
   color: inherit; /* monotone: glyphs inherit item color, never emoji paint */
   font-variant-emoji: text;
 }
+.store-sidebar-icon svg { display: block; }
 .store-sidebar-label {
   overflow: hidden;
   text-overflow: ellipsis;

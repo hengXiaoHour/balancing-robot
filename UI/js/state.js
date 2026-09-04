@@ -50,6 +50,12 @@ function applyVehicleUI() {
   if (sel) sel.value = vehicle;
   var hint = document.getElementById('vehicleHint');
   if (hint) hint.textContent = VEHICLE_HINTS[vehicle] || '';
+  var badge = document.getElementById('vehicleBadge');
+  if (badge) {
+    var labels = { balancing: 'BALANCING', rccar: 'RC CAR', drone: 'DRONE' };
+    badge.textContent = labels[vehicle] || vehicle;
+    badge.title = VEHICLE_HINTS[vehicle] || '';
+  }
   var droneWrap = document.getElementById('droneThrottleWrap');
   if (droneWrap) droneWrap.style.display = (vehicle === 'drone') ? 'block' : 'none';
   var title = document.getElementById('stickTitle');

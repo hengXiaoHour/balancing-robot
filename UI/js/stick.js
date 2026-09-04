@@ -8,7 +8,7 @@ var stickDragging = false;
 
 function sizeStick() {
   var rect = stickCanvas.getBoundingClientRect();
-  var side = Math.max(160, Math.min(rect.width || 300, 340));
+  var side = Math.max(160, Math.min(rect.width || 300, 440));
   stickCanvas.width = side;
   stickCanvas.height = side;
   stickCanvas.style.height = side + 'px';
@@ -19,43 +19,67 @@ function sizeStick() {
 function drawStick() {
   var w = stickCanvas.width, h = stickCanvas.height;
   var cx = w / 2, cy = h / 2;
+  var linked = isConnected;
+  // NEBULA VOID instrument: black field, hairline plate frame
   stickCtx.fillStyle = '#000000';
   stickCtx.fillRect(0, 0, w, h);
+  stickCtx.strokeStyle = '#1E1E1E';
+  stickCtx.lineWidth = 1;
+  stickCtx.strokeRect(4.5, 4.5, w - 9, h - 9);
   // crosshair axes
-  stickCtx.strokeStyle = '#2A2A2A';
+  stickCtx.strokeStyle = '#232323';
   stickCtx.lineWidth = 1;
   stickCtx.beginPath();
   stickCtx.moveTo(cx - stickMax - 6, cy); stickCtx.lineTo(cx + stickMax + 6, cy);
   stickCtx.moveTo(cx, cy - stickMax - 6); stickCtx.lineTo(cx, cy + stickMax + 6);
   stickCtx.stroke();
-  // travel ring + tick marks
-  stickCtx.strokeStyle = '#3A3A3A';
+  // travel ring
+  stickCtx.strokeStyle = '#2A2A2A';
   stickCtx.lineWidth = 1;
   stickCtx.beginPath();
   stickCtx.arc(cx, cy, stickMax, 0, Math.PI * 2);
   stickCtx.stroke();
+  // 12 ticks: cardinals red, minors gray
   var i, a, x1, y1, x2, y2;
   for (i = 0; i < 12; i++) {
     a = i * Math.PI / 6;
-    x1 = cx + Math.cos(a) * (stickMax - 7); y1 = cy + Math.sin(a) * (stickMax - 7);
+    var cardinal = (i % 3 === 0);
+    stickCtx.strokeStyle = cardinal ? '#CC0000' : '#3A3A3A';
+    stickCtx.lineWidth = cardinal ? 2 : 1;
+    var inner = cardinal ? stickMax - 11 : stickMax - 7;
+    x1 = cx + Math.cos(a) * inner; y1 = cy + Math.sin(a) * inner;
     x2 = cx + Math.cos(a) * stickMax; y2 = cy + Math.sin(a) * stickMax;
     stickCtx.beginPath(); stickCtx.moveTo(x1, y1); stickCtx.lineTo(x2, y2); stickCtx.stroke();
   }
-  // center home dot
-  stickCtx.fillStyle = '#3A3A3A';
-  stickCtx.beginPath();
-  stickCtx.arc(cx, cy, 4, 0, Math.PI * 2);
-  stickCtx.fill();
-  // knob: gray idle, red when linked
-  stickCtx.fillStyle = isConnected ? '#CC0000' : '#8A8A8A';
-  stickCtx.beginPath();
-  stickCtx.arc(stickX, stickY, 22, 0, Math.PI * 2);
-  stickCtx.fill();
-  stickCtx.strokeStyle = isConnected ? '#FF0A0A' : '#F2F2F2';
+  // center home marker
+  stickCtx.strokeStyle = '#3A3A3A';
   stickCtx.lineWidth = 1;
   stickCtx.beginPath();
-  stickCtx.arc(stickX, stickY, 22, 0, Math.PI * 2);
+  stickCtx.moveTo(cx - 5, cy); stickCtx.lineTo(cx + 5, cy);
+  stickCtx.moveTo(cx, cy - 5); stickCtx.lineTo(cx, cy + 5);
   stickCtx.stroke();
+  // deflection vector: center -> knob, faint red
+  var dx = stickX - cx, dy = stickY - cy;
+  if (Math.sqrt(dx * dx + dy * dy) > 3) {
+    stickCtx.strokeStyle = linked ? 'rgba(255,10,10,0.45)' : 'rgba(138,138,138,0.4)';
+    stickCtx.lineWidth = 2;
+    stickCtx.beginPath(); stickCtx.moveTo(cx, cy); stickCtx.lineTo(stickX, stickY); stickCtx.stroke();
+  }
+  // knob: dark fill, red ring when linked / gray idle, hot core dot
+  var knobR = Math.max(18, Math.min(30, w * 0.07));
+  stickCtx.fillStyle = '#101010';
+  stickCtx.beginPath();
+  stickCtx.arc(stickX, stickY, knobR, 0, Math.PI * 2);
+  stickCtx.fill();
+  stickCtx.strokeStyle = linked ? '#FF0A0A' : '#8A8A8A';
+  stickCtx.lineWidth = 2;
+  stickCtx.beginPath();
+  stickCtx.arc(stickX, stickY, knobR, 0, Math.PI * 2);
+  stickCtx.stroke();
+  stickCtx.fillStyle = linked ? '#FF0A0A' : '#5A6480';
+  stickCtx.beginPath();
+  stickCtx.arc(stickX, stickY, 3, 0, Math.PI * 2);
+  stickCtx.fill();
 }
 function stickUpdate(clientX, clientY) {
   var rect = stickCanvas.getBoundingClientRect();

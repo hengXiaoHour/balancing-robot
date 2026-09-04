@@ -1,7 +1,7 @@
 /* Joystick instrument: square plate, crosshair drawn in canvas (stick.js) */
 .joystick-wrap {
   width: 100%;
-  max-width: 340px;
+  max-width: 440px;
   margin: 0;
   user-select: none;
   -webkit-user-select: none;
@@ -22,12 +22,13 @@
   touch-action: none;
   overscroll-behavior: none;
 }
-/* Desktop: stick left, data + arm right — kills the side voids */
+/* Desktop: stick left, data + arm right — stick stays square, sized by
+   viewport height so the tab fills the screen without distortion */
 .control-grid {
   display: grid;
-  grid-template-columns: minmax(240px, 340px) minmax(220px, 1fr);
+  grid-template-columns: minmax(260px, min(52dvh, 440px)) minmax(220px, 1fr);
   gap: 16px;
-  align-items: start;
+  align-items: center;
 }
 .control-side { min-width: 0; }
 .arm-wide { width: 100%; min-height: 48px; }

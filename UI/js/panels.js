@@ -44,15 +44,21 @@ function toggleFullscreen() {
   } catch (e) { console.warn('Fullscreen failed:', e); }
 }
 
+function renderArm() {
+  // Single writer for the header arm pill (readonly indicator).
+  // toggleArm() and telemetry both funnel here — no more alternating text.
+  var btn = document.getElementById('armBtn');
+  if (!btn) return;
+  btn.textContent = state.armed ? 'ARMED' : 'DISARMED';
+  btn.classList.toggle('armed', !!state.armed);
+}
 function toggleArm() {
   if (!isConnected) {
     showError('Not connected to ESP32');
     return;
   }
   state.armed = !state.armed;
-  var btn = document.getElementById('armBtn');
-  btn.textContent = state.armed ? 'ARMED' : 'DISARMED';
-  btn.classList.toggle('armed', state.armed);
+  renderArm();
   if (state.armed) {
     if (vehicle === 'balancing') state.throttle = 0.2;
     else if (vehicle === 'drone') state.throttle = droneThrottlePct / 100;
@@ -364,6 +370,7 @@ window.addEventListener('load', function () {
   document.getElementById('maxAngleValue').textContent = maxRollPitchAngle + '\u00B0';
   applyVehicleUI();
   updateDisplay();
+  renderArm();
   sizeStick();
   drawAttitude(0, 0);
   drawCompass(0);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Multi-Vehicle Control</title>
+  <title>VISWA</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#000000">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,10 +24,10 @@
       <span class="store-sidebar-hamburger">&#9776;</span>
     </div>
     <nav class="store-sidebar-nav">
-      <button class="store-sidebar-nav-item active" data-panel="control" title="CONTROL"><span class="store-sidebar-icon">&#9678;</span><span class="store-sidebar-label">CONTROL</span></button>
-      <button class="store-sidebar-nav-item" data-panel="status" title="STATUS"><span class="store-sidebar-icon">&#9638;</span><span class="store-sidebar-label">STATUS</span></button>
-      <button class="store-sidebar-nav-item" data-panel="pid" title="PID TUNE"><span class="store-sidebar-icon">&#8739;</span><span class="store-sidebar-label">PID TUNE</span></button>
-      <button class="store-sidebar-nav-item" data-panel="setup" title="SETUP"><span class="store-sidebar-icon">&#128295;&#65038;</span><span class="store-sidebar-label">SETUP</span></button>
+      <button class="store-sidebar-nav-item active" data-panel="control" title="CONTROL"><span class="store-sidebar-icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="5"/><path d="M8 0.8v3.4M8 11.8v3.4M0.8 8h3.4M11.8 8h3.4"/></svg></span><span class="store-sidebar-label">CONTROL</span></button>
+      <button class="store-sidebar-nav-item" data-panel="status" title="STATUS"><span class="store-sidebar-icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.6" y="1.6" width="5.2" height="5.2"/><rect x="9.2" y="1.6" width="5.2" height="5.2"/><rect x="1.6" y="9.2" width="5.2" height="5.2"/><rect x="9.2" y="9.2" width="5.2" height="5.2"/></svg></span><span class="store-sidebar-label">STATUS</span></button>
+      <button class="store-sidebar-nav-item" data-panel="pid" title="PID TUNE"><span class="store-sidebar-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span><span class="store-sidebar-label">PID TUNE</span></button>
+      <button class="store-sidebar-nav-item" data-panel="setup" title="SETUP"><span class="store-sidebar-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><span class="store-sidebar-label">SETUP</span></button>
     </nav>
     <div class="store-sidebar-spacer"></div>
   </div>
@@ -35,7 +35,11 @@
   <!-- Main column -->
   <div class="main-col">
     <div class="header">
-      <h1>MULTI-VEHICLE <span>CONTROL</span></h1>
+      <div class="header-left">
+        <svg class="viswa-mark" viewBox="0 0 20 20" width="26" height="26" fill="none"><rect x="0.75" y="0.75" width="18.5" height="18.5" stroke="#CC0000" stroke-width="1.5"/><path d="M4.5 5.5 10 14.5 15.5 5.5" stroke="#F2F2F2" stroke-width="1.8"/></svg>
+        <h1>VISWA</h1>
+        <span id="vehicleBadge" class="vehicle-badge" title="">BALANCING</span>
+      </div>
       <div class="header-right">
         <div id="batteryIndicator" class="battery-indicator" title="Battery Voltage">
           <svg width="28" height="16" viewBox="0 0 28 16" style="fill: #ffcc00; stroke: #ffcc00; stroke-width: 1;">
@@ -45,9 +49,9 @@
           </svg>
           <span id="batteryVoltage" style="font-size: 10px; margin-left: 4px; color: #ffcc00; font-weight: bold; min-width: 45px;">-- V</span>
         </div>
-        <button id="armBtn" class="connection-status" onclick="toggleArm()">DISARMED</button>
+        <div id="armBtn" class="connection-status" title="Arm state (toggle in CONTROL)">DISARMED</div>
         <div id="connectionStatus" class="connection-status disconnected">DISCONNECTED</div>
-        <button id="fullscreenBtn" onclick="toggleFullscreen()" title="Toggle fullscreen">FULL</button>
+        <button id="fullscreenBtn" onclick="toggleFullscreen()" title="Toggle fullscreen"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.5 5.5v-4h4M10.5 1.5h4v4M14.5 10.5v4h-4M5.5 14.5h-4v-4"/></svg></button>
       </div>
     </div>
     <div id="errorMessage" class="error-message"></div>
