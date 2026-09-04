@@ -203,9 +203,11 @@
 @media (max-width: 768px) {
   .header { padding: 8px 10px; gap: 6px; }
   .header-left, .header-right { gap: 6px; }
-  .connection-status { padding: 4px 8px; font-size: 10px; letter-spacing: 0.1em; }
+  .connection-status { padding: 4px 8px; font-size: 10px; letter-spacing: 0.1em; display: inline-flex; align-items: center; justify-content: center; }
   .battery-indicator { padding: 4px 6px; min-height: 44px; gap: 4px; }
   .vehicle-badge { font-size: 9px; padding: 3px 6px; min-height: 44px; display: inline-flex; align-items: center; }
+  /* Optical centering: all-caps has no descenders, reads high when centered */
+  .connection-status, .vehicle-badge, .battery-indicator { transform: translateY(1px); }
   #fullscreenBtn { padding: 4px 8px; }
 }
 
