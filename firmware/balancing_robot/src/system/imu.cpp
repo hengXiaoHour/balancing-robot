@@ -16,13 +16,13 @@ void initIMU() {
   delay(100);
   if (!mpu.initialize()) {
     #if ACTIVE_IMU == IMU_SENSOR_MPU6500_SPI
-    Serial.println("[ERROR] MPU6500 (SPI) not found! Drone cannot be armed until sensor is properly connected and initialized.");
+    Serial.println("[ERROR] MPU6500 (SPI) not found! Robot cannot be armed until sensor is properly connected and initialized.");
     #elif ACTIVE_IMU == IMU_SENSOR_MPU6500_I2C
-    Serial.println("[ERROR] MPU6500 (I2C) not found! Drone cannot be armed until sensor is properly connected and initialized.");
+    Serial.println("[ERROR] MPU6500 (I2C) not found! Robot cannot be armed until sensor is properly connected and initialized.");
     Serial.printf("[ERROR] I2C config -> SDA: GPIO %d, SCL: GPIO %d, Speed: %d Hz\n", I2C_SDA, I2C_SCL, I2C_SPEED);
     Serial.println("[ERROR] Check wiring + pull-ups, and confirm MPU address (0x68/0x69)");
     #else
-    Serial.println("[ERROR] MPU6050 not found! Drone cannot be armed until sensor is properly connected and initialized.");
+    Serial.println("[ERROR] MPU6050 not found! Robot cannot be armed until sensor is properly connected and initialized.");
     Serial.printf("[ERROR] I2C config -> SDA: GPIO %d, SCL: GPIO %d, Speed: %d Hz\n", I2C_SDA, I2C_SCL, I2C_SPEED);
     Serial.println("[ERROR] Check wiring + pull-ups, and confirm MPU address (0x68/0x69)");
     #endif

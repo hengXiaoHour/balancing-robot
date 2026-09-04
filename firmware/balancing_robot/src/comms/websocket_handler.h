@@ -17,7 +17,7 @@ extern float avgFilterTime;
 // Control state variables
 extern bool motorsArmed;
 extern bool motorsActive;
-extern bool safeToArm;  // ARM HYSTERESIS: Drone is level enough to arm
+extern bool safeToArm;  // ARM HYSTERESIS: Robot is level enough to arm
 extern bool mpuInitialized;  // MPU6050 initialization status
 extern bool filterInitialized;  // Filter warm-up complete
 extern float pitch_setpoint;

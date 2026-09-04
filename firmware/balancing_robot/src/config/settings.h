@@ -86,8 +86,8 @@
 #define SERIAL_BAUD 115200  // Must match your serial monitor setting
 
 // ===== FILTER PARAMETERS =====
-#define GYRO_LPF_ALPHA 0.7f       // Gyroscope software low-pass
-#define ACCEL_LPF_ALPHA 0.7f      // Accelerometer software low-pass
+#define GYRO_LPF_ALPHA 1.0f       // Gyroscope software low-pass
+#define ACCEL_LPF_ALPHA 0.1f      // Accelerometer software low-pass
 #define BATTERY_LPF_ALPHA 0.15f   // Battery voltage low-pass
 #define TIME_ALPHA 0.1            // Timing measurement smoothing
 #define FAILSAFE_LPF_ALPHA 0.2    // Failsafe angle detection filter

@@ -48,7 +48,7 @@ extern float trim_roll;   // Roll sensor trim bias
 extern float battery_voltage;  // Battery voltage in volts
 extern BatteryState batteryState;  // Battery monitoring state
 extern bool useAPMode;  // WiFi mode: false = STA, true = AP
-extern bool safeToArm;  // ARM HYSTERESIS: Drone is level enough to arm
+extern bool safeToArm;  // ARM HYSTERESIS: Robot is level enough to arm
 extern bool filterInitialized;  // Filter warm-up complete
 extern bool testMotorActive;
 extern volatile unsigned long filterExecutionTime;  // Last filter run (µs)

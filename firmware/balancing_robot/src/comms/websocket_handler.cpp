@@ -137,9 +137,9 @@ void handleWebSocketCommand(const String& jsonStr) {
       else if (!filterInitialized) {
         broadcastConsoleMessage("[WARN] ARM BLOCKED: Filter still warming up, please wait...");
       }
-      // Check if drone is level using hysteresis (safeToArm flag)
+      // Check if robot is level using hysteresis (safeToArm flag)
       else if (!safeToArm) {
-        broadcastConsoleMessage("[WARN] ARM BLOCKED: Drone must be level! Pitch: " + String(filtered_pitch, 1) + "° Roll: " + String(filtered_roll, 1) + "° (Must be < 40° for 200ms to allow arming)");
+        broadcastConsoleMessage("[WARN] ARM BLOCKED: Robot must be level! Pitch: " + String(filtered_pitch, 1) + "° Roll: " + String(filtered_roll, 1) + "° (Must be < 40° for 200ms to allow arming)");
       } else {
         motorsArmed = true;
         motorsActive = true;

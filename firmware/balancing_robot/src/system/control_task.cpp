@@ -128,11 +128,11 @@ void controlLoopTask(void *pvParameters) {
       filtered_roll = FAILSAFE_LPF_ALPHA * ROLL_ANGLE_FINAL_USED + (1.0 - FAILSAFE_LPF_ALPHA) * filtered_roll;
 
       // ===== UPDATE ARM HYSTERESIS =====
-      // Check if drone is level enough to allow arming (only if MPU is initialized)
+      // Check if robot is level enough to allow arming (only if MPU is initialized)
       if (mpuInitialized && abs(filtered_pitch) < SAFE_ANGLE_THRESHOLD && abs(filtered_roll) < SAFE_ANGLE_THRESHOLD) {
         safeAngleCounter++;
         if (safeAngleCounter >= SAFE_ANGLE_HYSTERESIS_CHECKS) {
-          safeToArm = true;  // Drone has been level for required duration
+          safeToArm = true;  // Robot has been level for required duration
           safeAngleCounter = SAFE_ANGLE_HYSTERESIS_CHECKS;  // Cap the counter
         }
       } else {

@@ -259,7 +259,7 @@ void updateCascadedControl() {
 
 void applyBraking() {
   // Simple braking: when joystick is released, apply small opposite angle
-  // This helps stop the drone faster by creating drag through angle
+  // This helps stop the robot faster by creating drag through angle
 
   const float BRAKE_STRENGTH = 3.0f;  // Degrees of braking angle
   const float BRAKE_DEADZONE = 0.0f;  // Joystick deadzone

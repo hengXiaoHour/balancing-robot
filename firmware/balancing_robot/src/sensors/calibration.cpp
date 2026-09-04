@@ -41,7 +41,7 @@ void processCalibrationStep(const String& command) {
   if (command == "save") {
     // User pressed save - validate accel orientation before starting collection
     if (calibrationState != CALIB_GYRO) {
-      // Check if drone is in the correct orientation for this step
+      // Check if robot is in the correct orientation for this step
       if (!validateAccelOrientationForStep()) {
         // Wrong orientation - user must retry
         return;

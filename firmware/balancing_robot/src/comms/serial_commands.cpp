@@ -16,7 +16,7 @@ void printWelcomeBanner() {
   Serial.println("\n========================================");
   Serial.println("Balancing Robot v1.0 - MPU6050 Protected");
   Serial.println("========================================");
-  Serial.println("\n[SAFETY] Drone cannot arm without MPU6050 initialization");
+  Serial.println("\n[SAFETY] Robot cannot arm without MPU6050 initialization");
   Serial.println("         Use 'retry_mpu' command if sensor fails to connect");
   Serial.println("\nAvailable Commands:");
   Serial.println("  help           - Display this help message");
@@ -84,8 +84,7 @@ void printWelcomeBanner() {
   Serial.println("  led test       - Run status LED boot self-test");
   Serial.println("  led on/off     - Force status LED on or off");
   Serial.println("  led rgb R G B  - Set status LED color 0-255 (RGB boards only)");
-  Serial.println("  test_motor     - Spin each motor individually at 20% throttle for pinout scan:");
-  Serial.println("                   Motor FL(33)→FR(27)→RR(26)→RL(25), 2s each, auto-stops after loop");
+  Serial.println("  test_motor     - Disabled in BALANCING_ROBOT mode");
   Serial.println("  status         - Toggle sensor monitoring");
   Serial.println("  debug          - Toggle debug information");
   Serial.println("\nWiFi & OTA Commands:");
@@ -134,9 +133,9 @@ void handleSerialCommand() {
       else if (!filterInitialized) {
         Serial.println("\n[WARN] ARM BLOCKED: Filter still warming up, please wait...");
       }
-      // Check if drone is level using hysteresis (safeToArm flag)
+      // Check if robot is level using hysteresis (safeToArm flag)
       else if (!safeToArm) {
-        Serial.print("\n[WARN] ARM BLOCKED: Drone must be level! Pitch: "); Serial.print(filtered_pitch, 1);
+        Serial.print("\n[WARN] ARM BLOCKED: Robot must be level! Pitch: "); Serial.print(filtered_pitch, 1);
         Serial.print("° Roll: "); Serial.print(filtered_roll, 1);
         Serial.println("° (Must be < 40° for 200ms to allow arming)");
       } else {
