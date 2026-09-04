@@ -35,11 +35,16 @@ function sizeStick() {
     if (mc2) { var mcs = getComputedStyle(mc2); padV = parseFloat(mcs.paddingTop) + parseFloat(mcs.paddingBottom); }
     var room = (mc2 ? mc2.clientHeight : window.innerHeight) - padV - nonStick;
     side = Math.max(160, Math.min(side, 320, room));
+    stickCanvas.style.width = side + 'px';
+    stickCanvas.style.height = side + 'px';
+  } else {
+    // Desktop: let CSS own the display size — clear any mobile inline pin
+    // or the stick keeps its phone size after resizing back up.
+    stickCanvas.style.width = '';
+    stickCanvas.style.height = '';
   }
   stickCanvas.width = side;
   stickCanvas.height = side;
-  stickCanvas.style.width = side + 'px';
-  stickCanvas.style.height = side + 'px';
   stickMax = side / 2 - 32;
   if (!stickDragging) { stickX = side / 2; stickY = side / 2; }
   drawStick();
