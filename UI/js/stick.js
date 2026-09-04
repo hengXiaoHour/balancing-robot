@@ -51,6 +51,48 @@ function drawStick() {
   stickCtx.beginPath();
   stickCtx.arc(cx, cy, stickMax, 0, Math.PI * 2);
   stickCtx.stroke();
+  // range rings: 33/66% faint, 85% dotted orbit
+  [0.33, 0.66].forEach(function (f) {
+    stickCtx.strokeStyle = '#242424';
+    stickCtx.lineWidth = 1;
+    stickCtx.beginPath();
+    stickCtx.arc(cx, cy, stickMax * f, 0, Math.PI * 2);
+    stickCtx.stroke();
+  });
+  stickCtx.save();
+  stickCtx.setLineDash([2, 6]);
+  stickCtx.strokeStyle = '#333333';
+  stickCtx.lineWidth = 1;
+  stickCtx.beginPath();
+  stickCtx.arc(cx, cy, stickMax * 0.85, 0, Math.PI * 2);
+  stickCtx.stroke();
+  stickCtx.restore();
+  // vernier graduations along both axes (every 10%, skip center)
+  stickCtx.strokeStyle = '#333333';
+  stickCtx.lineWidth = 1;
+  var vi, v;
+  for (vi = 1; vi <= 9; vi++) {
+    v = stickMax * vi / 10;
+    [[cx - v, cy, cx - v, cy - 4], [cx - v, cy, cx - v, cy + 4],
+     [cx + v, cy, cx + v, cy - 4], [cx + v, cy, cx + v, cy + 4],
+     [cx, cy - v, cx - 4, cy - v], [cx, cy - v, cx + 4, cy - v],
+     [cx, cy + v, cx - 4, cy + v], [cx, cy + v, cx + 4, cy + v]].forEach(function (s) {
+      stickCtx.beginPath(); stickCtx.moveTo(s[0], s[1]); stickCtx.lineTo(s[2], s[3]); stickCtx.stroke();
+    });
+  }
+  // cardinal chevrons outside the ring, dim red, pointing out
+  stickCtx.fillStyle = 'rgba(204,0,0,0.6)';
+  [[0, -1], [0, 1], [-1, 0], [1, 0]].forEach(function (d) {
+    var bx = cx + d[0] * (stickMax + 12), by = cy + d[1] * (stickMax + 12);
+    stickCtx.save();
+    stickCtx.translate(bx, by);
+    stickCtx.rotate(Math.atan2(d[1], d[0]) + Math.PI / 2);
+    stickCtx.beginPath();
+    stickCtx.moveTo(0, -6); stickCtx.lineTo(-4, 0); stickCtx.lineTo(-4, -3);
+    stickCtx.lineTo(0, -7); stickCtx.lineTo(4, -3); stickCtx.lineTo(4, 0);
+    stickCtx.closePath(); stickCtx.fill();
+    stickCtx.restore();
+  });
   // 12 ticks: cardinals red, minors gray
   var i, a, x1, y1, x2, y2;
   for (i = 0; i < 12; i++) {
@@ -85,32 +127,54 @@ function drawStick() {
   stickCtx.moveTo(cx - 5, cy); stickCtx.lineTo(cx + 5, cy);
   stickCtx.moveTo(cx, cy - 5); stickCtx.lineTo(cx, cy + 5);
   stickCtx.stroke();
-  // deflection vector: center -> knob, faint red
+  // deflection sector: filled wedge from center toward knob, magnitude shaded
   var dx = stickX - cx, dy = stickY - cy;
-  if (Math.sqrt(dx * dx + dy * dy) > 3) {
-    stickCtx.strokeStyle = linked ? 'rgba(255,10,10,0.45)' : 'rgba(138,138,138,0.4)';
+  var defl = Math.sqrt(dx * dx + dy * dy);
+  if (defl > 3) {
+    var ang0 = Math.atan2(dy, dx);
+    stickCtx.save();
+    stickCtx.fillStyle = linked ? 'rgba(255,10,10,0.10)' : 'rgba(138,138,138,0.10)';
+    stickCtx.beginPath();
+    stickCtx.moveTo(cx, cy);
+    stickCtx.arc(cx, cy, defl, ang0 - 0.35, ang0 + 0.35);
+    stickCtx.closePath();
+    stickCtx.fill();
+    stickCtx.restore();
+    stickCtx.save();
+    if (linked) { stickCtx.shadowColor = 'rgba(255,10,10,0.8)'; stickCtx.shadowBlur = 8; }
+    stickCtx.strokeStyle = linked ? 'rgba(255,10,10,0.6)' : 'rgba(138,138,138,0.5)';
     stickCtx.lineWidth = 2;
     stickCtx.beginPath(); stickCtx.moveTo(cx, cy); stickCtx.lineTo(stickX, stickY); stickCtx.stroke();
+    stickCtx.restore();
   }
-  // knob: dark fill, red ring when linked / gray idle, hot core dot
+  // knob: modern thumbstick nub — solid graphite dome, single hairline rim,
+  // soft red glow when live and deflected
   var knobR = Math.max(18, Math.min(34, w * 0.07));
-  stickCtx.fillStyle = '#101010';
+  stickCtx.save();
+  if (linked && defl > 3) { stickCtx.shadowColor = 'rgba(255,10,10,0.55)'; stickCtx.shadowBlur = 18; }
+  stickCtx.fillStyle = '#1B1B1B';
   stickCtx.beginPath();
   stickCtx.arc(stickX, stickY, knobR, 0, Math.PI * 2);
   stickCtx.fill();
+  stickCtx.restore();
   stickCtx.strokeStyle = linked ? '#FF0A0A' : '#8A8A8A';
-  stickCtx.lineWidth = 2;
+  stickCtx.lineWidth = 1.5;
   stickCtx.beginPath();
   stickCtx.arc(stickX, stickY, knobR, 0, Math.PI * 2);
   stickCtx.stroke();
-  stickCtx.fillStyle = linked ? '#FF0A0A' : '#8A8A8A';
-  stickCtx.beginPath();
-  stickCtx.arc(stickX, stickY, 3, 0, Math.PI * 2);
-  stickCtx.fill();
-  // grip ring inside the knob + dashed deadzone circle on the field
-  stickCtx.strokeStyle = 'rgba(242,242,242,0.35)';
+  // top-light crescent: small offset highlight arc for a domed feel
+  stickCtx.strokeStyle = linked ? 'rgba(255,120,120,0.8)' : 'rgba(242,242,242,0.5)';
   stickCtx.lineWidth = 1.5;
-  stickCtx.beginPath(); stickCtx.arc(stickX, stickY, knobR - 6, 0, Math.PI * 2); stickCtx.stroke();
+  stickCtx.beginPath();
+  stickCtx.arc(stickX, stickY, knobR - 4, Math.PI * 1.1, Math.PI * 1.6);
+  stickCtx.stroke();
+  // contact dot only while deflected (no dead-pixel look at rest)
+  if (defl > 3) {
+    stickCtx.fillStyle = linked ? '#FF0A0A' : '#8A8A8A';
+    stickCtx.beginPath();
+    stickCtx.arc(stickX, stickY, 3, 0, Math.PI * 2);
+    stickCtx.fill();
+  }
   stickCtx.save();
   stickCtx.setLineDash([4, 5]);
   stickCtx.strokeStyle = 'rgba(138,138,138,0.5)';
