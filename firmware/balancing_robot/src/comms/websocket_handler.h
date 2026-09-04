@@ -1,6 +1,7 @@
 #ifndef WEBSOCKET_HANDLER_H
 #define WEBSOCKET_HANDLER_H
 
+#include <Arduino.h>
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 #include "../config/settings.h"
@@ -87,6 +88,8 @@ extern bool webSocketConnected;
 void initWebSocket();
 void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length);
 void handleWebSocketCommand(const String& jsonStr);
+String buildStateJson();
+void printStateJsonSerial();  // same payload over USB serial for the WebUI
 void broadcastState();
 void broadcastTelemetry();
 void broadcastTelemetryImmediate();  // Force immediate broadcast (e.g. failsafe events)

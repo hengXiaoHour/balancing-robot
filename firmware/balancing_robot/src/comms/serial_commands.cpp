@@ -4,6 +4,7 @@
 #include "../control/pid_controller.h"  // speed setpoints
 #include "../control/cascade_pid_controller.h"  // cascade externs (when enabled)
 #include "wifi_ota.h"  // switchWiFiMode(), printWiFiStatus()
+#include "websocket_handler.h"  // printStateJsonSerial() — shared state JSON for WebUI
 #include "../system/led.h"  // ledBootTest(), ledSet(), ledSetRGB()
 
 // Definitions live here (were in balancing_robot.ino); externs in serial_commands.h
@@ -258,6 +259,11 @@ void handleSerialCommand() {
     }
     else if (command == "reset_calibration") {
       resetCalibrationToDefaults();
+    }
+    else if (command == "load") {
+      // Print the same state JSON the WebSocket broadcasts, so the WebUI
+      // (USB serial transport) can autofill PID/trim inputs.
+      printStateJsonSerial();
     }
 
     // WiFi & OTA Commands

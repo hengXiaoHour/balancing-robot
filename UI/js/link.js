@@ -225,6 +225,7 @@ async function connectSerial() {
     setConnectionStatus(true);
     addConsoleMessage('[SER] Open at 115200. Enabling telemetry (status)...');
     serialWrite('status'); // toggles firmware [LOOP] stream on
+    serialWrite('load'); // autofill PID/trim inputs, same as WS connect
     readSerialLoop();
   } catch (e) {
     console.error('Serial open failed:', e);
@@ -277,6 +278,13 @@ function onSerialLine(line) {
     var data = parseLoopLine(line);
     if (data) handleDeviceMessage(data);
     return; // [LOOP] at 10Hz stays out of the console buffer
+  }
+  if (line.charAt(0) === '{') {
+    // Firmware state JSON (e.g. answer to `load`) — same shape as WS broadcast.
+    try {
+      handleDeviceMessage(JSON.parse(line));
+      return;
+    } catch (e) { /* fall through to console mirror */ }
   }
   addConsoleMessage(line);
 }
@@ -348,7 +356,7 @@ function serialSendObject(obj) {
   if (obj.calibrate_accel) { serialWrite('calibrate_accel'); return; }
   if (obj.calib_next) { serialWrite('save'); return; } // serial advance word
   if (obj.calib_abort) { serialWrite('abort'); return; }
-  if (obj.load) { serialWrite('load'); addConsoleMessage('>>> load: watch console for PID printout (no autofill over serial)'); return; }
+  if (obj.load) { serialWrite('load'); addConsoleMessage('>>> load requested (autofills on reply)'); return; }
   if (obj.reset_pid) { serialWrite('reset_pid'); return; }
   if (obj.reset_calibration) { serialWrite('reset_calibration'); return; }
 }

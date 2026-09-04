@@ -331,9 +331,7 @@ void handleWebSocketCommand(const String& jsonStr) {
 }
 
 // ===== Broadcast Current State (PID, Calibration, Trim) =====
-void broadcastState() {
-  if (!webSocketConnected) return;
-
+String buildStateJson() {
   String output = "{";
   output += "\"pitch_p\":" + String(KP_Pitch) + ",";
   output += "\"pitch_i\":" + String(KI_Pitch) + ",";
@@ -353,8 +351,17 @@ void broadcastState() {
   output += "\"accel_bias_y\":" + String(ayBias) + ",";
   output += "\"accel_bias_z\":" + String(azBias);
   output += "}";
+  return output;
+}
+void broadcastState() {
+  if (!webSocketConnected) return;
 
-  webSocket.broadcastTXT(output);
+  String out = buildStateJson();
+  webSocket.broadcastTXT(out);
+}
+// Same payload over USB serial so the WebUI can autofill PID/trim without Wi-Fi.
+void printStateJsonSerial() {
+  Serial.println(buildStateJson());
 }
 
 // ===== Broadcast Telemetry (Angles, Motors, Battery) =====
