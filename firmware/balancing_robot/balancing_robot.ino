@@ -53,8 +53,6 @@
 #include "src/comms/websocket_handler.h"  // WebSocket server and communication
 #include "src/comms/esp_now_handler.h"  // ESP-NOW controller communication
 
-// External variables from ESP-NOW handler
-extern volatile bool espnow_connected;
 
 // Calibration state + bias values: defined in sensors/calibration.cpp
 
