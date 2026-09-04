@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Multi-Vehicle Control</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#050810">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/uplot/dist/uPlot.min.css" />
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/sidebar.css" />
+  <link rel="stylesheet" href="css/panels.css" />
+  <link rel="stylesheet" href="css/stick.css" />
+  <script src="https://unpkg.com/uplot/dist/uPlot.iife.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <div class="store-sidebar" id="storeSidebar">
+    <div class="store-sidebar-toggle" id="sidebarToggle" title="Toggle menu">
+      <span class="store-sidebar-hamburger">&#9776;</span>
+    </div>
+    <nav class="store-sidebar-nav">
+      <button class="store-sidebar-nav-item active" data-panel="control" title="CONTROL"><span class="store-sidebar-icon">&#127918;</span><span class="store-sidebar-label">CONTROL</span></button>
+      <button class="store-sidebar-nav-item" data-panel="status" title="STATUS"><span class="store-sidebar-icon">&#128202;</span><span class="store-sidebar-label">STATUS</span></button>
+      <button class="store-sidebar-nav-item" data-panel="pid" title="PID TUNE"><span class="store-sidebar-icon">&#9881;</span><span class="store-sidebar-label">PID TUNE</span></button>
+      <button class="store-sidebar-nav-item" data-panel="graph" title="GRAPH"><span class="store-sidebar-icon">&#128200;</span><span class="store-sidebar-label">GRAPH</span></button>
+      <button class="store-sidebar-nav-item" data-panel="setup" title="SETUP"><span class="store-sidebar-icon">&#9888;</span><span class="store-sidebar-label">SETUP</span></button>
+    </nav>
+    <div class="store-sidebar-spacer"></div>
+  </div>
+
+  <!-- Main column -->
+  <div class="main-col">
+    <div class="header">
+      <h1>MULTI-VEHICLE <span>CONTROL</span></h1>
+      <div class="header-right">
+        <div id="batteryIndicator" class="battery-indicator" title="Battery Voltage">
+          <svg width="28" height="16" viewBox="0 0 28 16" style="fill: #ffcc00; stroke: #ffcc00; stroke-width: 1;">
+            <rect x="2" y="2" width="20" height="12" rx="1" fill="none"/>
+            <rect x="23" y="5" width="3" height="6" fill="none"/>
+            <rect id="batteryFill" x="4" y="4" width="16" height="8" fill="#ffcc00" rx="0.5"/>
+          </svg>
+          <span id="batteryVoltage" style="font-size: 10px; margin-left: 4px; color: #ffcc00; font-weight: bold; min-width: 45px;">-- V</span>
+        </div>
+        <button id="armBtn" class="connection-status" onclick="toggleArm()">DISARMED</button>
+        <div id="connectionStatus" class="connection-status disconnected">DISCONNECTED</div>
+        <button id="fullscreenBtn" onclick="toggleFullscreen()" title="Toggle fullscreen">&#9974;</button>
+      </div>
+    </div>
+    <div id="errorMessage" class="error-message"></div>
+
+    <div class="content">
+      <div class="main-content">
+        <!-- CONTROL -->
+        <div id="panel-control" class="panel-view active">
+          <div class="card">
+            <h3>VEHICLE</h3>
+            <div class="vehicle-row">
+              <label for="vehicleSelect">Vehicle:</label>
+              <select id="vehicleSelect" onchange="onVehicleChange(this.value)">
+                <option value="balancing">BALANCING ROBOT</option>
+                <option value="rccar">RC CAR</option>
+                <option value="drone">DRONE</option>
+              </select>
+              <span class="muted" id="vehicleHint"></span>
+            </div>
+          </div>
+          <div class="card">
+            <h3 id="stickTitle">CONTROL STICK</h3>
+            <div class="joystick-wrap">
+              <canvas id="joystick1"></canvas>
+            </div>
+            <div class="stick-readout" id="stickReadout">
+              Pitch: <span id="pitch-val">0.0</span>&deg;<br/>
+              Roll: <span id="roll-val">0.0</span>&deg;<br/>
+              Yaw: <span id="yaw-val">0</span>&deg;/s<br/>
+              Throttle: <span id="throttle-val">0</span>%
+            </div>
+            <div id="droneThrottleWrap" style="display: none; margin-top: 12px;">
+              <label style="font-size: 12px; color: #8892b0; font-weight: bold;">Throttle: <span id="droneThrottleVal" style="color: #00e5cc;">0</span>%</label>
+              <input type="range" id="droneThrottle" min="0" max="100" value="0" oninput="onDroneThrottle(this.value)">
+            </div>
+            <div class="row-flex" style="margin-top: 12px; justify-content: center;">
+              <button class="control-btn" style="min-width: 160px;" onclick="toggleArm()">ARM / DISARM</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATUS -->
+        <div id="panel-status" class="panel-view">
+          <div class="card">
+            <h3>STATUS &amp; TELEMETRY</h3>
+            <div class="telemetry">
+              <div class="telemetry-item"><strong>Armed:</strong> <span id="telem-armed">--</span></div>
+              <div class="telemetry-item"><strong>Vbat:</strong> <span id="telem-vbat">--</span> V</div>
+              <div class="telemetry-item"><strong>Loop Rate:</strong> <span id="telem-loop">--</span> Hz</div>
+              <div class="telemetry-item"><strong>Filter:</strong> <span id="telem-filter">--</span></div>
+              <div class="telemetry-item"><strong>PID [P,R]:</strong> <span id="telem-pid">[--,--]</span></div>
+              <div class="telemetry-item"><strong>Motors [L,R]:</strong> <span id="telem-motors">[--,--]</span></div>
+              <div class="telemetry-item"><strong>Throttle:</strong> <span id="telem-throttle">--</span>%</div>
+              <div class="telemetry-item"><strong>Filter Time:</strong> <span id="telem-filter-time">--</span> &micro;s</div>
+              <div class="telemetry-item"><strong>Avg Filter Time:</strong> <span id="telem-avg-filter-time">--</span> &micro;s</div>
+              <div class="telemetry-item"><strong>Free Heap:</strong> <span id="telem-heap">--</span> B</div>
+              <div class="telemetry-item"><strong>CPU Load:</strong> <span id="telem-cpu">--</span>%</div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>INSTRUMENTS</h3>
+            <div class="instruments">
+              <div class="inst">
+                <canvas id="attitudeCanvas" width="180" height="180"></canvas>
+                <div class="muted">Attitude</div>
+              </div>
+              <div class="inst">
+                <canvas id="compassCanvas" width="180" height="180"></canvas>
+                <div class="muted">Compass (Yaw)</div>
+              </div>
+            </div>
+            <div class="telemetry-item" style="font-size: 15px; text-align: center;">
+              <strong>Roll:</strong> <span id="sensor-roll">--</span>&deg;
+              &nbsp;&nbsp;<strong>Pitch:</strong> <span id="sensor-pitch">--</span>&deg;
+              &nbsp;&nbsp;<strong>Yaw:</strong> <span id="sensor-yaw">--</span>&deg;
+            </div>
+          </div>
+          <div class="card">
+            <h3>SERIAL CONSOLE</h3>
+            <div id="serialConsole"></div>
+            <button class="console-clear-btn" onclick="clearConsole()">Clear</button>
+          </div>
+        </div>
+
+        <!-- PID TUNE -->
+        <div id="panel-pid" class="panel-view">
+          <div class="card">
+            <h3>PID TUNING</h3>
+            <h4>PITCH</h4>
+            <div class="pid-grid" style="margin-bottom: 10px;">
+              <div><label>P</label><input type="number" id="pid-pitch-p" step="0.001" min="0" onchange="sendPidValue('pitch_p', this.value)"></div>
+              <div><label>I</label><input type="number" id="pid-pitch-i" step="0.001" min="0" onchange="sendPidValue('pitch_i', this.value)"></div>
+              <div><label>D</label><input type="number" id="pid-pitch-d" step="0.001" min="0" onchange="sendPidValue('pitch_d', this.value)"></div>
+            </div>
+            <h4>ROLL</h4>
+            <div class="pid-grid" style="margin-bottom: 10px;">
+              <div><label>P</label><input type="number" id="pid-roll-p" step="0.001" min="0" onchange="sendPidValue('roll_p', this.value)"></div>
+              <div><label>I</label><input type="number" id="pid-roll-i" step="0.001" min="0" onchange="sendPidValue('roll_i', this.value)"></div>
+              <div><label>D</label><input type="number" id="pid-roll-d" step="0.001" min="0" onchange="sendPidValue('roll_d', this.value)"></div>
+            </div>
+            <h4>YAW</h4>
+            <div class="pid-grid" style="margin-bottom: 10px;">
+              <div><label>P</label><input type="number" id="pid-yaw-p" step="0.001" min="0" onchange="sendPidValue('yaw_p', this.value)"></div>
+              <div><label>I</label><input type="number" id="pid-yaw-i" step="0.001" min="0" onchange="sendPidValue('yaw_i', this.value)"></div>
+              <div><label>D</label><input type="number" id="pid-yaw-d" step="0.001" min="0" onchange="sendPidValue('yaw_d', this.value)"></div>
+            </div>
+            <div class="row-flex">
+              <button class="control-btn secondary" onclick="loadStateFromDevice()">LOAD STATE</button>
+              <button class="control-btn" style="background: #b71c1c;" onclick="resetPID()">RESET PID</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- GRAPH -->
+        <div id="panel-graph" class="panel-view">
+          <div class="card">
+            <h3>ANGLE GRAPHS</h3>
+            <div id="angleChart"></div>
+            <div class="graph-legend">
+              <label><input type="checkbox" id="rollCheck" checked onchange="toggleDataset(0)"> <span style="color: #ff6b6b;">&#9679;</span> Roll</label>
+              <label><input type="checkbox" id="pitchCheck" checked onchange="toggleDataset(1)"> <span style="color: #4ade80;">&#9679;</span> Pitch</label>
+              <label><input type="checkbox" id="yawCheck" onchange="toggleDataset(2)"> <span style="color: #60a5fa;">&#9679;</span> Yaw</label>
+              <label><input type="checkbox" id="setpointCheck" checked onchange="toggleDataset(3)"> <span style="color: #888;">-</span> Setpoint (0&deg;)</label>
+              <label><input type="checkbox" id="autoZoomCheck" checked> Auto Zoom</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- SETUP -->
+        <div id="panel-setup" class="panel-view">
+          <div class="card">
+            <h3>CONNECTION</h3>
+            <div class="row-flex">
+              <input type="text" id="espIpInput" placeholder="192.168.x.x" value="192.168.100.27" style="flex: 1; min-width: 140px;">
+              <button class="control-btn" onclick="connectToESP32()">CONNECT</button>
+              <button class="control-btn secondary" onclick="disconnectESP32()">DISCONNECT</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>STICK RANGE</h3>
+            <label style="font-size: 12px; color: #8892b0;">Max Roll/Pitch Angle: <span id="maxAngleValue" style="color: #00e5cc; font-weight: bold;">10&deg;</span></label>
+            <input type="range" id="maxAngleSlider" min="5" max="45" value="10" oninput="updateMaxAngle(this.value)">
+            <div class="muted">Range: 5&deg; - 45&deg;. Saved locally in browser.</div>
+            <div class="row-flex" style="margin-top: 8px;">
+              <button class="control-btn secondary" onclick="resetSettings()">RESET TO DEFAULTS</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>CALIBRATION</h3>
+            <div class="muted" style="margin-bottom: 6px;">Status: <span id="calibStatus">Ready</span></div>
+            <div class="muted" id="calibInstructions" style="margin-bottom: 8px;"></div>
+            <div class="row-flex">
+              <button id="calibGyroBtn" class="control-btn secondary" onclick="startGyroCalibration()">CALIBRATE GYRO</button>
+              <button id="calibAccelBtn" class="control-btn secondary" onclick="startAccelCalibration()">CALIBRATE ACCEL</button>
+            </div>
+            <div id="calibNextBtn" style="display: none; margin-top: 8px;">
+              <button class="control-btn" style="width: 100%;" onclick="nextCalibrationStep()">NEXT STEP</button>
+            </div>
+            <div id="calibAbortBtn" style="display: none; margin-top: 8px;">
+              <button class="control-btn secondary" style="width: 100%;" onclick="abortCalibration()">ABORT</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>TRIM</h3>
+            <div class="row-flex">
+              <label class="muted">Trim Pitch (&deg;)</label>
+              <input type="number" id="trim-pitch-input" step="0.1" min="-45" max="45" onchange="sendTrimValue('trim_pitch', this.value)">
+              <label class="muted">Trim Roll (&deg;)</label>
+              <input type="number" id="trim-roll-input" step="0.1" min="-45" max="45" onchange="sendTrimValue('trim_roll', this.value)">
+            </div>
+          </div>
+          <div class="card">
+            <h3>RESET</h3>
+            <div class="row-flex">
+              <button class="control-btn" style="background: #b71c1c;" onclick="resetPID()">RESET PID</button>
+              <button class="control-btn" style="background: #b71c1c;" onclick="resetCalibration()">RESET CALIBRATION</button>
+              <button class="control-btn secondary" onclick="loadStateFromDevice()">LOAD STATE</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Mobile bottom nav (compact, narrow screens only; mirrors sidebar panels) -->
+<nav class="mobile-nav" aria-label="Panels">
+  <button class="mobile-nav-item active" data-panel="control" title="CONTROL"><span class="mobile-nav-icon">&#127918;</span><span class="mobile-nav-label">CTRL</span></button>
+  <button class="mobile-nav-item" data-panel="status" title="STATUS"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">STAT</span></button>
+  <button class="mobile-nav-item" data-panel="pid" title="PID TUNE"><span class="mobile-nav-icon">&#9881;</span><span class="mobile-nav-label">PID</span></button>
+  <button class="mobile-nav-item" data-panel="graph" title="GRAPH"><span class="mobile-nav-icon">&#128200;</span><span class="mobile-nav-label">GRAPH</span></button>
+  <button class="mobile-nav-item" data-panel="setup" title="SETUP"><span class="mobile-nav-icon">&#9888;</span><span class="mobile-nav-label">SETUP</span></button>
+</nav>
+<script src="js/state.js"></script>
+<script src="js/link.js"></script>
+<script src="js/stick.js"></script>
+<script src="js/panels.js"></script>
+</body>
+</html>
