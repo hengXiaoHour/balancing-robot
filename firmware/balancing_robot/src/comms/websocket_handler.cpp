@@ -79,9 +79,6 @@ void handleWebSocketCommand(const String& jsonStr) {
     if (end == -1) end = jsonStr.indexOf("}", start);
     String pitchStr = jsonStr.substring(start, end);
     float pitchInput = pitchStr.toFloat() * CONTROLLER_PITCH_SIGN;
-    #if WS_PITCH_INPUT_INVERT
-    pitchInput = -pitchInput;
-    #endif
     // Angle-mode path: stick degrees -> lean target (deg)
     pitch_setpoint = constrain(pitchInput, -ESPNOW_MAX_PITCH, ESPNOW_MAX_PITCH);
     // Cascade path: stick degrees -> desired forward/backward speed (m/s)
@@ -97,9 +94,6 @@ void handleWebSocketCommand(const String& jsonStr) {
     if (end == -1) end = jsonStr.indexOf("}", start);
     String rollStr = jsonStr.substring(start, end);
     float rollInput = rollStr.toFloat() * CONTROLLER_ROLL_SIGN;
-    #if WS_ROLL_INPUT_INVERT
-    rollInput = -rollInput;
-    #endif
     // Angle-mode path: stick degrees -> lean target (deg)
     roll_setpoint = constrain(rollInput, -ESPNOW_MAX_ROLL, ESPNOW_MAX_ROLL);
     // Cascade path: stick degrees -> desired lateral speed (m/s)
@@ -115,9 +109,6 @@ void handleWebSocketCommand(const String& jsonStr) {
     if (end == -1) end = jsonStr.indexOf("}", start);
     String yawStr = jsonStr.substring(start, end);
     float yawInput = yawStr.toFloat() * CONTROLLER_YAW_SIGN;
-    #if WS_YAW_INPUT_INVERT
-    yawInput = -yawInput;
-    #endif
     #if JOYSTICK_YAW_INPUT_ENABLED
     // Yaw is always rate mode: updateYawPID() reads yaw_rate_target (deg/s)
     yaw_rate_target = constrain(yawInput, -ESPNOW_MAX_YAW_RATE, ESPNOW_MAX_YAW_RATE);

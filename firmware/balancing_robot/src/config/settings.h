@@ -66,11 +66,6 @@
 #define CONTROLLER_ROLL_SIGN 1.0f  // NOT USED: roll disabled
 #define CONTROLLER_YAW_SIGN -1.0f
 
-// ===== WEBSOCKET STICK DIRECTION (0 = raw, 1 = invert; WebUI only) =====
-#define WS_PITCH_INPUT_INVERT 0  // WebUI sends pre-oriented values; keep 0 (raw)
-#define WS_ROLL_INPUT_INVERT 0
-#define WS_YAW_INPUT_INVERT 0
-
 // ===== AXIS INVERSION (0 = normal, 1 = invert; consumed by axis_map.h) =====
 #define ROLL_AXIS_INVERT 0   // NOT USED: roll disabled
 #define PITCH_AXIS_INVERT 0
