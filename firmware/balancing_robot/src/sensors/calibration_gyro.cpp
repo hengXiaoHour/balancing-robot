@@ -1,5 +1,5 @@
 #include "calibration.h"
-#include "../config/config.h"  // GYRO_SENSITIVITY
+#include "../config/settings.h"  // GYRO_SENSITIVITY
 
 // ===== Start GYRO-ONLY calibration =====
 void startGyroCalibration() {

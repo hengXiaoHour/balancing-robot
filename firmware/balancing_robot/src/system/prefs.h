@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <Preferences.h>
-#include "../config/config.h"  // ENABLE_CASCADE_PID, CASCADE_*_KP/... defaults
+#include "../config/settings.h"  // ENABLE_CASCADE_PID, CASCADE_*_KP/... defaults
 
 // PID gains (definitions in balancing_robot.ino)
 extern float KP, KI, KD;

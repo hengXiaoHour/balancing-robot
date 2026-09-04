@@ -1,5 +1,5 @@
 #include "calibration.h"
-#include "../config/config.h"  // ACCEL_SENSITIVITY, GYRO_SENSITIVITY, ACCEL_RANGE_G
+#include "../config/settings.h"  // ACCEL_SENSITIVITY, GYRO_SENSITIVITY, ACCEL_RANGE_G
 
 CalibrationData calibData;
 unsigned long lastPrintTime = 0;

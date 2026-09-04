@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "kalman_filter.h"
-#include "../config/config.h"  // ACCEL_SENSITIVITY, GYRO_* macros
+#include "../config/settings.h"  // ACCEL_SENSITIVITY, GYRO_* macros
 
 // ===== Kalman Filter Initialization State =====
 static bool kalman_initialized = false;

@@ -1,5 +1,5 @@
 #include "calibration.h"
-#include "../config/config.h"  // ACCEL_SENSITIVITY, ACCEL_RANGE_G
+#include "../config/settings.h"  // ACCEL_SENSITIVITY, ACCEL_RANGE_G
 
 // ===== Start ACCEL-ONLY calibration (6 steps) =====
 void startAccelCalibration() {

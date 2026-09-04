@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <string.h>  // memset
 #include "ekf_filter.h"
-#include "../config/config.h"  // ACCEL_SENSITIVITY, GYRO_* macros
+#include "../config/settings.h"  // ACCEL_SENSITIVITY, GYRO_* macros
 
 // ===== EKF Tuning Parameters =====
 // Process noise (Q matrix diagonal)

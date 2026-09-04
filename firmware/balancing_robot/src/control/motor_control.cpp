@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "motor_control.h"
-#include "../config/config.h"  // ENA/IN pins, PWM_*, PID_MAX, ROBOT_* limits
+#include "../config/settings.h"  // ENA/IN pins, PWM_*, PID_MAX, ROBOT_* limits
 
 // Definitions live here (were in balancing_robot.ino); externs in *_handler.h / control_task.h
 bool motorsArmed = false;

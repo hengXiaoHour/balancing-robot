@@ -2,7 +2,7 @@
 #define CONTROL_TASK_H
 
 #include <Arduino.h>
-#include "../config/config.h"
+#include "../config/settings.h"
 #include "imu.h"  // mpu, mpuInitialized
 #include "../control/motor_control.h"       // stopMotors, applyVehicleInputLimits, updateVehicleMotorControl
 #include "../control/pid_controller.h"      // updateDualPID, applyBraking

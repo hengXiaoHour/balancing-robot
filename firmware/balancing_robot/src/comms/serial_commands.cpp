@@ -1,4 +1,4 @@
-#include "../config/config.h"  // FIRST: macros used by serial_commands.h (#if guards)
+#include "../config/settings.h"  // FIRST: macros used by serial_commands.h (#if guards)
 #include "serial_commands.h"
 #include "../control/motor_control.h"  // stopMotors()
 #include "../control/pid_controller.h"  // speed setpoints

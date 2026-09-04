@@ -55,7 +55,7 @@ extern int32_t accelXSum, accelYSum, accelZSum;
 extern int32_t gyroXSum, gyroYSum, gyroZSum;
 extern int sampleCount;
 
-// (Default PID values live in config/config.h — single source of truth.)
+// (Default PID values live in config/settings.h — single source of truth.)
 
 // ===== Calibration API (see calibration.cpp) =====
 void printCalibrationMenu();

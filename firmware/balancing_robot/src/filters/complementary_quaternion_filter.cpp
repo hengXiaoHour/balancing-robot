@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "complementary_quaternion_filter.h"
-#include "../config/config.h"  // ACCEL_SENSITIVITY, GYRO_* macros
+#include "../config/settings.h"  // ACCEL_SENSITIVITY, GYRO_* macros
 
 // ===== Complementary Quaternion Filter Parameters =====
 static float comp_q_q0 = 1.0f, comp_q_q1 = 0.0f, comp_q_q2 = 0.0f, comp_q_q3 = 0.0f;  // Quaternion

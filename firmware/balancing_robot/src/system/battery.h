@@ -2,7 +2,7 @@
 #define BATTERY_H
 
 #include <Arduino.h>
-#include "../config/config.h"  // BATTERY_PIN, ADC_*, thresholds, LED pins
+#include "../config/settings.h"  // BATTERY_PIN, ADC_*, thresholds, LED pins
 #include "../sensors/battery_state.h"  // BatteryState enum
 
 // Battery globals (definitions in battery.cpp)

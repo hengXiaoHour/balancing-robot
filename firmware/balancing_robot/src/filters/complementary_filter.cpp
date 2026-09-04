@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "complementary_filter.h"
-#include "../config/config.h"  // ACCEL_SENSITIVITY, GYRO_* macros
+#include "../config/settings.h"  // ACCEL_SENSITIVITY, GYRO_* macros
 
 // Complementary Filter Parameters
 static float comp_alpha = 0.999f;  // Weight of gyro (0.98 = 98% gyro, 2% accel)

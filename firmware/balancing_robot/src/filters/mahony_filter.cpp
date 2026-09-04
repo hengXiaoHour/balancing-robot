@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "mahony_filter.h"
-#include "../config/config.h"  // ACCEL_SENSITIVITY, GYRO_* macros
+#include "../config/settings.h"  // ACCEL_SENSITIVITY, GYRO_* macros
 
 // Mahony Filter Parameters
 static float mahony_q0 = 1.0f, mahony_q1 = 0.0f, mahony_q2 = 0.0f, mahony_q3 = 0.0f;

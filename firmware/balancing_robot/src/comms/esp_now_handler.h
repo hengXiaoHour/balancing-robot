@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <freertos/FreeRTOS.h>
-#include "../config/config.h"  // ESPNOW_*, CONTROLLER_MAC_*, sign macros (body-free chain)
+#include "../config/settings.h"  // ESPNOW_*, CONTROLLER_MAC_*, sign macros (body-free chain)
 
 // ===== EXTERNAL VARIABLES =====
 extern float pitch_setpoint;

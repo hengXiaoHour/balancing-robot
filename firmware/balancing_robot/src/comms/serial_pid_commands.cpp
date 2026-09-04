@@ -1,4 +1,4 @@
-#include "../config/config.h"  // FIRST: ENABLE_CASCADE_PID / CASCADE_MODE_ANGLE_CONTROL
+#include "../config/settings.h"  // FIRST: ENABLE_CASCADE_PID / CASCADE_MODE_ANGLE_CONTROL
 #include "serial_commands.h"  // KP.., cascade vars, savePIDToPreferences(), lastPIDUpdateTime
 #include "serial_pid_commands.h"
 #include "../control/cascade_pid_controller.h"  // pitch/roll_rate_target (rate mode)

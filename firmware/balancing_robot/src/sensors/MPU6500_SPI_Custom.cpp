@@ -1,5 +1,5 @@
 #include "MPU6500_SPI_Custom.h"
-#include "../config/sensor.h"  // IMU_SPI_CLOCK_HZ + IMU_SPI_* pins (body-free chain)
+#include "../config/settings.h"  // IMU_SPI_CLOCK_HZ + IMU_SPI_* pins (body-free chain)
 
 MPU6500_SPI_Custom::MPU6500_SPI_Custom()
     : spiSettings(IMU_SPI_CLOCK_HZ, MSBFIRST, SPI_MODE3) {}

@@ -1,5 +1,5 @@
 #include "led.h"
-#include "../config/config.h"  // LOW_VOLTAGE_LED_PIN, LED_*_LEVEL, STATUS_LED_RGB, LED_* colors
+#include "../config/settings.h"  // LOW_VOLTAGE_LED_PIN, LED_*_LEVEL, STATUS_LED_RGB, LED_* colors
 
 #ifdef STATUS_LED_RGB
 // Addressable RGB (WS2812): driven by the core's built-in neopixelWrite,

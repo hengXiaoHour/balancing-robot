@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "madgwick_filter.h"
-#include "../config/config.h"  // ACCEL_SENSITIVITY, GYRO_* macros
+#include "../config/settings.h"  // ACCEL_SENSITIVITY, GYRO_* macros
 
 // Madgwick Filter Parameters
 static float madgwick_q0 = 1.0f, madgwick_q1 = 0.0f, madgwick_q2 = 0.0f, madgwick_q3 = 0.0f;  // Quaternion

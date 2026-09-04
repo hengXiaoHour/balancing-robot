@@ -53,7 +53,7 @@ void savePIDToPreferences() {
 }
 
 void resetPIDToDefaults() {
-  // Reset to default values from config.h
+  // Reset to default values from settings.h
   KP = DEFAULT_KP;
   KI = DEFAULT_KI;
   KD = DEFAULT_KD;

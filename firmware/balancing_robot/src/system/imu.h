@@ -3,8 +3,7 @@
 
 #include <Arduino.h>
 #include <Wire.h>
-#include "../config/config.h"   // I2C_SDA/SCL/SPEED
-#include "../config/sensor.h"   // IMU_Custom alias for the selected profile
+#include "../config/settings.h"   // I2C_SDA/SCL/SPEED + IMU_Custom alias
 
 // Global IMU object + init flag (definitions in imu.cpp)
 extern IMU_Custom mpu;

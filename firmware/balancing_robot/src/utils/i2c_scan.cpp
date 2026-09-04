@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "i2c_scan.h"
-#include "../config/board.h"  // I2C_SDA / I2C_SCL pins
+#include "../config/settings.h"  // I2C_SDA / I2C_SCL pins
 
 // Device name lookup helper
 const char* getI2CDeviceName(uint8_t address) {

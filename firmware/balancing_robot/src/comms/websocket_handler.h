@@ -3,7 +3,7 @@
 
 #include <WebServer.h>
 #include <WebSocketsServer.h>
-#include "../config/config.h"
+#include "../config/settings.h"
 #include "../sensors/calibration.h"  // CalibrationState, CALIB_IDLE, record/advance helpers
 
 // ===== External Variables =====

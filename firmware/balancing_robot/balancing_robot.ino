@@ -4,7 +4,7 @@
 
 #include <Wire.h>
 #include <Preferences.h>
-#include "src/config/config.h"
+#include "src/config/settings.h"
 
 // Filters
 #include "src/filters/filter_selector.h"
