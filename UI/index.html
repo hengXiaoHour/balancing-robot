@@ -58,18 +58,6 @@
         <!-- CONTROL -->
         <div id="panel-control" class="panel-view active">
           <div class="card">
-            <h3>VEHICLE</h3>
-            <div class="vehicle-row">
-              <label for="vehicleSelect">Vehicle:</label>
-              <select id="vehicleSelect" onchange="onVehicleChange(this.value)">
-                <option value="balancing">BALANCING ROBOT</option>
-                <option value="rccar">RC CAR</option>
-                <option value="drone">DRONE</option>
-              </select>
-              <span class="muted" id="vehicleHint"></span>
-            </div>
-          </div>
-          <div class="card">
             <h3 id="stickTitle">CONTROL STICK</h3>
             <div class="control-grid">
               <div class="joystick-wrap">
@@ -183,6 +171,18 @@
 
         <!-- SETUP -->
         <div id="panel-setup" class="panel-view">
+          <div class="card">
+            <h3>VEHICLE</h3>
+            <div class="vehicle-row">
+              <label for="vehicleSelect">Vehicle:</label>
+              <select id="vehicleSelect" onchange="onVehicleChange(this.value)">
+                <option value="balancing">BALANCING ROBOT</option>
+                <option value="rccar">RC CAR</option>
+                <option value="drone">DRONE</option>
+              </select>
+              <span class="muted" id="vehicleHint"></span>
+            </div>
+          </div>
           <div class="card">
             <h3>CONNECTION</h3>
             <div class="row-flex" style="margin-bottom: 8px;">
