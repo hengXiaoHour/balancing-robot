@@ -35,6 +35,20 @@
   flex-shrink: 0;
   font-size: 18px;
 }
+/* Panel toggle (Claude-style split-view): only in the expanded bar */
+.store-sidebar-collapse {
+  width: 24px;
+  height: 24px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.store-sidebar-collapse svg { display: block; }
+.store-sidebar.expanded .store-sidebar-toggle { justify-content: space-between; }
+.store-sidebar.expanded .store-sidebar-collapse { display: flex; }
+.store-sidebar-collapse:hover { color: var(--text); }
 .store-sidebar-nav { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
 /* VISWA brand: hidden while the bar is collapsed, revealed on expand */
 .sidebar-brand {
