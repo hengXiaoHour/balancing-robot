@@ -1,12 +1,12 @@
-/* Sidebar (store-llm style): 48px collapsed, 260px expanded */
+/* Sidebar NEBULA VOID: 48px collapsed, 260px expanded, pure black, hairline border */
 .store-sidebar {
   width: 48px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--bg-deep);
-  border-right: 1px solid var(--border-subtle);
-  transition: width 0.25s var(--ease-bouncy);
+  background: #000000;
+  border-right: 1px solid var(--border);
+  transition: width 0.2s linear;
   overflow: hidden;
   z-index: 130;
 }
@@ -17,13 +17,15 @@
   gap: 10px;
   padding: 14px 12px;
   cursor: pointer;
-  color: var(--text-primary);
+  color: var(--text);
   flex-shrink: 0;
   user-select: none;
   -webkit-user-select: none;
-  transition: background 0.2s var(--ease-smooth);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
-.store-sidebar-toggle:hover { background: rgba(255, 255, 255, 0.1); }
+.store-sidebar-toggle:hover { background: var(--surface); }
 .store-sidebar-hamburger {
   width: 24px;
   height: 24px;
@@ -40,23 +42,24 @@
   gap: 12px;
   width: 100%;
   padding: 10px 12px;
-  background: none;
+  background: transparent;
   border: none;
   border-left: 3px solid transparent;
-  color: var(--text-secondary);
+  color: var(--muted);
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
   text-align: left;
   white-space: nowrap;
-  transition: background 0.2s var(--ease-smooth), color 0.2s var(--ease-smooth), transform 0.25s var(--ease-bouncy);
 }
-.store-sidebar-nav-item:hover { background: rgba(255, 77, 77, 0.15); color: var(--coral-bright); transform: translateX(2px); }
+.store-sidebar-nav-item:hover { background: var(--surface); color: var(--text); }
 .store-sidebar-nav-item.active {
-  background: rgba(255, 77, 77, 0.15);
-  color: var(--coral-bright);
-  border-left-color: var(--coral-bright);
+  background: var(--surface);
+  color: var(--red-hot);
+  border-left-color: var(--red);
 }
 .store-sidebar-icon {
   width: 24px;
@@ -67,5 +70,11 @@
   flex-shrink: 0;
   font-size: 16px;
 }
-.store-sidebar-label { overflow: hidden; text-overflow: ellipsis; }
+.store-sidebar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
 .store-sidebar-spacer { flex: 1; }
