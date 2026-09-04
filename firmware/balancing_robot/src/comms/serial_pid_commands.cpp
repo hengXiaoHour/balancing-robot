@@ -3,6 +3,9 @@
 #include "serial_pid_commands.h"
 #include "../control/cascade_pid_controller.h"  // pitch/roll_rate_target (rate mode)
 
+// Definition lives here (was in balancing_robot.ino); extern in serial_commands.h
+unsigned long lastPIDUpdateTime = 0;
+
 // ===== PID-tuning commands (moved from handleSerialCommand() verbatim) =====
 // Returns true when the command was handled.
 bool handlePIDCommand(const String& command) {

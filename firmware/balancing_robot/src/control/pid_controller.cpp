@@ -1,6 +1,26 @@
 #include <Arduino.h>
 #include "pid_controller.h"
 
+// Definitions live here (were in balancing_robot.ino); externs in pid_controller.h
+float KP = DEFAULT_KP, KI = DEFAULT_KI, KD = DEFAULT_KD;
+float pidError = 0.0f, pidIntegral = 0.0f, pidOutput = 0.0f;
+float pidError_Pitch = 0.0f, pidIntegral_Pitch = 0.0f, pidOutput_Pitch = 0.0f;
+float KP_Pitch = DEFAULT_KP, KI_Pitch = DEFAULT_KI, KD_Pitch = DEFAULT_KD;
+float pidError_Roll = 0.0f, pidIntegral_Roll = 0.0f, pidOutput_Roll = 0.0f;
+float KP_Roll = DEFAULT_KP, KI_Roll = DEFAULT_KI, KD_Roll = DEFAULT_KD;
+float pidIntegral_Yaw = 0.0f, pidOutput_Yaw = 0.0f;
+float KP_Yaw = DEFAULT_KP, KI_Yaw = DEFAULT_KI, KD_Yaw = DEFAULT_KD;
+float yaw_rate_target = 0.0f;
+float LOW_THROTTLE_THRESHOLD = 15.0f;
+// Velocity estimation state (used by updateVelocityEstimation)
+float vel_x = 0.0f, vel_y = 0.0f;
+float speed_x_setpoint = 0.0f, speed_y_setpoint = 0.0f;
+float speedKp = 0.1f, speedKi = 0.01f, speedKd = 0.0f;
+float speedIntegral_x = 0.0f, speedIntegral_y = 0.0f;
+float speedDeadband = 0.05f, maxAngleFromSpeed = 5.0f;
+float accel_x_filtered = 0.0f, accel_y_filtered = 0.0f;
+float accelAlpha = 0.1f, velDecay = 0.9f;
+
 // ===== Update Single PID Controller (PITCH ONLY) =====
 void updateSinglePID() {
   // Calculate error using pitch angle (forward/backward tilt)

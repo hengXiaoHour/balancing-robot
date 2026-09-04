@@ -9,10 +9,7 @@
 // Preference storage
 Preferences prefs;
 
-// PID Controller Variables (loaded from preferences)
-float KP = DEFAULT_KP;
-float KI = DEFAULT_KI;
-float KD = DEFAULT_KD;
+// PID gains + state: defined in control/pid_controller.cpp
 
 // Include header files AFTER config.h
 #include "src/filters/filter_selector.h"        // Filter selection (choose ONE)
@@ -99,51 +96,8 @@ float P[6][6] = {
 };
 float dt = 0.02;
 
-// PID variables
-float pidError = 0.0;
-float pidIntegral = 0.0;
-float pidLastError = 0.0;
-float pidOutput = 0.0;
-
-// DUAL PID - PITCH
-float pidError_Pitch = 0.0;
-float pidIntegral_Pitch = 0.0;
-float pidOutput_Pitch = 0.0;
-float KP_Pitch = DEFAULT_KP;
-float KI_Pitch = DEFAULT_KI;
-float KD_Pitch = DEFAULT_KD;
-
-// DUAL PID - ROLL
-float pidError_Roll = 0.0;
-float pidIntegral_Roll = 0.0;
-float pidOutput_Roll = 0.0;
-float KP_Roll = DEFAULT_KP;
-float KI_Roll = DEFAULT_KI;
-float KD_Roll = DEFAULT_KD;
-
-// YAW AXIS
-float pidIntegral_Yaw = 0.0;
-float pidOutput_Yaw = 0.0;
-float KP_Yaw = DEFAULT_KP;
-float KI_Yaw = DEFAULT_KI;
-float KD_Yaw = DEFAULT_KD;
-
-// Cascaded control
-float vel_x = 0.0f;
-float vel_y = 0.0f;
-float speed_x_setpoint = 0.0f;
-float speed_y_setpoint = 0.0f;
-float speedKp = 0.1f, speedKi = 0.01f, speedKd = 0.0f;
-float speedIntegral_x = 0.0f, speedIntegral_y = 0.0f;
-float speedDeadband = 0.05f;
-float maxAngleFromSpeed = 5.0f;
-float accel_x_filtered = 0.0f, accel_y_filtered = 0.0f;
-float accelAlpha = 0.1f;
-float velDecay = 0.9f;
-float yaw_rate_target = 0.0f;
-float pitch_rate_target = 0.0f;
-float roll_rate_target = 0.0f;
-float LOW_THROTTLE_THRESHOLD = 15.0f;
+// PID state + per-axis gains + velocity estimation: defined in control/pid_controller.cpp
+// (pidLastError was dead — deleted, no references anywhere)
 
 // Motor scaling
 float motorScale_Left = 1.0f;
@@ -175,8 +129,7 @@ bool ledState = false;
 float pidOutput_Left = 0.0;
 float pidOutput_Right = 0.0;
 
-// Telemetry
-unsigned long lastPIDUpdateTime = 0;
+// Telemetry timestamp: defined in comms/serial_pid_commands.cpp
 
 // Failsafe filtering
 float filtered_pitch = 0.0;
