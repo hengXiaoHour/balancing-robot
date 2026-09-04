@@ -8,6 +8,7 @@
 #include "../sensors/calibration.h"  // calibrationState, CALIB_IDLE, resetCalibrationToDefaults()
 #include "../utils/timing.h"  // loopTimeUs
 #include "../filters/filter_selector.h"  // getActiveFilterName()
+#include "serial_pid_commands.h"  // handlePIDCommand() sub-dispatcher
 
 // Forward declarations (defined in their modules)
 void retryMPUInitialization();  // system/imu.cpp
