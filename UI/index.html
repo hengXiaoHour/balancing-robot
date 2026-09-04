@@ -27,7 +27,6 @@
       <button class="store-sidebar-nav-item active" data-panel="control" title="CONTROL"><span class="store-sidebar-icon">&#9678;</span><span class="store-sidebar-label">CONTROL</span></button>
       <button class="store-sidebar-nav-item" data-panel="status" title="STATUS"><span class="store-sidebar-icon">&#9646;</span><span class="store-sidebar-label">STATUS</span></button>
       <button class="store-sidebar-nav-item" data-panel="pid" title="PID TUNE"><span class="store-sidebar-icon">&#10011;</span><span class="store-sidebar-label">PID TUNE</span></button>
-      <button class="store-sidebar-nav-item" data-panel="graph" title="GRAPH"><span class="store-sidebar-icon">&#8767;</span><span class="store-sidebar-label">GRAPH</span></button>
       <button class="store-sidebar-nav-item" data-panel="setup" title="SETUP"><span class="store-sidebar-icon">&#9651;</span><span class="store-sidebar-label">SETUP</span></button>
     </nav>
     <div class="store-sidebar-spacer"></div>
@@ -119,6 +118,17 @@
             </div>
           </div>
           <div class="card">
+            <h3>ANGLE GRAPHS</h3>
+            <div id="angleChart"></div>
+            <div class="graph-legend">
+              <label><input type="checkbox" id="rollCheck" checked onchange="toggleDataset(0)"> <span style="color: #ff6b6b;">&#9679;</span> Roll</label>
+              <label><input type="checkbox" id="pitchCheck" checked onchange="toggleDataset(1)"> <span style="color: #4ade80;">&#9679;</span> Pitch</label>
+              <label><input type="checkbox" id="yawCheck" onchange="toggleDataset(2)"> <span style="color: #60a5fa;">&#9679;</span> Yaw</label>
+              <label><input type="checkbox" id="setpointCheck" checked onchange="toggleDataset(3)"> <span style="color: #888;">-</span> Setpoint (0&deg;)</label>
+              <label><input type="checkbox" id="autoZoomCheck" checked> Auto Zoom</label>
+            </div>
+          </div>
+          <div class="card">
             <h3>SERIAL CONSOLE</h3>
             <div id="serialConsole"></div>
             <button class="console-clear-btn" onclick="clearConsole()">Clear</button>
@@ -150,21 +160,6 @@
             <div class="row-flex">
               <button class="control-btn secondary" onclick="loadStateFromDevice()">LOAD STATE</button>
               <button class="control-btn" style="background: #b71c1c;" onclick="resetPID()">RESET PID</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- GRAPH -->
-        <div id="panel-graph" class="panel-view">
-          <div class="card">
-            <h3>ANGLE GRAPHS</h3>
-            <div id="angleChart"></div>
-            <div class="graph-legend">
-              <label><input type="checkbox" id="rollCheck" checked onchange="toggleDataset(0)"> <span style="color: #ff6b6b;">&#9679;</span> Roll</label>
-              <label><input type="checkbox" id="pitchCheck" checked onchange="toggleDataset(1)"> <span style="color: #4ade80;">&#9679;</span> Pitch</label>
-              <label><input type="checkbox" id="yawCheck" onchange="toggleDataset(2)"> <span style="color: #60a5fa;">&#9679;</span> Yaw</label>
-              <label><input type="checkbox" id="setpointCheck" checked onchange="toggleDataset(3)"> <span style="color: #888;">-</span> Setpoint (0&deg;)</label>
-              <label><input type="checkbox" id="autoZoomCheck" checked> Auto Zoom</label>
             </div>
           </div>
         </div>

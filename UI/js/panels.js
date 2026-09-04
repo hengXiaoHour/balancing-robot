@@ -19,7 +19,7 @@ function showPanel(name) {
   document.querySelectorAll('.panel-view').forEach(function (p) { p.classList.remove('active'); });
   var el = document.getElementById('panel-' + name);
   if (el) el.classList.add('active');
-  if (name === 'graph') {
+  if (name === 'status' || name === 'graph') {
     if (!window.angleChartInstance) {
       setTimeout(function () { initializeAngleChart(); }, 100);
     } else {
