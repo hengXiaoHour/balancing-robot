@@ -69,6 +69,8 @@
   justify-content: center;
   flex-shrink: 0;
   font-size: 16px;
+  color: inherit; /* monotone: glyphs inherit item color, never emoji paint */
+  font-variant-emoji: text;
 }
 .store-sidebar-label {
   overflow: hidden;
