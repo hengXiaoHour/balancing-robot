@@ -64,8 +64,7 @@ extern volatile bool espnow_connected;
 // Global Variables
 unsigned long lastLoopTime = 0;
 bool filterInitialized = false;
-bool motorsArmed = false;
-bool motorsActive = false;
+// Arm/motor state: defined in control/motor_control.cpp
 bool statusMonitoring = false;
 bool debugMonitoring = false;
 float pitch_setpoint = 0.0;
@@ -99,35 +98,17 @@ float dt = 0.02;
 // PID state + per-axis gains + velocity estimation: defined in control/pid_controller.cpp
 // (pidLastError was dead — deleted, no references anywhere)
 
-// Motor scaling
-float motorScale_Left = 1.0f;
-float motorScale_Right = 1.0f;
-float throttle = 25.0f;
-float throttle_increment = 5.0f;
-float throttle_input_normalized = 0.0f;
+// Motor scaling + outputs + arm hysteresis: defined in control/motor_control.cpp
 
-// Motor test mode (stubs — test mode is disabled in BALANCING_ROBOT mode)
-bool testMotorActive = false;
+// Motor test mode: defined in control/motor_control.cpp
 
 // Filter variables
 float filtered_accelX = 0.0, filtered_accelY = 0.0, filtered_accelZ = 0.0;
 float filtered_gyroX = 0.0, filtered_gyroY = 0.0, filtered_gyroZ = 0.0;
 
-// Battery voltage monitoring
-float battery_voltage = 0.0f;
-float battery_voltage_filtered = 0.0f;
-float battery_samples[BATTERY_SAMPLE_SIZE] = {0};
-int battery_sample_index = 0;
-bool batteryFilterPrimed = false;
-float lastValidBatteryRawVoltage = 0.0f;
+// Battery voltage monitoring: defined in system/battery.cpp
 
-BatteryState batteryState = BATTERY_NORMAL;
-unsigned long lastLEDBlink = 0;
-bool ledState = false;
-
-// Motor PIDs
-float pidOutput_Left = 0.0;
-float pidOutput_Right = 0.0;
+// Motor PIDs: defined in control/motor_control.cpp
 
 // Telemetry timestamp: defined in comms/serial_pid_commands.cpp
 
@@ -135,9 +116,7 @@ float pidOutput_Right = 0.0;
 float filtered_pitch = 0.0;
 float filtered_roll = 0.0;
 
-// Arm hysteresis
-bool safeToArm = false;
-uint16_t safeAngleCounter = 0;
+// Arm hysteresis: defined in control/motor_control.cpp
 
 // Dual-core task variables
 SemaphoreHandle_t dataLock = NULL;
