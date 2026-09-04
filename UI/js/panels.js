@@ -89,7 +89,12 @@ function armHoldCancel() {
   }
 }
 function armHoldClick() {
-  if (!isConnected) { showError('Not connected to ESP32'); return; }
+  if (!isConnected) {
+    // Dead button = way back in: pop the link gate instead of nagging.
+    offlineDismissed = false;
+    syncOfflineOverlay();
+    return;
+  }
   if (state.armed) toggleArm();          // tap to disarm, instant
   else if (!armHoldDone) showError('Hold 1s to ARM');
   armHoldDone = false;
