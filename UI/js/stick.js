@@ -234,8 +234,10 @@ stickCanvas.addEventListener('mousemove', function (e) { if (stickDragging) { e.
 window.addEventListener('mouseup', function () { if (stickDragging) stickReset(); });
 window.addEventListener('blur', function () { if (stickDragging) stickReset(); });
 window.addEventListener('touchend', function () { if (stickDragging) stickReset(); });
-stickCanvas.addEventListener('mouseup', function (e) { if (e) e.preventDefault(); stickReset(); });
-stickCanvas.addEventListener('mouseleave', function () { if (stickDragging) stickReset(); });
+// Held drags track even off-canvas (clamped to the edge in stickUpdate):
+// leaving the border pins the stick, only release recenters it.
+window.addEventListener('mousemove', function (e) { if (stickDragging && e.buttons) stickUpdate(e.clientX, e.clientY); });
+window.addEventListener('touchmove', function (e) { if (stickDragging && e.touches.length) stickUpdate(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 stickCanvas.addEventListener('touchstart', function (e) { e.preventDefault(); stickDragging = true; stickUpdate(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
 stickCanvas.addEventListener('touchmove', function (e) { if (stickDragging) { e.preventDefault(); stickUpdate(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
 stickCanvas.addEventListener('touchend', function (e) { if (e) e.preventDefault(); stickReset(); });
