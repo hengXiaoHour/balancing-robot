@@ -47,12 +47,7 @@ extern int32_t accelXSum, accelYSum, accelZSum;
 extern int32_t gyroXSum, gyroYSum, gyroZSum;
 extern int sampleCount;
 
-// ===== Default PID values (moved from pid_tuning.h, which is deleted) =====
-// NOTE: these intentionally override config.h's DEFAULT_KP/KI/KD for the axis
-// gains. Do not "fix" the duplication without retuning the robot (Phase 5).
-#define DEFAULT_KP 8.0
-#define DEFAULT_KI 0.2
-#define DEFAULT_KD 5.0
+// (Default PID values live in config/config.h — single source of truth.)
 
 // ===== Calibration API (see calibration.cpp) =====
 void printCalibrationMenu();
