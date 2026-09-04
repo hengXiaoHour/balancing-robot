@@ -78,7 +78,8 @@ void handleWebSocketCommand(const String& jsonStr) {
     int end = jsonStr.indexOf(",", start);
     if (end == -1) end = jsonStr.indexOf("}", start);
     String pitchStr = jsonStr.substring(start, end);
-    float pitchInput = pitchStr.toFloat() * CONTROLLER_PITCH_SIGN;
+    // NOTE: negated — UI sends nose-up-positive, lean target is nose-down-positive
+    float pitchInput = pitchStr.toFloat() * CONTROLLER_PITCH_SIGN * -1.0f;
     // Angle-mode path: stick degrees -> lean target (deg)
     pitch_setpoint = constrain(pitchInput, -ESPNOW_MAX_PITCH, ESPNOW_MAX_PITCH);
     // Cascade path: stick degrees -> desired forward/backward speed (m/s)
