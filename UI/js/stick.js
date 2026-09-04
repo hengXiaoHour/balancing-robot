@@ -6,6 +6,17 @@ var stickMax = 100;
 var stickX = 0, stickY = 0; // pixel pos of knob
 var stickDragging = false;
 
+// Yaw deadzone (balancing): stick angles within ±20° of the fore-aft
+// axis read as pure pitch — lean sideways past it to yaw.
+var YAW_DEADZONE_DEG = 20;
+function yawWithDeadzone(normX, normY, fullScale) {
+  var mag = Math.sqrt(normX * normX + normY * normY);
+  if (mag < 0.02) return 0;
+  var ang = Math.atan2(Math.abs(normX), Math.abs(normY)) * 180 / Math.PI;
+  if (ang <= YAW_DEADZONE_DEG) return 0;
+  return normX * fullScale * Math.min(1, (ang - YAW_DEADZONE_DEG) / (90 - YAW_DEADZONE_DEG));
+}
+
 function sizeStick() {
   var rect = stickCanvas.getBoundingClientRect();
   var side = Math.max(160, Math.min(rect.width || 300, 640));
@@ -50,6 +61,20 @@ function drawStick() {
     x1 = cx + Math.cos(a) * inner; y1 = cy + Math.sin(a) * inner;
     x2 = cx + Math.cos(a) * stickMax; y2 = cy + Math.sin(a) * stickMax;
     stickCtx.beginPath(); stickCtx.moveTo(x1, y1); stickCtx.lineTo(x2, y2); stickCtx.stroke();
+  }
+  // yaw deadzone rails (±20° about fore-aft): lean past them to yaw
+  if (typeof vehicle !== 'undefined' && vehicle === 'balancing') {
+    stickCtx.save();
+    stickCtx.strokeStyle = 'rgba(138,138,138,0.35)';
+    stickCtx.lineWidth = 1;
+    [-1, 1].forEach(function (s) {
+      var ra = s * YAW_DEADZONE_DEG * Math.PI / 180;
+      stickCtx.beginPath();
+      stickCtx.moveTo(cx - Math.sin(ra) * stickMax, cy + Math.cos(ra) * stickMax);
+      stickCtx.lineTo(cx + Math.sin(ra) * stickMax, cy - Math.cos(ra) * stickMax);
+      stickCtx.stroke();
+    });
+    stickCtx.restore();
   }
   // center home marker
   stickCtx.strokeStyle = '#3A3A3A';
@@ -112,7 +137,7 @@ function stickUpdate(clientX, clientY) {
     // Negated: canvas Y is down-positive, lean target is forward-positive.
     state.pitch = -normY * maxRollPitchAngle;
     state.roll = 0;
-    state.yaw = normX * 360;
+    state.yaw = yawWithDeadzone(normX, normY, 360);
     state.throttle = state.armed ? 0.2 : 0;
   } else if (vehicle === 'rccar') {
     // Y -> throttle 0-100%, X -> yaw / steer
