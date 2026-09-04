@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Multi-Vehicle Control</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#050810">
+  <meta name="theme-color" content="#000000">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -24,11 +24,11 @@
       <span class="store-sidebar-hamburger">&#9776;</span>
     </div>
     <nav class="store-sidebar-nav">
-      <button class="store-sidebar-nav-item active" data-panel="control" title="CONTROL"><span class="store-sidebar-icon">&#127918;</span><span class="store-sidebar-label">CONTROL</span></button>
-      <button class="store-sidebar-nav-item" data-panel="status" title="STATUS"><span class="store-sidebar-icon">&#128202;</span><span class="store-sidebar-label">STATUS</span></button>
-      <button class="store-sidebar-nav-item" data-panel="pid" title="PID TUNE"><span class="store-sidebar-icon">&#9881;</span><span class="store-sidebar-label">PID TUNE</span></button>
-      <button class="store-sidebar-nav-item" data-panel="graph" title="GRAPH"><span class="store-sidebar-icon">&#128200;</span><span class="store-sidebar-label">GRAPH</span></button>
-      <button class="store-sidebar-nav-item" data-panel="setup" title="SETUP"><span class="store-sidebar-icon">&#9888;</span><span class="store-sidebar-label">SETUP</span></button>
+      <button class="store-sidebar-nav-item active" data-panel="control" title="CONTROL"><span class="store-sidebar-icon">&#9678;</span><span class="store-sidebar-label">CONTROL</span></button>
+      <button class="store-sidebar-nav-item" data-panel="status" title="STATUS"><span class="store-sidebar-icon">&#9646;</span><span class="store-sidebar-label">STATUS</span></button>
+      <button class="store-sidebar-nav-item" data-panel="pid" title="PID TUNE"><span class="store-sidebar-icon">&#10011;</span><span class="store-sidebar-label">PID TUNE</span></button>
+      <button class="store-sidebar-nav-item" data-panel="graph" title="GRAPH"><span class="store-sidebar-icon">&#8767;</span><span class="store-sidebar-label">GRAPH</span></button>
+      <button class="store-sidebar-nav-item" data-panel="setup" title="SETUP"><span class="store-sidebar-icon">&#9651;</span><span class="store-sidebar-label">SETUP</span></button>
     </nav>
     <div class="store-sidebar-spacer"></div>
   </div>
@@ -48,7 +48,7 @@
         </div>
         <button id="armBtn" class="connection-status" onclick="toggleArm()">DISARMED</button>
         <div id="connectionStatus" class="connection-status disconnected">DISCONNECTED</div>
-        <button id="fullscreenBtn" onclick="toggleFullscreen()" title="Toggle fullscreen">&#9974;</button>
+        <button id="fullscreenBtn" onclick="toggleFullscreen()" title="Toggle fullscreen">FULL</button>
       </div>
     </div>
     <div id="errorMessage" class="error-message"></div>
@@ -71,21 +71,25 @@
           </div>
           <div class="card">
             <h3 id="stickTitle">CONTROL STICK</h3>
-            <div class="joystick-wrap">
-              <canvas id="joystick1"></canvas>
-            </div>
-            <div class="stick-readout" id="stickReadout">
-              Pitch: <span id="pitch-val">0.0</span>&deg;<br/>
-              Roll: <span id="roll-val">0.0</span>&deg;<br/>
-              Yaw: <span id="yaw-val">0</span>&deg;/s<br/>
-              Throttle: <span id="throttle-val">0</span>%
-            </div>
-            <div id="droneThrottleWrap" style="display: none; margin-top: 12px;">
-              <label style="font-size: 12px; color: #8892b0; font-weight: bold;">Throttle: <span id="droneThrottleVal" style="color: #00e5cc;">0</span>%</label>
-              <input type="range" id="droneThrottle" min="0" max="100" value="0" oninput="onDroneThrottle(this.value)">
-            </div>
-            <div class="row-flex" style="margin-top: 12px; justify-content: center;">
-              <button class="control-btn" style="min-width: 160px;" onclick="toggleArm()">ARM / DISARM</button>
+            <div class="control-grid">
+              <div class="joystick-wrap">
+                <canvas id="joystick1"></canvas>
+              </div>
+              <div class="control-side">
+                <div class="stick-readout" id="stickReadout">
+                  <div class="ro-row"><span class="ro-label">Pitch</span><span class="ro-val"><span id="pitch-val">0.0</span>&deg;</span></div>
+                  <div class="ro-row"><span class="ro-label">Roll</span><span class="ro-val"><span id="roll-val">0.0</span>&deg;</span></div>
+                  <div class="ro-row"><span class="ro-label">Yaw</span><span class="ro-val"><span id="yaw-val">0</span>&deg;/s</span></div>
+                  <div class="ro-row"><span class="ro-label">Throttle</span><span class="ro-val"><span id="throttle-val">0</span>%</span></div>
+                </div>
+                <div id="droneThrottleWrap" style="display: none; margin-top: 12px;">
+                  <label style="font-size: 12px; color: #8892b0; font-weight: bold;">Throttle: <span id="droneThrottleVal" style="color: #00e5cc;">0</span>%</label>
+                  <input type="range" id="droneThrottle" min="0" max="100" value="0" oninput="onDroneThrottle(this.value)">
+                </div>
+                <div class="row-flex" style="margin-top: 12px;">
+                  <button class="control-btn arm-wide" onclick="toggleArm()">ARM / DISARM</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -233,14 +237,6 @@
     </div>
   </div>
 </div>
-<!-- Mobile bottom nav (compact, narrow screens only; mirrors sidebar panels) -->
-<nav class="mobile-nav" aria-label="Panels">
-  <button class="mobile-nav-item active" data-panel="control" title="CONTROL"><span class="mobile-nav-icon">&#127918;</span><span class="mobile-nav-label">CTRL</span></button>
-  <button class="mobile-nav-item" data-panel="status" title="STATUS"><span class="mobile-nav-icon">&#128202;</span><span class="mobile-nav-label">STAT</span></button>
-  <button class="mobile-nav-item" data-panel="pid" title="PID TUNE"><span class="mobile-nav-icon">&#9881;</span><span class="mobile-nav-label">PID</span></button>
-  <button class="mobile-nav-item" data-panel="graph" title="GRAPH"><span class="mobile-nav-icon">&#128200;</span><span class="mobile-nav-label">GRAPH</span></button>
-  <button class="mobile-nav-item" data-panel="setup" title="SETUP"><span class="mobile-nav-icon">&#9888;</span><span class="mobile-nav-label">SETUP</span></button>
-</nav>
 <script src="js/state.js"></script>
 <script src="js/link.js"></script>
 <script src="js/stick.js"></script>

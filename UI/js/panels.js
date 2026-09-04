@@ -15,23 +15,10 @@ navItems.forEach(function (btn) {
     if (window.innerWidth < 768) sidebar.classList.remove('expanded');
   });
 });
-// Bottom mobile nav mirrors the sidebar (same data-panel values).
-var mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-mobileNavItems.forEach(function (btn) {
-  btn.addEventListener('click', function () {
-    showPanel(btn.getAttribute('data-panel'));
-    navItems.forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-panel') === btn.getAttribute('data-panel'));
-    });
-    mobileNavItems.forEach(function (b) { b.classList.remove('active'); });
-    btn.classList.add('active');
-  });
-});
 function showPanel(name) {
   document.querySelectorAll('.panel-view').forEach(function (p) { p.classList.remove('active'); });
   var el = document.getElementById('panel-' + name);
   if (el) el.classList.add('active');
-  mobileNavItems.forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-panel') === name); });
   if (name === 'graph') {
     if (!window.angleChartInstance) {
       setTimeout(function () { initializeAngleChart(); }, 100);

@@ -92,8 +92,7 @@ button.control-btn.armed { background: var(--red); border-color: var(--red); col
 }
 .error-message.show { display: block; }
 
-/* ===== Mobile / narrow-screen layout: CSS only, no markup changes ===== */
-.mobile-nav { display: none; }
+/* ===== Mobile / narrow-screen layout ===== */
 @media (max-width: 768px) {
   html, body { overflow: auto; }
   body { min-height: max(560px, 100dvh); }
@@ -111,57 +110,15 @@ button.control-btn.armed { background: var(--red); border-color: var(--red); col
     padding-top: calc(8px + env(safe-area-inset-top, 0px));
   }
   .main-content { padding: 12px 16px 24px 16px; }
+  .main-content { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); scroll-padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   .card { margin-bottom: 16px; }
   /* Touch-first sizing: min 44px targets */
   button.control-btn, .console-clear-btn, #fullscreenBtn, #armBtn,
   .connection-status, select, input[type="text"], input[type="number"] {
     min-height: 44px;
   }
-  .store-sidebar-nav-item, .mobile-nav-item { min-height: 44px; }
+  .store-sidebar-nav-item { min-height: 44px; }
   input[type="range"] { min-height: 44px; }
 
-  /* Same sidebar markup becomes a fixed bottom tab bar */
-  .mobile-nav { display: none; }
-  .store-sidebar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: calc(64px + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    flex-direction: row;
-    align-items: stretch;
-    background: var(--bg);
-    border-right: none;
-    border-top: 1px solid var(--border);
-    z-index: 100;
-  }
-  .store-sidebar.expanded { width: 100%; }
-  .store-sidebar-toggle { display: none; }
-  .store-sidebar-spacer { display: none; }
-  .store-sidebar-nav {
-    flex-direction: row;
-    flex: 1;
-    align-items: stretch;
-    justify-content: space-around;
-    padding: 0;
-    gap: 0;
-  }
-  .store-sidebar-nav-item {
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 2px;
-    flex: 1;
-    width: auto;
-    padding: 6px 4px;
-    border-left: none;
-    border-top: 2px solid transparent;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-  }
-  .store-sidebar-nav-item:hover { transform: none; }
-  .store-sidebar-nav-item.active { border-top-color: var(--red); }
-  .store-sidebar-icon { width: auto; height: auto; font-size: 18px; line-height: 1; }
-  .store-sidebar-label { font-size: 10px; letter-spacing: 0.1em; }
+
 }

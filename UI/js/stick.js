@@ -8,35 +8,53 @@ var stickDragging = false;
 
 function sizeStick() {
   var rect = stickCanvas.getBoundingClientRect();
-  var w = Math.max(100, rect.width || 300);
-  var h = 280;
-  stickCanvas.width = w;
-  stickCanvas.height = h;
-  stickMax = Math.min(w, h) / 2 - 30;
-  if (!stickDragging) { stickX = w / 2; stickY = h / 2; }
+  var side = Math.max(160, Math.min(rect.width || 300, 340));
+  stickCanvas.width = side;
+  stickCanvas.height = side;
+  stickCanvas.style.height = side + 'px';
+  stickMax = side / 2 - 32;
+  if (!stickDragging) { stickX = side / 2; stickY = side / 2; }
   drawStick();
 }
 function drawStick() {
   var w = stickCanvas.width, h = stickCanvas.height;
-  stickCtx.fillStyle = '#050810';
+  var cx = w / 2, cy = h / 2;
+  stickCtx.fillStyle = '#000000';
   stickCtx.fillRect(0, 0, w, h);
-  stickCtx.strokeStyle = 'rgba(137,146,176,0.4)';
-  stickCtx.lineWidth = 2;
+  // crosshair axes
+  stickCtx.strokeStyle = '#2A2A2A';
+  stickCtx.lineWidth = 1;
   stickCtx.beginPath();
-  stickCtx.arc(w / 2, h / 2, stickMax, 0, Math.PI * 2);
+  stickCtx.moveTo(cx - stickMax - 6, cy); stickCtx.lineTo(cx + stickMax + 6, cy);
+  stickCtx.moveTo(cx, cy - stickMax - 6); stickCtx.lineTo(cx, cy + stickMax + 6);
   stickCtx.stroke();
-  stickCtx.fillStyle = '#5a6480';
+  // travel ring + tick marks
+  stickCtx.strokeStyle = '#3A3A3A';
+  stickCtx.lineWidth = 1;
   stickCtx.beginPath();
-  stickCtx.arc(w / 2, h / 2, 5, 0, Math.PI * 2);
+  stickCtx.arc(cx, cy, stickMax, 0, Math.PI * 2);
+  stickCtx.stroke();
+  var i, a, x1, y1, x2, y2;
+  for (i = 0; i < 12; i++) {
+    a = i * Math.PI / 6;
+    x1 = cx + Math.cos(a) * (stickMax - 7); y1 = cy + Math.sin(a) * (stickMax - 7);
+    x2 = cx + Math.cos(a) * stickMax; y2 = cy + Math.sin(a) * stickMax;
+    stickCtx.beginPath(); stickCtx.moveTo(x1, y1); stickCtx.lineTo(x2, y2); stickCtx.stroke();
+  }
+  // center home dot
+  stickCtx.fillStyle = '#3A3A3A';
+  stickCtx.beginPath();
+  stickCtx.arc(cx, cy, 4, 0, Math.PI * 2);
   stickCtx.fill();
-  stickCtx.fillStyle = isConnected ? '#ff4d4d' : '#5a6480';
+  // knob: gray idle, red when linked
+  stickCtx.fillStyle = isConnected ? '#CC0000' : '#8A8A8A';
   stickCtx.beginPath();
-  stickCtx.arc(stickX, stickY, 25, 0, Math.PI * 2);
+  stickCtx.arc(stickX, stickY, 22, 0, Math.PI * 2);
   stickCtx.fill();
-  stickCtx.strokeStyle = '#00e5cc';
-  stickCtx.lineWidth = 2;
+  stickCtx.strokeStyle = isConnected ? '#FF0A0A' : '#F2F2F2';
+  stickCtx.lineWidth = 1;
   stickCtx.beginPath();
-  stickCtx.arc(stickX, stickY, 25, 0, Math.PI * 2);
+  stickCtx.arc(stickX, stickY, 22, 0, Math.PI * 2);
   stickCtx.stroke();
 }
 function stickUpdate(clientX, clientY) {
