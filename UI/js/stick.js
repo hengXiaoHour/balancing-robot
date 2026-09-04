@@ -93,6 +93,18 @@ function drawStick() {
     stickCtx.strokeStyle = linked ? 'rgba(255,10,10,0.35)' : 'rgba(138,138,138,0.3)';
     stickCtx.lineWidth = 1;
     stickCtx.beginPath(); stickCtx.moveTo(cx, cy); stickCtx.lineTo(stickX, stickY); stickCtx.stroke();
+    // overdrive halo: outer arc grows while pinned at the edge
+    if (typeof odFactor === 'number' && odFactor > 1.01) {
+      stickCtx.save();
+      stickCtx.strokeStyle = '#FF0A0A';
+      stickCtx.globalAlpha = Math.min(1, (odFactor - 1) * 2);
+      stickCtx.lineWidth = 2;
+      stickCtx.lineCap = 'round';
+      stickCtx.beginPath();
+      stickCtx.arc(cx, cy, stickMax + 8, ang0 - 0.5, ang0 + 0.5);
+      stickCtx.stroke();
+      stickCtx.restore();
+    }
   }
   // nub: small solid graphite dot with hairline rim, glow only when live
   var knobR = Math.max(14, Math.min(24, w * 0.05));
@@ -142,14 +154,38 @@ function stickUpdate(clientX, clientY) {
   }
   stickX = stickCanvas.width / 2 + x;
   stickY = stickCanvas.height / 2 + y;
-  var normX = x / stickMax;
-  var normY = y / stickMax;
+  odNormX = x / stickMax;
+  odNormY = y / stickMax;
+  odWatch(Math.sqrt(odNormX * odNormX + odNormY * odNormY));
+  applyStickOutput();
+}
+// Hold-at-edge overdrive (balancing): pin past 95% and the command keeps
+// climbing to 1.5x while held. Ease off and it drops back to normal.
+var odNormX = 0, odNormY = 0, odStart = 0, odTimer = null, odFactor = 1;
+function odTick() {
+  if (!stickDragging) { odStop(); return; }
+  odFactor = 1 + Math.min(0.5, (Date.now() - odStart) / 1000 * 0.25);
+  applyStickOutput();
+}
+function odStop() {
+  odFactor = 1;
+  if (odTimer) { clearInterval(odTimer); odTimer = null; }
+}
+function odWatch(mag) {
+  if (vehicle === 'balancing' && stickDragging && mag > 0.95) {
+    if (!odTimer) { odStart = Date.now(); odFactor = 1; odTimer = setInterval(odTick, 100); }
+  } else {
+    odStop();
+  }
+}
+function applyStickOutput() {
+  var normX = odNormX, normY = odNormY;
   if (vehicle === 'balancing') {
     // Y -> pitch / speed setpoint, X -> yaw. Throttle held at arm value.
     // Negated: canvas Y is down-positive, lean target is forward-positive.
-    state.pitch = -normY * maxRollPitchAngle;
+    state.pitch = -normY * maxRollPitchAngle * odFactor;
     state.roll = 0;
-    state.yaw = yawWithDeadzone(normX, normY, 360);
+    state.yaw = yawWithDeadzone(normX, normY, 360 * odFactor);
     state.throttle = state.armed ? 0.2 : 0;
   } else if (vehicle === 'rccar') {
     // Y -> throttle 0-100%, X -> yaw / steer
@@ -169,6 +205,7 @@ function stickUpdate(clientX, clientY) {
 }
 function stickReset() {
   stickDragging = false;
+  odStop();
   if (stickCanvas.width) { stickX = stickCanvas.width / 2; stickY = stickCanvas.height / 2; }
   if (vehicle === 'balancing') {
     state.pitch = 0; state.yaw = 0; state.roll = 0;
