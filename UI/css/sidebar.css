@@ -36,15 +36,16 @@
   font-size: 18px;
 }
 .store-sidebar-nav { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
-/* VISWA brand: V mark always visible, name clipped until expanded */
+/* VISWA brand: hidden while the bar is collapsed, revealed on expand */
 .sidebar-brand {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
   white-space: nowrap;
   border-bottom: 1px solid var(--border);
 }
+.store-sidebar.expanded .sidebar-brand { display: flex; }
 .sidebar-brand .viswa-mark { flex-shrink: 0; }
 .sidebar-brand-label {
   font-family: var(--font-display);
