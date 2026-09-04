@@ -57,6 +57,7 @@ extern float throttle;
 extern float pidIntegral_Pitch, pidIntegral_Roll, pidIntegral_Yaw;
 extern volatile unsigned long loopTimeMs;
 extern volatile uint32_t freeHeapMemory, minFreeHeap;
+extern SemaphoreHandle_t dataLock;  // shared-data mutex (defined in control_task.cpp)
 
 // 1kHz control loop pinned to Core 0 (see control_task.cpp)
 void controlLoopTask(void *pvParameters);

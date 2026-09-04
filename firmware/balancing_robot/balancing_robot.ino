@@ -6,8 +6,7 @@
 #include <Preferences.h>
 #include "src/config/config.h"  // Load all configuration parameters
 
-// Preference storage
-Preferences prefs;
+// Preference storage: defined in sensors/calibration.cpp (main NVS user)
 
 // PID gains + state: defined in control/pid_controller.cpp
 
@@ -45,9 +44,7 @@ Preferences prefs;
 
 #include "src/sensors/battery_state.h"  // BatteryState enum + LOW_VOLTAGE_THRESHOLD
 
-// ESP-NOW throttle gating variables (declared before includes so esp_now_handler.h can use them)
-bool throttle_gate_ready = false;  // Throttle gating for ESP-NOW
-float last_throttle = 0.0f;        // Previous throttle value for ESP-NOW gating
+// ESP-NOW throttle gating: defined in comms/esp_now_handler.cpp
 
 #include "src/comms/serial_commands.h"
 #include "src/comms/wifi_ota.h"  // WiFi + OTA support
@@ -65,8 +62,7 @@ extern volatile bool espnow_connected;
 unsigned long lastLoopTime = 0;
 bool filterInitialized = false;
 // Arm/motor state: defined in control/motor_control.cpp
-bool statusMonitoring = false;
-bool debugMonitoring = false;
+// Monitoring flags: defined in comms/serial_commands.cpp
 float pitch_setpoint = 0.0;
 float roll_setpoint = 0.0;
 float yaw_setpoint = 0.0;
@@ -118,19 +114,13 @@ float filtered_roll = 0.0;
 
 // Arm hysteresis: defined in control/motor_control.cpp
 
-// Dual-core task variables
-SemaphoreHandle_t dataLock = NULL;
-volatile bool controlLoopRunning = false;
-volatile unsigned long loopTimeMs = 0;
+// Dual-core task variables: defined in system/control_task.cpp
+// (controlLoopRunning was dead — declared, never read — deleted)
 
-// Computational complexity tracking
-volatile unsigned long filterExecutionTime = 0;
-volatile uint32_t freeHeapMemory = 0;
-volatile uint32_t minFreeHeap = 999999;
-float avgFilterTime = 0.0;
+// Computational complexity tracking: defined in system/control_task.cpp
 
 // Barometer stubs: baro_altitude_scale + accel_z_bias_cal_mps2 defined in
-// sensors/calibration.cpp (NVS-loaded); accel_z_world_mps2 moves in a later step.
+// sensors/calibration.cpp (NVS-loaded); accel_z_world_mps2 in comms/serial_commands.cpp.
 
 void setup() {
   Serial.begin(115200);

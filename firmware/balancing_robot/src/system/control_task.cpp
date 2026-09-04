@@ -1,5 +1,14 @@
 #include "control_task.h"
 
+// Definitions live here (were in balancing_robot.ino); externs in control_task.h
+// (controlLoopRunning was dead — declared, never read — deleted)
+SemaphoreHandle_t dataLock = NULL;
+volatile unsigned long loopTimeMs = 0;
+volatile unsigned long filterExecutionTime = 0;
+volatile uint32_t freeHeapMemory = 0;
+volatile uint32_t minFreeHeap = 999999;
+float avgFilterTime = 0.0f;
+
 // ===== CORE 0: Control Loop (IMU + Kalman + PID) =====
 void controlLoopTask(void *pvParameters) {
   unsigned long lastLoopTime = millis();
