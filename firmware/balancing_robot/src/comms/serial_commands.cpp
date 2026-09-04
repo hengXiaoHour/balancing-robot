@@ -4,6 +4,7 @@
 #include "../control/pid_controller.h"  // speed setpoints
 #include "../control/cascade_pid_controller.h"  // cascade externs (when enabled)
 #include "wifi_ota.h"  // switchWiFiMode(), printWiFiStatus()
+#include "../system/led.h"  // ledBootTest(), ledSet(), ledSetRGB()
 
 // Definitions live here (were in balancing_robot.ino); externs in serial_commands.h
 float accel_z_world_mps2 = 0.0f;
@@ -80,6 +81,9 @@ void printWelcomeBanner() {
   Serial.println("  reset_calibration - Reset calibration to defaults");
   Serial.println("  battery_reset/bat_reset - Reset low voltage warning");
   Serial.println("  i2c_scan       - Scan I2C bus for connected devices");
+  Serial.println("  led test       - Run status LED boot self-test");
+  Serial.println("  led on/off     - Force status LED on or off");
+  Serial.println("  led rgb R G B  - Set status LED color 0-255 (RGB boards only)");
   Serial.println("  test_motor     - Spin each motor individually at 20% throttle for pinout scan:");
   Serial.println("                   Motor FL(33)→FR(27)→RR(26)→RL(25), 2s each, auto-stops after loop");
   Serial.println("  status         - Toggle sensor monitoring");
@@ -183,6 +187,30 @@ void handleSerialCommand() {
     }
     else if (command == "i2c_scan") {
       scanI2CBus();
+    }
+    else if (command == "led test") {
+      ledBootTest();
+    }
+    else if (command == "led on") {
+      ledSet(true);
+      Serial.println("[LED] forced ON (battery monitor resumes control next update)");
+    }
+    else if (command == "led off") {
+      ledSet(false);
+      Serial.println("[LED] forced OFF (battery monitor resumes control next update)");
+    }
+    else if (command.startsWith("led rgb ")) {
+#ifdef STATUS_LED_RGB
+      int r, g, b;
+      if (sscanf(command.c_str(), "led rgb %d %d %d", &r, &g, &b) == 3) {
+        ledSetRGB((uint8_t)constrain(r, 0, 255), (uint8_t)constrain(g, 0, 255), (uint8_t)constrain(b, 0, 255));
+        Serial.printf("[LED] color set to R=%d G=%d B=%d\n", constrain(r, 0, 255), constrain(g, 0, 255), constrain(b, 0, 255));
+      } else {
+        Serial.println("[LED] usage: led rgb <0-255> <0-255> <0-255>");
+      }
+#else
+      Serial.println("[LED] this board has a plain LED, no RGB support");
+#endif
     }
     else if (command == "status") {
       statusMonitoring = !statusMonitoring;  // Toggle status monitoring
