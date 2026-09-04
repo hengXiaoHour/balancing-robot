@@ -6,9 +6,11 @@
 #include "../utils/i2c_scan.h"
 #include "../sensors/battery_state.h"
 #include "../sensors/calibration.h"  // calibrationState, CALIB_IDLE, resetCalibrationToDefaults()
+#include "../utils/timing.h"  // loopTimeUs
+#include "../filters/filter_selector.h"  // getActiveFilterName()
 
-// Forward declarations (defined in balancing_robot.ino)
-void retryMPUInitialization();
+// Forward declarations (defined in their modules)
+void retryMPUInitialization();  // system/imu.cpp
 void savePIDToPreferences();
 void resetPIDToDefaults();
 void loadPIDFromPreferences();
@@ -49,6 +51,11 @@ extern bool useAPMode;  // WiFi mode: false = STA, true = AP
 extern bool safeToArm;  // ARM HYSTERESIS: Drone is level enough to arm
 extern bool filterInitialized;  // Filter warm-up complete
 extern bool testMotorActive;
+extern volatile unsigned long filterExecutionTime;  // Last filter run (µs)
+extern float avgFilterTime;  // Smoothed filter run (µs)
+extern volatile uint32_t freeHeapMemory;  // Heap high-water tracking
+extern volatile uint32_t minFreeHeap;
+extern float accel_z_world_mps2;  // World-frame vertical accel
 extern void switchWiFiMode();  // Function to switch WiFi modes
 extern void printWiFiStatus();  // Function to print WiFi status
 
@@ -77,5 +84,6 @@ void resetCascadePID();
 // ===== Serial Commands API (see serial_commands.cpp) =====
 void printWelcomeBanner();
 void handleSerialCommand();
+void printTelemetryStatus();  // rate-limited [LOOP] status line (called from loop())
 
 #endif

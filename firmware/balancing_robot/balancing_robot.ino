@@ -366,33 +366,8 @@ void loop() {
   // CORE 1: Handle all non-critical tasks (serial commands, telemetry, calibration UI)
   // Control loop runs uninterrupted on Core 0
   
-  // TELEMETRY
-  static unsigned long lastTelemetry = 0;
-  if (statusMonitoring && (millis() - lastTelemetry >= TELEMETRY_UPDATE_RATE)) {
-    lastTelemetry = millis();
-    
-    float loopRate = 1000000.0f / (loopTimeUs > 0 ? loopTimeUs : 1);
-    
-    Serial.print("[LOOP] ");
-    Serial.print("[Filter: "); Serial.print(getActiveFilterName()); Serial.print("] | ");
-    Serial.print("Mode: BALANCING_ROBOT | ");
-    Serial.print("Status: "); Serial.print(motorsArmed ? "ARMED" : "DISARMED"); Serial.print(" | ");
-    Serial.print("Rate: "); Serial.print(loopRate, 2); Serial.print("Hz | ");
-    Serial.print("Pitch: "); Serial.print(PITCH_ANGLE_FINAL_USED, 2); Serial.print("deg | ");
-    Serial.print("Roll: "); Serial.print(ROLL_ANGLE_FINAL_USED, 2); Serial.print("deg | ");
-    Serial.print("Yaw: "); Serial.print(yaw, 2); Serial.print("deg | ");
-    Serial.print("PID[P,R]: "); Serial.print(pidOutput_Pitch, 0); Serial.print(",");
-    Serial.print(pidOutput_Roll, 0); Serial.print(" | ");
-    Serial.print("Motors[L,R]: "); Serial.print(pidOutput_Left, 0); Serial.print(",");
-    Serial.print(pidOutput_Right, 0); Serial.print(" | ");
-    Serial.print("Vbat: "); Serial.print(battery_voltage, 2); Serial.print("V | ");
-    Serial.print("Az: "); Serial.print(accel_z_world_mps2, 2); Serial.print("m/s2 | ");
-    Serial.print("[COMP] Filter: "); Serial.print(filterExecutionTime); Serial.print("us (avg: ");
-    Serial.print(avgFilterTime, 1); Serial.print("us) | Heap: "); Serial.print(freeHeapMemory);
-    Serial.print("B (min: "); Serial.print(minFreeHeap); Serial.print("B) | Load: ");
-    float cpuLoad = (avgFilterTime / 10000.0) * 100.0;
-    Serial.print(cpuLoad, 1); Serial.println("%");
-  }
+  // TELEMETRY (rate-limited [LOOP] status line, see serial_commands.cpp)
+  printTelemetryStatus();
   
   // Check for OTA updates (disabled when using ESP-NOW)
   #if !ENABLE_ESPNOW
