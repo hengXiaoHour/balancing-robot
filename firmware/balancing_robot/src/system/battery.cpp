@@ -1,5 +1,16 @@
 #include "battery.h"
 
+// Definitions live here (were in balancing_robot.ino); externs in battery.h
+float battery_voltage = 0.0f;
+float battery_voltage_filtered = 0.0f;
+float battery_samples[BATTERY_SAMPLE_SIZE] = {0};
+int battery_sample_index = 0;
+bool batteryFilterPrimed = false;
+float lastValidBatteryRawVoltage = 0.0f;
+BatteryState batteryState = BATTERY_NORMAL;
+unsigned long lastLEDBlink = 0;
+bool ledState = false;
+
 // ===== BATTERY VOLTAGE MANAGEMENT FUNCTIONS =====
 void updateBatteryVoltage() {
   int adc_raw = analogRead(BATTERY_PIN);
