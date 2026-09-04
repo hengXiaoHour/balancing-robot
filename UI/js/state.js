@@ -8,6 +8,8 @@ var maxRollPitchAngle = parseFloat(localStorage.getItem('maxAngle') || '10');
 if (!isFinite(maxRollPitchAngle)) maxRollPitchAngle = 10;
 var yawDeadzoneDeg = parseFloat(localStorage.getItem('yawDeadzone') || '10');
 if (!isFinite(yawDeadzoneDeg)) yawDeadzoneDeg = 10;
+var yawRateMax = parseFloat(localStorage.getItem('yawRate') || '100');
+if (!isFinite(yawRateMax)) yawRateMax = 100;
 
 var ws = null;
 var isConnected = false;
@@ -99,6 +101,7 @@ function updateMaxAngle(v) {
 function resetSettings() {
   updateMaxAngle(10);
   updateYawDeadzone(10);
+  updateYawRate(100);
 }
 function updateYawDeadzone(v) {
   yawDeadzoneDeg = Math.max(0, Math.min(45, parseFloat(v) || 0));
@@ -107,4 +110,11 @@ function updateYawDeadzone(v) {
   var s = document.getElementById('yawDeadzoneSlider');
   if (s) s.value = yawDeadzoneDeg;
   drawStick();
+}
+function updateYawRate(v) {
+  yawRateMax = Math.max(20, Math.min(200, parseFloat(v) || 100));
+  localStorage.setItem('yawRate', String(yawRateMax));
+  document.getElementById('yawRateValue').textContent = yawRateMax + '\u00B0/S';
+  var s = document.getElementById('yawRateSlider');
+  if (s) s.value = yawRateMax;
 }

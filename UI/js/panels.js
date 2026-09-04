@@ -509,6 +509,9 @@ window.addEventListener('load', function () {
   var ydz = document.getElementById('yawDeadzoneSlider');
   if (ydz) ydz.value = yawDeadzoneDeg;
   document.getElementById('yawDeadzoneValue').textContent = yawDeadzoneDeg + '\u00B0';
+  var yr = document.getElementById('yawRateSlider');
+  if (yr) yr.value = yawRateMax;
+  document.getElementById('yawRateValue').textContent = yawRateMax + '\u00B0/S';
   applyVehicleUI();
   updateDisplay();
   renderArm();

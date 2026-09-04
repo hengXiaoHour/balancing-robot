@@ -8,6 +8,9 @@ var stickDragging = false;
 
 // Yaw deadzone (balancing): stick angles within yawDeadzoneDeg of the
 // fore-aft axis read as pure pitch — lean sideways past it to yaw.
+function yawRate() {
+  return (typeof yawRateMax === 'number' && isFinite(yawRateMax)) ? yawRateMax : 100;
+}
 function yawWithDeadzone(normX, normY, fullScale) {
   var mag = Math.sqrt(normX * normX + normY * normY);
   if (mag < 0.02) return 0;
@@ -198,7 +201,7 @@ function applyStickOutput() {
     // Negated: canvas Y is down-positive, lean target is forward-positive.
     state.pitch = -normY * maxRollPitchAngle * odFactor;
     state.roll = 0;
-    state.yaw = yawWithDeadzone(normX, normY, 360 * odFactor);
+    state.yaw = yawWithDeadzone(normX, normY, yawRate() * odFactor);
     state.throttle = state.armed ? 0.2 : 0;
   } else if (vehicle === 'rccar') {
     // Y -> throttle 0-100%, X -> yaw / steer
