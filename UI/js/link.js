@@ -150,7 +150,7 @@ function handleDeviceMessage(data) {
   // ===== ARM / FAILSAFE SYNC (readonly pill, rendered via renderArm) =====
   if (data.armed !== undefined) {
     document.getElementById('telem-armed').textContent = data.armed ? 'YES' : 'NO';
-    document.getElementById('telem-armed').style.color = data.armed ? '#00e5cc' : '#ff4d4d';
+    document.getElementById('telem-armed').style.color = data.armed ? '#FF0A0A' : '#8A8A8A';
     if (data.armed !== state.armed && !userJustToggledArm) {
       state.armed = data.armed;
       console.warn('[FAILSAFE] ESP32 state change - pill synced');

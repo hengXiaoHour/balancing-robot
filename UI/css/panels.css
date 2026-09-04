@@ -43,7 +43,7 @@
   letter-spacing: 0.16em;
   border: 1px solid var(--ghost-border);
 }
-/* Connected: teal. Disconnected: muted gray. */
+/* Connected: white. Disconnected: muted gray. */
 .connection-status.connected { background: transparent; color: var(--teal); border-color: var(--teal); }
 .connection-status.disconnected { background: transparent; color: var(--muted); border-color: var(--ghost-border); }
 
@@ -115,7 +115,7 @@
   letter-spacing: 0.16em;
 }
 
-/* Telemetry: mono uppercase micro-labels, teal live values */
+/* Telemetry: mono uppercase micro-labels, white live values */
 .telemetry { font-size: 12px; line-height: 2; font-family: var(--font-mono); }
 .telemetry-item { border-bottom: 1px solid var(--border); padding: 2px 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
 .telemetry-item strong { color: var(--text); }
@@ -134,7 +134,7 @@
 }
 .pid-grid input { width: 100%; }
 
-/* Console: black plate, mono, teal text */
+/* Console: black plate, mono, white text */
 #serialConsole {
   background: #000000;
   border: 1px solid var(--border);

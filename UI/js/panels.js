@@ -77,7 +77,7 @@ function updateBatteryIndicator(voltage) {
   document.getElementById('batteryVoltage').textContent = voltage.toFixed(2) + ' V';
   var minV = 9.0, maxV = 12.6;
   var pct = Math.max(0, Math.min(1, (voltage - minV) / (maxV - minV)));
-  var fillColor = pct > 0.5 ? '#00e5cc' : pct > 0.25 ? '#ffcc00' : '#ff4d4d';
+  var fillColor = pct > 0.5 ? '#22cc55' : pct > 0.25 ? '#ffcc00' : '#ff4d4d';
   var batteryFill = document.getElementById('batteryFill');
   batteryFill.style.width = (pct * 0.8) + '%';
   batteryFill.setAttribute('fill', fillColor);
@@ -99,12 +99,12 @@ function drawAttitude(roll, pitch) {
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, Math.PI * 2);
   ctx.clip();
-  ctx.fillStyle = '#0a5cad';
+  ctx.fillStyle = '#1A1A1A';
   ctx.fillRect(0, 0, size, size);
   ctx.translate(center, center);
   ctx.rotate((roll * Math.PI) / 180);
   var pitchOffset = (pitch * radius) / 90;
-  ctx.fillStyle = '#3d7a1e';
+  ctx.fillStyle = '#000000';
   ctx.fillRect(-radius * 2, -pitchOffset, radius * 4, radius * 2);
   ctx.strokeStyle = '#fff';
   ctx.lineWidth = 2;
@@ -123,7 +123,7 @@ function drawAttitude(roll, pitch) {
     ctx.stroke();
   }
   ctx.restore();
-  ctx.strokeStyle = '#00e5cc';
+  ctx.strokeStyle = '#F2F2F2';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, Math.PI * 2);
@@ -148,18 +148,18 @@ function drawCompass(yaw) {
   var center = size / 2;
   var radius = size / 2 - 4;
   ctx.clearRect(0, 0, size, size);
-  ctx.fillStyle = '#050810';
+  ctx.fillStyle = '#000000';
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, Math.PI * 2);
   ctx.fill();
   ctx.save();
   ctx.translate(center, center);
   ctx.rotate((-yaw * Math.PI) / 180);
-  ctx.fillStyle = '#f0f4ff';
+  ctx.fillStyle = '#F2F2F2';
   ctx.font = 'bold 12px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  var pts = [['N', 0, -radius + 14, '#ff4d4d'], ['E', radius - 14, 0, '#f0f4ff'], ['S', 0, radius - 22, '#f0f4ff'], ['W', -radius + 14, 0, '#f0f4ff']];
+  var pts = [['N', 0, -radius + 14, '#ff4d4d'], ['E', radius - 14, 0, '#F2F2F2'], ['S', 0, radius - 22, '#F2F2F2'], ['W', -radius + 14, 0, '#F2F2F2']];
   pts.forEach(function (p) {
     ctx.fillStyle = p[3];
     ctx.fillText(p[0], p[1], p[2]);
@@ -168,7 +168,7 @@ function drawCompass(yaw) {
     var a = (d * Math.PI) / 180;
     var r1 = radius - 4;
     var r0 = (d % 90 === 0) ? radius - 14 : radius - 9;
-    ctx.strokeStyle = '#8892b0';
+    ctx.strokeStyle = '#8A8A8A';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(Math.sin(a) * r0, -Math.cos(a) * r0);
@@ -187,7 +187,7 @@ function drawCompass(yaw) {
   ctx.closePath();
   ctx.fill();
   ctx.restore();
-  ctx.fillStyle = '#00e5cc';
+  ctx.fillStyle = '#F2F2F2';
   ctx.font = 'bold 13px Arial';
   ctx.textAlign = 'center';
   ctx.fillText(yaw.toFixed(0) + '\u00B0', center, size - 8);
@@ -345,15 +345,15 @@ function initializeAngleChart() {
         if (rawValue == null) return '--';
         return new Date(rawValue).toLocaleTimeString('en-US', { hour12: false });
       }},
-      { label: 'Roll', stroke: '#ff6b6b', fill: 'rgba(255,107,107,0.1)', width: 2, spanGaps: false, show: true },
-      { label: 'Pitch', stroke: '#00e5cc', fill: 'rgba(0,229,204,0.1)', width: 2, spanGaps: false, show: true },
-      { label: 'Yaw', stroke: '#60a5fa', fill: 'rgba(96,165,250,0.1)', width: 2, spanGaps: false, show: false },
+      { label: 'Roll', stroke: '#FF0A0A', fill: 'rgba(255,10,10,0.1)', width: 2, spanGaps: false, show: true },
+      { label: 'Pitch', stroke: '#F2F2F2', fill: 'rgba(242,242,242,0.1)', width: 2, spanGaps: false, show: true },
+      { label: 'Yaw', stroke: '#8A8A8A', fill: 'rgba(138,138,138,0.1)', width: 2, spanGaps: false, show: false },
       { label: 'Setpoint (0\u00B0)', stroke: '#ffcc00', width: 2, dash: [4, 4], spanGaps: false, show: true }
     ],
     scales: { x: { time: false }, y: { auto: true, range: [-180, 180] } },
     axes: [
-      { label: 'Time', stroke: '#8892b0', font: '11px Arial', grid: { stroke: 'rgba(137,146,176,0.15)', width: 0.5 } },
-      { label: 'Angle (\u00B0)', stroke: '#8892b0', font: '11px Arial', grid: { stroke: 'rgba(137,146,176,0.15)', width: 0.5 } }
+      { label: 'Time', stroke: '#8A8A8A', font: '11px Arial', grid: { stroke: 'rgba(138,138,138,0.15)', width: 0.5 } },
+      { label: 'Angle (\u00B0)', stroke: '#8A8A8A', font: '11px Arial', grid: { stroke: 'rgba(138,138,138,0.15)', width: 0.5 } }
     ],
     legend: { show: false },
     cursor: { show: true, x: true, y: true }

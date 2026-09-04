@@ -63,5 +63,7 @@
   .joystick-wrap { margin: 0 auto; }
 }
 @media (max-width: 768px) {
-  .joystick-wrap { max-width: 100%; }
+  /* Control tab never scrolls: natural-height card, stick capped to fit */
+  #panel-control .card { min-height: 0; margin-bottom: 0; }
+  .joystick-wrap { max-width: 320px; }
 }
