@@ -33,6 +33,46 @@
 }
 .header-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
+/* Help icon + popup tip: replaces inline helper paragraphs (SETUP) */
+.help-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  border: 1px solid var(--ghost-border);
+  cursor: help;
+  vertical-align: baseline;
+  user-select: none;
+}
+.help-icon:hover, .help-icon.open { color: var(--red-hot); border-color: var(--red); }
+.help-icon .tip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: -8px;
+  width: max-content;
+  max-width: min(240px, 70vw);
+  white-space: normal;
+  z-index: 60;
+  background: #0A0A0A;
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--red);
+  color: #C9C9C9;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  text-transform: none;
+  padding: 8px 10px;
+}
+.help-icon:hover .tip, .help-icon:focus .tip, .help-icon.open .tip { display: block; }
 /* Status pills: flat mono uppercase, no fill rounding */
 .connection-status {
   padding: 6px 14px;

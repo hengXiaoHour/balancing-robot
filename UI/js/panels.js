@@ -495,6 +495,12 @@ function offlineDismiss() {
   document.getElementById('offlineOverlay').style.display = 'none';
   if (typeof sizeStick === 'function') requestAnimationFrame(sizeStick);
 }
+// Help icons: tap toggles the tip on touch screens (hover covers desktop)
+document.addEventListener('click', function (e) {
+  var h = (e.target && e.target.closest) ? e.target.closest('.help-icon') : null;
+  document.querySelectorAll('.help-icon.open').forEach(function (el) { if (el !== h) el.classList.remove('open'); });
+  if (h) h.classList.toggle('open');
+});
 function syncOfflineOverlay() {
   if (offlineDismissed) return;
   document.getElementById('offlineOverlay').style.display = isConnected ? 'none' : 'flex';

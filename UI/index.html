@@ -217,7 +217,7 @@
           <div class="card">
             <h3>CONNECTION</h3>
             <div class="row-flex" style="margin-bottom: 8px;">
-              <label class="muted" for="transportSelect">Link:</label>
+              <label class="muted" for="transportSelect">Link:</label><span class="help-icon" tabindex="0">?<span class="tip">USB serial: Chrome/Edge only, 115200 baud. Same stick, same telemetry, no Wi-Fi needed.</span></span>
               <select id="transportSelect" onchange="onTransportChange(this.value)">
                 <option value="ws">WI-FI (WEBSOCKET)</option>
                 <option value="serial">USB (SERIAL)</option>
@@ -232,19 +232,15 @@
               <button class="control-btn" onclick="connectSerial()">CONNECT SERIAL</button>
               <button class="control-btn secondary" onclick="disconnectSerial()">DISCONNECT</button>
             </div>
-            <div class="muted" style="margin-top: 8px;">USB serial: Chrome/Edge, 115200 baud. Same stick, same telemetry, no Wi-Fi needed.</div>
           </div>
           <div class="card">
             <h3>STICK RANGE</h3>
-            <label style="font-size: 12px; color: #8A8A8A;">Max Roll/Pitch Angle: <span id="maxAngleValue" style="color: #F2F2F2; font-weight: bold;">10&deg;</span></label>
+            <label style="font-size: 12px; color: #8A8A8A;">Max Roll/Pitch Angle: <span id="maxAngleValue" style="color: #F2F2F2; font-weight: bold;">10&deg;</span><span class="help-icon" tabindex="0">?<span class="tip">Full stick deflection = this lean angle. Range 5&deg; - 45&deg;. Saved locally in browser.</span></span></label>
             <input type="range" id="maxAngleSlider" min="5" max="45" value="10" oninput="updateMaxAngle(this.value)">
-            <div class="muted">Range: 5&deg; - 45&deg;. Saved locally in browser.</div>
-            <label style="font-size: 12px; color: #8A8A8A; margin-top: 10px; display: block;">Yaw Deadzone: <span id="yawDeadzoneValue" style="color: #F2F2F2; font-weight: bold;">10&deg;</span></label>
+            <label style="font-size: 12px; color: #8A8A8A; margin-top: 10px; display: block;">Yaw Deadzone: <span id="yawDeadzoneValue" style="color: #F2F2F2; font-weight: bold;">10&deg;</span><span class="help-icon" tabindex="0">?<span class="tip">Stick lean off fore-aft before yaw kicks in. 0&deg; = raw, no deadzone. Saved locally.</span></span></label>
             <input type="range" id="yawDeadzoneSlider" min="0" max="45" value="10" oninput="updateYawDeadzone(this.value)">
-            <div class="muted">Stick lean off fore-aft before yaw kicks in. 0&deg; = raw. Saved locally.</div>
-            <label style="font-size: 12px; color: #8A8A8A; margin-top: 10px; display: block;">Yaw Rate: <span id="yawRateValue" style="color: #F2F2F2; font-weight: bold;">100&deg;/S</span></label>
+            <label style="font-size: 12px; color: #8A8A8A; margin-top: 10px; display: block;">Yaw Rate: <span id="yawRateValue" style="color: #F2F2F2; font-weight: bold;">100&deg;/S</span><span class="help-icon" tabindex="0">?<span class="tip">Full sideways stick = this spin rate. Balancing mode only. Saved locally.</span></span></label>
             <input type="range" id="yawRateSlider" min="20" max="200" value="100" oninput="updateYawRate(this.value)">
-            <div class="muted">Full sideways stick = this spin rate. Balancing only. Saved locally.</div>
             <div class="row-flex" style="margin-top: 8px;">
               <button class="control-btn secondary" onclick="resetSettings()">RESET TO DEFAULTS</button>
             </div>
