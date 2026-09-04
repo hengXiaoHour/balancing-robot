@@ -3,6 +3,9 @@
 #include "pid_controller.h"  // updateYawPID()
 
 // ===== CASCADE PID STATE VARIABLES (PITCH AXIS) =====
+// Rate targets defined here (were in balancing_robot.ino); externs in cascade_pid_controller.h
+float pitch_rate_target = 0.0f;
+float roll_rate_target = 0.0f;
 // Outer loop: angle → rate setpoint
 float cascade_angle_error_pitch = 0.0f;
 float cascade_angle_integral_pitch = 0.0f;
