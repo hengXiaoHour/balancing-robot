@@ -164,13 +164,8 @@ float throttle = 25.0f;
 float throttle_increment = 5.0f;
 float throttle_input_normalized = 0.0f;
 
-// Motor test mode
-const float TEST_MOTOR_THROTTLE_PERCENT = 20.0f;
-const unsigned long TEST_MOTOR_DURATION_MS = 2000;
+// Motor test mode (stubs — test mode is disabled in BALANCING_ROBOT mode)
 bool testMotorActive = false;
-int testMotorIndex = 0;
-int testMotorLastPrinted = -1;
-unsigned long testMotorStartMs = 0;
 
 // Filter variables
 float filtered_accelX = 0.0, filtered_accelY = 0.0, filtered_accelZ = 0.0;

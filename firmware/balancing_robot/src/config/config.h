@@ -22,11 +22,14 @@
 #define ENABLE_CASCADE_PID 0  // Cascade (outer angle + inner rate) PID
 
 // Default PID Tuning Values (used in SINGLE angle PID mode)
-#define DEFAULT_KP 200.0   // Proportional gain (main correction)
+// Single source of truth — axis defaults formerly duplicated in
+// sensors/calibration.h (8.0/0.2/5.0 won at boot; config's 200/1/20 only
+// leaked into prefs reset). Unified here so boot + reset agree.
+#define DEFAULT_KP 8.0   // Proportional gain (main correction)
                           // Higher = stronger response to angle error
-#define DEFAULT_KI 1.0    // Integral gain (steady-state error correction)
+#define DEFAULT_KI 0.2    // Integral gain (steady-state error correction)
                           // Controls long-term drift correction
-#define DEFAULT_KD 20.0    // Derivative gain (damping, based on gyro rate)
+#define DEFAULT_KD 5.0    // Derivative gain (damping, based on gyro rate)
                           // Controls oscillation dampening
                           // Set to 0 to disable, increase slowly if needed
 
