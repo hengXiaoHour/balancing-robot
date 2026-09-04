@@ -84,7 +84,7 @@ void printWelcomeBanner() {
   Serial.println("  led test       - Run status LED boot self-test");
   Serial.println("  led on/off     - Force status LED on or off");
   Serial.println("  led rgb R G B  - Set status LED color 0-255 (RGB boards only)");
-  Serial.println("  test_motor     - Disabled in BALANCING_ROBOT mode");
+  Serial.println("  test_motor     - Wheel test: LEFT fwd/rev then RIGHT fwd/rev, 20%, 2s each");
   Serial.println("  status         - Toggle sensor monitoring");
   Serial.println("  debug          - Toggle debug information");
   Serial.println("\nWiFi & OTA Commands:");

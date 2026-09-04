@@ -60,10 +60,66 @@ void setRightMotorSpeed(float speed) {
 
 // ===== Balancing-robot (vehicle) mode functions =====
 void toggleMotorTest() {
-  Serial.println("[MODE] Motor test command is disabled in BALANCING_ROBOT mode");
+  if (testMotorActive) {
+    testMotorActive = false;
+    stopMotors();
+    Serial.println("[MOTOR TEST] stopped by user");
+    return;
+  }
+  if (motorsArmed) {
+    Serial.println("[MOTOR TEST] refused: disarm first (type 'disarm')");
+    return;
+  }
+  testMotorActive = true;
+  Serial.println("[MOTOR TEST] starting: LEFT fwd/rev, then RIGHT fwd/rev, 20%, 2s each");
 }
 
 void updateMotorTest() {
+  // Non-blocking wheel test: LEFT fwd → LEFT rev → RIGHT fwd → RIGHT rev.
+  // Control loop skips motor output while testMotorActive (see control_task.cpp).
+  static uint8_t phase = 0;
+  static unsigned long phaseStart = 0;
+  static bool wasActive = false;
+  static int8_t announcedPhase = -1;
+  const float TEST_PWM = 0.2f * 4095.0f;  // 20%
+  const unsigned long PHASE_MS = 2000;
+
+  if (!testMotorActive) {
+    phase = 0;
+    wasActive = false;
+    return;
+  }
+  if (!wasActive) {  // fresh start
+    phase = 0;
+    announcedPhase = -1;
+    phaseStart = millis();
+    wasActive = true;
+  }
+
+  unsigned long now = millis();
+  if (now - phaseStart >= PHASE_MS) {
+    phase++;
+    phaseStart = now;
+  }
+
+  if (announcedPhase != (int8_t)phase && phase <= 3) {
+    announcedPhase = (int8_t)phase;
+    const char* names[] = {"LEFT forward", "LEFT reverse", "RIGHT forward", "RIGHT reverse"};
+    Serial.print("[MOTOR TEST] ");
+    Serial.println(names[phase]);
+  }
+
+  switch (phase) {
+    case 0: setLeftMotorSpeed(TEST_PWM);   setRightMotorSpeed(0);         break;
+    case 1: setLeftMotorSpeed(-TEST_PWM);  setRightMotorSpeed(0);         break;
+    case 2: setLeftMotorSpeed(0);          setRightMotorSpeed(TEST_PWM);  break;
+    case 3: setLeftMotorSpeed(0);          setRightMotorSpeed(-TEST_PWM); break;
+    default:
+      stopMotors();
+      testMotorActive = false;
+      Serial.println("[MOTOR TEST] complete");
+      break;
+  }
 }
 
 void applyVehicleInputLimits() {
