@@ -9,6 +9,15 @@ int32_t accelXSum = 0, accelYSum = 0, accelZSum = 0;
 int32_t gyroXSum = 0, gyroYSum = 0, gyroZSum = 0;
 int sampleCount = 0;
 
+// Definitions live here (were in balancing_robot.ino); externs in calibration.h
+CalibrationState calibrationState = CALIB_IDLE;
+float gyroBiasX = 0.0f, gyroBiasY = 0.0f, gyroBiasZ = 0.0f;
+float axBias = 0.0f, axScale = 1.0f;
+float ayBias = 0.0f, ayScale = 1.0f;
+float azBias = 0.0f, azScale = 1.0f;
+float baro_altitude_scale = 1.0f;
+float accel_z_bias_cal_mps2 = 0.0f;
+
 // ===== Print calibration menu =====
 void printCalibrationMenu() {
   Serial.println("\n========================================");

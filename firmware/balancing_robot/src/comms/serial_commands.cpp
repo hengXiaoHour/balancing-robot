@@ -5,6 +5,9 @@
 #include "../control/cascade_pid_controller.h"  // cascade externs (when enabled)
 #include "wifi_ota.h"  // switchWiFiMode(), printWiFiStatus()
 
+// Definitions live here (were in balancing_robot.ino); externs in serial_commands.h
+float accel_z_world_mps2 = 0.0f;
+
 // ===== Print Welcome Banner =====
 void printWelcomeBanner() {
   Serial.println("\n========================================");
