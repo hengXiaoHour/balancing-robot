@@ -6,15 +6,16 @@ var stickMax = 100;
 var stickX = 0, stickY = 0; // pixel pos of knob
 var stickDragging = false;
 
-// Yaw deadzone (balancing): stick angles within ±20° of the fore-aft
-// axis read as pure pitch — lean sideways past it to yaw.
-var YAW_DEADZONE_DEG = 20;
+// Yaw deadzone (balancing): stick angles within yawDeadzoneDeg of the
+// fore-aft axis read as pure pitch — lean sideways past it to yaw.
 function yawWithDeadzone(normX, normY, fullScale) {
   var mag = Math.sqrt(normX * normX + normY * normY);
   if (mag < 0.02) return 0;
+  var dz = (typeof yawDeadzoneDeg === 'number' && isFinite(yawDeadzoneDeg)) ? yawDeadzoneDeg : 10;
   var ang = Math.atan2(Math.abs(normX), Math.abs(normY)) * 180 / Math.PI;
-  if (ang <= YAW_DEADZONE_DEG) return 0;
-  return normX * fullScale * Math.min(1, (ang - YAW_DEADZONE_DEG) / (90 - YAW_DEADZONE_DEG));
+  if (dz <= 0) return normX * fullScale;
+  if (ang <= dz) return 0;
+  return normX * fullScale * Math.min(1, (ang - dz) / (90 - dz));
 }
 
 function sizeStick() {
@@ -62,13 +63,14 @@ function drawStick() {
     x2 = cx + Math.cos(a) * stickMax; y2 = cy + Math.sin(a) * stickMax;
     stickCtx.beginPath(); stickCtx.moveTo(x1, y1); stickCtx.lineTo(x2, y2); stickCtx.stroke();
   }
-  // yaw deadzone rails (±20° about fore-aft): lean past them to yaw
-  if (typeof vehicle !== 'undefined' && vehicle === 'balancing') {
+  // yaw deadzone rails (about fore-aft): lean past them to yaw
+  var dzDraw = (typeof yawDeadzoneDeg === 'number' && isFinite(yawDeadzoneDeg)) ? yawDeadzoneDeg : 10;
+  if (typeof vehicle !== 'undefined' && vehicle === 'balancing' && dzDraw > 0) {
     stickCtx.save();
     stickCtx.strokeStyle = 'rgba(138,138,138,0.35)';
     stickCtx.lineWidth = 1;
     [-1, 1].forEach(function (s) {
-      var ra = s * YAW_DEADZONE_DEG * Math.PI / 180;
+      var ra = s * dzDraw * Math.PI / 180;
       stickCtx.beginPath();
       stickCtx.moveTo(cx - Math.sin(ra) * stickMax, cy + Math.cos(ra) * stickMax);
       stickCtx.lineTo(cx + Math.sin(ra) * stickMax, cy - Math.cos(ra) * stickMax);

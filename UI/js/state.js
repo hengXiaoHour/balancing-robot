@@ -6,6 +6,8 @@ var vehicle = localStorage.getItem('vehicleType') || 'balancing';
 if (['balancing', 'rccar', 'drone'].indexOf(vehicle) === -1) vehicle = 'balancing';
 var maxRollPitchAngle = parseFloat(localStorage.getItem('maxAngle') || '10');
 if (!isFinite(maxRollPitchAngle)) maxRollPitchAngle = 10;
+var yawDeadzoneDeg = parseFloat(localStorage.getItem('yawDeadzone') || '10');
+if (!isFinite(yawDeadzoneDeg)) yawDeadzoneDeg = 10;
 
 var ws = null;
 var isConnected = false;
@@ -96,4 +98,13 @@ function updateMaxAngle(v) {
 }
 function resetSettings() {
   updateMaxAngle(10);
+  updateYawDeadzone(10);
+}
+function updateYawDeadzone(v) {
+  yawDeadzoneDeg = Math.max(0, Math.min(45, parseFloat(v) || 0));
+  localStorage.setItem('yawDeadzone', String(yawDeadzoneDeg));
+  document.getElementById('yawDeadzoneValue').textContent = yawDeadzoneDeg + '\u00B0';
+  var s = document.getElementById('yawDeadzoneSlider');
+  if (s) s.value = yawDeadzoneDeg;
+  drawStick();
 }

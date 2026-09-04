@@ -504,6 +504,9 @@ window.addEventListener('load', function () {
   var slider = document.getElementById('maxAngleSlider');
   if (slider) slider.value = maxRollPitchAngle;
   document.getElementById('maxAngleValue').textContent = maxRollPitchAngle + '\u00B0';
+  var ydz = document.getElementById('yawDeadzoneSlider');
+  if (ydz) ydz.value = yawDeadzoneDeg;
+  document.getElementById('yawDeadzoneValue').textContent = yawDeadzoneDeg + '\u00B0';
   applyVehicleUI();
   updateDisplay();
   renderArm();
