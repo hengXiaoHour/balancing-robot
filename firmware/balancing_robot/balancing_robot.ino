@@ -60,21 +60,9 @@ float last_throttle = 0.0f;        // Previous throttle value for ESP-NOW gating
 // External variables from ESP-NOW handler
 extern volatile bool espnow_connected;
 
-// Calibration state
-CalibrationState calibrationState = CALIB_IDLE;
+// Calibration state + bias values: defined in sensors/calibration.cpp
 
 // ===== GLOBAL VARIABLE DECLARATIONS (Core Control Variables) =====
-
-// Calibration bias values from preferences
-float gyroBiasX = 0.0f;
-float gyroBiasY = 0.0f;
-float gyroBiasZ = 0.0f;
-float axBias = 0.0f;
-float axScale = 1.0f;
-float ayBias = 0.0f;
-float ayScale = 1.0f;
-float azBias = 0.0f;
-float azScale = 1.0f;
 
 // Global Variables
 unsigned long lastLoopTime = 0;
@@ -209,13 +197,8 @@ volatile uint32_t freeHeapMemory = 0;
 volatile uint32_t minFreeHeap = 999999;
 float avgFilterTime = 0.0;
 
-// Barometer stubs (disabled but variables retained for NVS compatibility)
-float baro_altitude_scale = 1.0f;
-float accel_z_bias_cal_mps2 = 0.0f;
-float accel_z_world_mps2 = 0.0f;
-float vertical_velocity_mps = 0.0f;
-float altitude_est_m = 0.0f;
-bool altitudeHoldEnabled = false;
+// Barometer stubs: baro_altitude_scale + accel_z_bias_cal_mps2 defined in
+// sensors/calibration.cpp (NVS-loaded); accel_z_world_mps2 moves in a later step.
 
 void setup() {
   Serial.begin(115200);
