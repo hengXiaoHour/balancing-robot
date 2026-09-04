@@ -75,6 +75,7 @@ h1, h2, h3, .brand {
   background: rgba(0,0,0,0.82);
 }
 .offline-card {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-top: 2px solid var(--red);
@@ -82,6 +83,31 @@ h1, h2, h3, .brand {
   max-width: 340px;
   text-align: center;
 }
+.offline-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.offline-close:hover { color: var(--red-hot); }
+.offline-ip-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.offline-ip-row input {
+  flex: 1;
+  background: #050505;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  padding: 8px;
+  min-width: 0;
+}
+.offline-ip-row input:focus { outline: none; border-color: var(--red); }
 .offline-card h3 { border-left: none; padding-left: 0; font-size: 14px; color: var(--text); }
 /* Hold-to-arm progress fill */
 .arm-wide { position: relative; overflow: hidden; --hold: 0%; }

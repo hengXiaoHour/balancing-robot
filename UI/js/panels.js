@@ -469,6 +469,17 @@ function renderMotorBars(l, r) {
 var offlineDismissed = false;
 function offlineConnect(t) {
   offlineDismissed = false;
+  if (t === 'ws') {
+    // Wi-Fi needs the robot's IP: take it from the gate field, fall back to saved.
+    var ipEl = document.getElementById('offlineIpInput');
+    var ip = ipEl ? ipEl.value.trim() : '';
+    if (!ip) ip = espIP;
+    if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) { showError('Bad IP — use 4 numbers like 192.168.100.27'); return; }
+    espIP = ip;
+    localStorage.setItem('espIP', espIP);
+    var main = document.getElementById('espIpInput');
+    if (main) main.value = espIP;
+  }
   onTransportChange(t);
   if (t === 'serial') connectSerial();
   else connectToESP32();
@@ -483,6 +494,8 @@ function syncOfflineOverlay() {
 }
 window.addEventListener('load', function () {
   document.getElementById('espIpInput').value = espIP;
+  var offIp = document.getElementById('offlineIpInput');
+  if (offIp) offIp.value = espIP;
   var slider = document.getElementById('maxAngleSlider');
   if (slider) slider.value = maxRollPitchAngle;
   document.getElementById('maxAngleValue').textContent = maxRollPitchAngle + '\u00B0';

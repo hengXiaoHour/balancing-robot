@@ -62,13 +62,17 @@
     <div class="content">
       <div id="offlineOverlay">
         <div class="offline-card">
+          <button class="offline-close" onclick="offlineDismiss()" title="Close">&times;</button>
           <h3>NO LINK</h3>
-          <div class="muted" style="margin-bottom:12px;">Vehicle offline. Pick a link to take control.</div>
+          <div class="muted" style="margin-bottom:12px;">VEHICLE OFFLINE. PICK A LINK TO TAKE CONTROL.</div>
+          <div class="offline-ip-row">
+            <span class="muted">IP</span>
+            <input type="text" id="offlineIpInput" inputmode="numeric" spellcheck="false">
+          </div>
           <div class="row-flex">
             <button class="control-btn" onclick="offlineConnect('ws')">CONNECT WI-FI</button>
             <button class="control-btn secondary" onclick="offlineConnect('serial')">CONNECT SERIAL</button>
           </div>
-          <button class="console-clear-btn" style="margin-top:10px;" onclick="offlineDismiss()">VIEW OFFLINE</button>
         </div>
       </div>
       <div class="main-content">
