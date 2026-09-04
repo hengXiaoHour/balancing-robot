@@ -7,13 +7,15 @@
 function escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-function addConsoleMessage(message) {
+function addConsoleMessage(message, cls) {
   var line = '[' + new Date().toLocaleTimeString('en-US', { hour12: false }) + '] ' + message;
-  consoleLines.push(line);
+  var c = 'console-line' + (cls ? ' ' + cls : '');
+  if (!cls && /error|fail|blocked|abort/i.test(message)) c += ' err';
+  consoleLines.push({ t: line, c: c });
   if (consoleLines.length > maxConsoleLines) consoleLines.shift();
   var consoleEl = document.getElementById('serialConsole');
   if (!consoleEl) return;
-  consoleEl.innerHTML = consoleLines.map(function (l) { return '<div class="console-line">' + escapeHtml(l) + '</div>'; }).join('');
+  consoleEl.innerHTML = consoleLines.map(function (l) { return '<div class="' + l.c + '">' + escapeHtml(l.t) + '</div>'; }).join('');
   consoleEl.scrollTop = consoleEl.scrollHeight;
 }
 function clearConsole() {
@@ -35,6 +37,25 @@ function setConnectionStatus(connected) {
   // read as an active condition next to DISCONNECTED.
   var badge = document.getElementById('vehicleBadge');
   if (badge) badge.style.opacity = connected ? '1' : '0.45';
+  // No link = stale data: dim battery + arm pill so header reads dead, not live.
+  ['batteryIndicator', 'armBtn'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.style.opacity = connected ? '1' : '0.45';
+  });
+  var kl2 = document.getElementById('kpi-link');
+  if (kl2) kl2.textContent = connected ? (transport === 'serial' ? 'SER' : 'WI-FI') : '--';
+  if (typeof syncOfflineOverlay === 'function') syncOfflineOverlay();
+  if (typeof renderArm === 'function') renderArm();
+}
+var tickTimer = null;
+var pktCount = 0;
+function tickPulse() {
+  // Link activity blink on the connection pill — proves live packets.
+  var el = document.getElementById('connectionStatus');
+  if (!el) return;
+  el.classList.add('tick');
+  if (tickTimer) clearTimeout(tickTimer);
+  tickTimer = setTimeout(function () { el.classList.remove('tick'); }, 150);
 }
 function showError(msg) {
   var errorEl = document.getElementById('errorMessage');
@@ -159,6 +180,10 @@ function handleDeviceMessage(data) {
     renderArm();
   }
   // ===== TELEMETRY =====
+  tickPulse();
+  pktCount++;
+  var pk = document.getElementById('kpi-pkts');
+  if (pk) pk.textContent = pktCount > 9999 ? (pktCount / 1000).toFixed(1) + 'k' : pktCount;
   var roll = 0, pitch = 0, yaw = 0;
   if (data.roll !== undefined) {
     roll = data.roll;
@@ -179,21 +204,38 @@ function handleDeviceMessage(data) {
     document.getElementById('telem-vbat').textContent = data.battery.toFixed(2);
     updateBatteryIndicator(data.battery);
   }
-  if (data.loop_rate !== undefined) document.getElementById('telem-loop').textContent = data.loop_rate.toFixed(0);
-  if (data.throttle !== undefined) document.getElementById('telem-throttle').textContent = data.throttle.toFixed(0);
+  if (data.loop_rate !== undefined) {
+    document.getElementById('telem-loop').textContent = data.loop_rate.toFixed(0);
+    var kl = document.getElementById('kpi-loop');
+    if (kl) kl.textContent = data.loop_rate.toFixed(0);
+    var klb = document.getElementById('kpi-loop-bar');
+    if (klb) klb.style.width = Math.min(100, data.loop_rate) + '%';
+  }
+  if (data.throttle !== undefined) {
+    document.getElementById('telem-throttle').textContent = data.throttle.toFixed(0);
+    var kt = document.getElementById('kpi-thr');
+    if (kt) kt.textContent = data.throttle.toFixed(0);
+    var ktb = document.getElementById('kpi-thr-bar');
+    if (ktb) ktb.style.width = Math.min(100, Math.max(0, data.throttle)) + '%';
+  }
   if (data.filter !== undefined) document.getElementById('telem-filter').textContent = data.filter;
   if (data.filter_time !== undefined) document.getElementById('telem-filter-time').textContent = data.filter_time.toFixed(0);
   if (data.avg_filter_time !== undefined) document.getElementById('telem-avg-filter-time').textContent = data.avg_filter_time.toFixed(0);
   if (data.cpu_load !== undefined) document.getElementById('telem-cpu').textContent = data.cpu_load.toFixed(1);
-  if (data.heap_free !== undefined) document.getElementById('telem-heap').textContent = data.heap_free.toFixed(0);
+  if (data.heap_free !== undefined) {
+    var heapEl = document.getElementById('telem-heap');
+    heapEl.textContent = data.heap_free >= 10000 ? (data.heap_free / 1000).toFixed(1) + 'k' : data.heap_free.toFixed(0);
+  }
   if (data.pid_pitch !== undefined && data.pid_yaw !== undefined) {
     document.getElementById('telem-pid').textContent = '[' + data.pid_pitch.toFixed(0) + ',' + data.pid_yaw.toFixed(0) + ']';
   }
   // 2-motor balancing robot: [L,R]
   if (data.motor_left !== undefined && data.motor_right !== undefined) {
     document.getElementById('telem-motors').textContent = '[' + data.motor_left.toFixed(0) + ',' + data.motor_right.toFixed(0) + ']';
+    if (typeof renderMotorBars === 'function') renderMotorBars(data.motor_left, data.motor_right);
   } else if (data.motor0 !== undefined && data.motor1 !== undefined) {
     document.getElementById('telem-motors').textContent = '[' + data.motor0.toFixed(0) + ',' + data.motor1.toFixed(0) + ']';
+    if (typeof renderMotorBars === 'function') renderMotorBars(data.motor0, data.motor1);
   }
 }
 

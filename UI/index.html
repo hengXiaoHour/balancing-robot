@@ -60,6 +60,17 @@
     <div id="errorMessage" class="error-message"></div>
 
     <div class="content">
+      <div id="offlineOverlay">
+        <div class="offline-card">
+          <h3>NO LINK</h3>
+          <div class="muted" style="margin-bottom:12px;">Vehicle offline. Pick a link to take control.</div>
+          <div class="row-flex">
+            <button class="control-btn" onclick="offlineConnect('ws')">CONNECT WI-FI</button>
+            <button class="control-btn secondary" onclick="offlineConnect('serial')">CONNECT SERIAL</button>
+          </div>
+          <button class="console-clear-btn" style="margin-top:10px;" onclick="offlineDismiss()">VIEW OFFLINE</button>
+        </div>
+      </div>
       <div class="main-content">
         <!-- CONTROL -->
         <div id="panel-control" class="panel-view active">
@@ -81,7 +92,8 @@
                   <input type="range" id="droneThrottle" min="0" max="100" value="0" oninput="onDroneThrottle(this.value)">
                 </div>
                 <div class="row-flex" style="margin-top: 12px;">
-                  <button class="control-btn arm-wide" onclick="toggleArm()">ARM / DISARM</button>
+                  <button id="armHoldBtn" class="control-btn arm-wide">HOLD TO ARM</button>
+                <div id="armHint" class="muted" style="margin-top:6px;">Hold 1 sec to arm &bull; tap to disarm</div>
                 </div>
               </div>
             </div>
@@ -90,6 +102,20 @@
 
         <!-- STATUS -->
         <div id="panel-status" class="panel-view">
+          <div class="card">
+            <h3>LINK KPIs</h3>
+            <div class="kpi-strip">
+              <div class="kpi"><div class="kpi-val" id="kpi-link">--</div><div class="kpi-label">TRANSPORT</div></div>
+              <div class="kpi"><div class="kpi-val" id="kpi-loop">--</div><div class="kpi-label">LOOP HZ</div><div class="kpi-bar"><div id="kpi-loop-bar"></div></div></div>
+              <div class="kpi"><div class="kpi-val" id="kpi-pkts">0</div><div class="kpi-label">PACKETS</div></div>
+              <div class="kpi"><div class="kpi-val" id="kpi-thr">--</div><div class="kpi-label">THR %</div><div class="kpi-bar"><div id="kpi-thr-bar"></div></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>MOTORS [L,R]</h3>
+            <div class="mbar-row"><span class="mbar-tag">L</span><div class="mbar"><div class="mbar-fill" id="mbarL"></div><div class="mbar-zero"></div></div><span class="mbar-num" id="mbarLNum">--</span></div>
+            <div class="mbar-row"><span class="mbar-tag">R</span><div class="mbar"><div class="mbar-fill" id="mbarR"></div><div class="mbar-zero"></div></div><span class="mbar-num" id="mbarRNum">--</span></div>
+          </div>
           <div class="card">
             <h3>STATUS &amp; TELEMETRY</h3>
             <div class="telemetry">

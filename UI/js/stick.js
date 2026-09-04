@@ -27,14 +27,14 @@ function drawStick() {
   stickCtx.lineWidth = 1;
   stickCtx.strokeRect(4.5, 4.5, w - 9, h - 9);
   // crosshair axes
-  stickCtx.strokeStyle = '#232323';
+  stickCtx.strokeStyle = '#3A3A3A';
   stickCtx.lineWidth = 1;
   stickCtx.beginPath();
   stickCtx.moveTo(cx - stickMax - 6, cy); stickCtx.lineTo(cx + stickMax + 6, cy);
   stickCtx.moveTo(cx, cy - stickMax - 6); stickCtx.lineTo(cx, cy + stickMax + 6);
   stickCtx.stroke();
   // travel ring
-  stickCtx.strokeStyle = '#2A2A2A';
+  stickCtx.strokeStyle = '#3D3D3D';
   stickCtx.lineWidth = 1;
   stickCtx.beginPath();
   stickCtx.arc(cx, cy, stickMax, 0, Math.PI * 2);
@@ -76,10 +76,20 @@ function drawStick() {
   stickCtx.beginPath();
   stickCtx.arc(stickX, stickY, knobR, 0, Math.PI * 2);
   stickCtx.stroke();
-  stickCtx.fillStyle = linked ? '#FF0A0A' : '#5A6480';
+  stickCtx.fillStyle = linked ? '#FF0A0A' : '#8A8A8A';
   stickCtx.beginPath();
   stickCtx.arc(stickX, stickY, 3, 0, Math.PI * 2);
   stickCtx.fill();
+  // grip ring inside the knob + dashed deadzone circle on the field
+  stickCtx.strokeStyle = 'rgba(242,242,242,0.35)';
+  stickCtx.lineWidth = 1.5;
+  stickCtx.beginPath(); stickCtx.arc(stickX, stickY, knobR - 6, 0, Math.PI * 2); stickCtx.stroke();
+  stickCtx.save();
+  stickCtx.setLineDash([4, 5]);
+  stickCtx.strokeStyle = 'rgba(138,138,138,0.5)';
+  stickCtx.lineWidth = 1;
+  stickCtx.beginPath(); stickCtx.arc(cx, cy, stickMax * 0.15, 0, Math.PI * 2); stickCtx.stroke();
+  stickCtx.restore();
 }
 function stickUpdate(clientX, clientY) {
   var rect = stickCanvas.getBoundingClientRect();

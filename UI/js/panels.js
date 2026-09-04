@@ -48,9 +48,51 @@ function renderArm() {
   // Single writer for the header arm pill (readonly indicator).
   // toggleArm() and telemetry both funnel here — no more alternating text.
   var btn = document.getElementById('armBtn');
-  if (!btn) return;
-  btn.textContent = state.armed ? 'ARMED' : 'DISARMED';
-  btn.classList.toggle('armed', !!state.armed);
+  if (btn) {
+    btn.textContent = state.armed ? 'ARMED' : 'DISARMED';
+    btn.classList.toggle('armed', !!state.armed);
+  }
+  var hold = document.getElementById('armHoldBtn');
+  if (hold && !holdArming) {
+    hold.textContent = state.armed ? 'TAP TO DISARM' : (!isConnected ? 'NO LINK — ARM DISABLED' : 'HOLD 1 SEC TO ARM');
+    hold.classList.toggle('no-link', !isConnected && !state.armed);
+  }
+}
+// Hold-to-arm: press and hold 1s to arm (progress fill), tap to disarm.
+var holdArming = false, armHoldTimer = null, armHoldDone = false;
+function armHoldStart(e) {
+  if (!isConnected || state.armed || holdArming) return;
+  if (e && e.preventDefault) e.preventDefault();
+  holdArming = true; armHoldDone = false;
+  var hold = document.getElementById('armHoldBtn');
+  var t0 = Date.now();
+  hold.textContent = 'ARMING…';
+  armHoldTimer = setInterval(function () {
+    var pct = Math.min(100, (Date.now() - t0) / 10);
+    hold.style.setProperty('--hold', pct + '%');
+    if (pct >= 100) {
+      clearInterval(armHoldTimer); armHoldTimer = null;
+      armHoldDone = true; holdArming = false;
+      hold.style.setProperty('--hold', '0%');
+      toggleArm();
+    }
+  }, 50);
+}
+function armHoldCancel() {
+  if (!holdArming) return;
+  holdArming = false;
+  if (armHoldTimer) { clearInterval(armHoldTimer); armHoldTimer = null; }
+  var hold = document.getElementById('armHoldBtn');
+  if (hold) {
+    hold.style.setProperty('--hold', '0%');
+    if (!state.armed) hold.textContent = 'HOLD TO ARM';
+  }
+}
+function armHoldClick() {
+  if (!isConnected) { showError('Not connected to ESP32'); return; }
+  if (state.armed) toggleArm();          // tap to disarm, instant
+  else if (!armHoldDone) showError('Hold 1s to ARM');
+  armHoldDone = false;
 }
 function toggleArm() {
   if (!isConnected) {
@@ -88,6 +130,7 @@ function updateBatteryIndicator(voltage) {
 
 // ===== Instruments =====
 function drawAttitude(roll, pitch) {
+  // Artificial horizon: sky/ground split, pitch ladder, fixed wings, roll arc.
   var canvas = document.getElementById('attitudeCanvas');
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
@@ -99,44 +142,76 @@ function drawAttitude(roll, pitch) {
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, Math.PI * 2);
   ctx.clip();
-  ctx.fillStyle = '#1A1A1A';
+  ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, size, size);
   ctx.translate(center, center);
   ctx.rotate((roll * Math.PI) / 180);
-  var pitchOffset = (pitch * radius) / 90;
+  var px = radius / 45; // px per degree: +/-45deg fills radius
+  var pitchOff = pitch * px;
+  // sky (dark gray) above horizon, black ground below
+  ctx.fillStyle = '#363636';
+  ctx.fillRect(-radius * 2, -radius * 2 - pitchOff, radius * 4, radius * 2);
   ctx.fillStyle = '#000000';
-  ctx.fillRect(-radius * 2, -pitchOffset, radius * 4, radius * 2);
-  ctx.strokeStyle = '#fff';
+  ctx.fillRect(-radius * 2, -pitchOff, radius * 4, radius * 2 + 1);
+  // horizon line: red-hot
+  ctx.strokeStyle = '#FF0A0A';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(-radius, -pitchOffset);
-  ctx.lineTo(radius, -pitchOffset);
+  ctx.moveTo(-radius * 2, -pitchOff);
+  ctx.lineTo(radius * 2, -pitchOff);
   ctx.stroke();
-  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-  ctx.lineWidth = 1;
-  for (var a = -60; a <= 60; a += 15) {
+  // pitch ladder every 10deg with labels
+  ctx.font = '700 9px "JetBrains Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  for (var a = -40; a <= 40; a += 10) {
     if (a === 0) continue;
-    var y = -pitchOffset - (a * radius) / 90;
+    var y = -pitchOff - a * px;
+    if (y < -radius * 1.6 || y > radius * 1.6) continue;
+    var wdt = (a % 20 === 0) ? 26 : 14;
+    ctx.strokeStyle = 'rgba(242,242,242,0.75)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(-20, y);
-    ctx.lineTo(20, y);
+    ctx.moveTo(-wdt, y); ctx.lineTo(wdt, y);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(242,242,242,0.75)';
+    ctx.fillText((a > 0 ? '+' : '') + a, wdt + 3, y);
+  }
+  ctx.restore();
+  // roll arc ticks (fixed to frame)
+  ctx.save();
+  ctx.translate(center, center);
+  for (var d = -45; d <= 45; d += 15) {
+    var ar = (d * Math.PI) / 180 - Math.PI / 2;
+    var r1 = radius - 3, r0 = (d % 45 === 0) ? radius - 12 : radius - 7;
+    ctx.strokeStyle = (d === 0) ? '#FF0A0A' : '#8A8A8A';
+    ctx.lineWidth = (d === 0) ? 2 : 1;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(ar) * r0, Math.sin(ar) * r0);
+    ctx.lineTo(Math.cos(ar) * r1, Math.sin(ar) * r1);
     ctx.stroke();
   }
   ctx.restore();
+  // bezel
   ctx.strokeStyle = '#F2F2F2';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, Math.PI * 2);
   ctx.stroke();
-  ctx.strokeStyle = '#ff4d4d';
+  // fixed wings: red W silhouette
+  ctx.strokeStyle = '#FF0A0A';
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(center - 30, center);
-  ctx.lineTo(center + 30, center);
+  ctx.moveTo(center - 34, center + 2);
+  ctx.lineTo(center - 12, center + 2);
+  ctx.lineTo(center - 6, center + 8);
+  ctx.lineTo(center + 6, center + 8);
+  ctx.lineTo(center + 12, center + 2);
+  ctx.lineTo(center + 34, center + 2);
   ctx.stroke();
-  ctx.fillStyle = '#ff4d4d';
+  ctx.fillStyle = '#FF0A0A';
   ctx.beginPath();
-  ctx.arc(center, center, 4, 0, Math.PI * 2);
+  ctx.arc(center, center + 2, 3, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -191,6 +266,17 @@ function drawCompass(yaw) {
   ctx.font = 'bold 13px Arial';
   ctx.textAlign = 'center';
   ctx.fillText(yaw.toFixed(0) + '\u00B0', center, size - 8);
+  // JARVIS sweep ring: rotating dashed halo (advances with each redraw)
+  ctx.save();
+  ctx.translate(center, center);
+  ctx.rotate((Date.now() / 40 % 360) * Math.PI / 180);
+  ctx.strokeStyle = 'rgba(204,0,0,0.55)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([10, 14]);
+  ctx.beginPath();
+  ctx.arc(0, 0, radius - 1, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
 }
 
 // ===== Calibration =====
@@ -362,7 +448,39 @@ function initializeAngleChart() {
   window.angleChartInstance.data = data;
 }
 
-// ===== Init =====
+// Bidirectional center-zero motor bars (auto-scales to peak output).
+var motorPeak = 255;
+function renderMotorBars(l, r) {
+  if (l === undefined) return;
+  motorPeak = Math.max(100, motorPeak * 0.995, Math.abs(l), Math.abs(r));
+  [['mbarL', 'mbarLNum', l], ['mbarR', 'mbarRNum', r]].forEach(function (m) {
+    var fill = document.getElementById(m[0]);
+    var num = document.getElementById(m[1]);
+    if (!fill || !num) return;
+    var v = m[2] || 0;
+    var pct = Math.min(50, Math.abs(v) / motorPeak * 50);
+    fill.style.width = pct + '%';
+    fill.style.left = v < 0 ? (50 - pct) + '%' : '50%';
+    fill.style.background = v < 0 ? '#8A8A8A' : '#FF0A0A';
+    num.textContent = v.toFixed(0);
+  });
+}
+// Offline gate: connect CTAs + view-offline dismiss (session only).
+var offlineDismissed = false;
+function offlineConnect(t) {
+  offlineDismissed = false;
+  onTransportChange(t);
+  if (t === 'serial') connectSerial();
+  else connectToESP32();
+}
+function offlineDismiss() {
+  offlineDismissed = true;
+  document.getElementById('offlineOverlay').style.display = 'none';
+}
+function syncOfflineOverlay() {
+  if (offlineDismissed) return;
+  document.getElementById('offlineOverlay').style.display = isConnected ? 'none' : 'flex';
+}
 window.addEventListener('load', function () {
   document.getElementById('espIpInput').value = espIP;
   var slider = document.getElementById('maxAngleSlider');
@@ -371,9 +489,26 @@ window.addEventListener('load', function () {
   applyVehicleUI();
   updateDisplay();
   renderArm();
+  (function () {
+    var hold = document.getElementById('armHoldBtn');
+    if (hold) {
+      hold.addEventListener('mousedown', armHoldStart);
+      hold.addEventListener('mouseup', armHoldCancel);
+      hold.addEventListener('mouseleave', armHoldCancel);
+      hold.addEventListener('click', armHoldClick);
+      hold.addEventListener('touchstart', armHoldStart, { passive: false });
+      hold.addEventListener('touchend', function (e) { if (e) e.preventDefault(); var wasArming = holdArming; armHoldCancel(); if (!wasArming) armHoldClick(); });
+    }
+  })();
+  syncOfflineOverlay();
   sizeStick();
   drawAttitude(0, 0);
   drawCompass(0);
+  if (typeof renderMotorBars === 'function') renderMotorBars(0, 0);
+  // JARVIS boot chant: proves console levels + sets the tone on every load.
+  addConsoleMessage('VISWA OS v1.0 // NEBULA VOID', 'dim');
+  addConsoleMessage('LINK SCAN: wi-fi :81 + usb serial 115200', 'dim');
+  addConsoleMessage('SYSTEMS NOMINAL — AWAITING LINK', 'dim');
   applyTransportUI();
   if (transport === 'serial') {
     addConsoleMessage('System ready. Pick USB serial in SETUP > CONNECTION.');

@@ -55,9 +55,9 @@
   border-bottom: 1px solid var(--border);
   padding: 2px 0;
 }
-.ro-label { color: var(--muted); }
-.ro-val { color: var(--text); }
-.ro-val span { color: var(--teal); font-weight: 700; }
+.ro-label { color: var(--muted); font-size: 11px; }
+.ro-val { color: var(--text); font-size: 17px; }
+.ro-val span { color: var(--text); font-weight: 700; }
 @media (max-width: 1023px) {
   .control-grid { grid-template-columns: 1fr; }
   .joystick-wrap { margin: 0 auto; }
