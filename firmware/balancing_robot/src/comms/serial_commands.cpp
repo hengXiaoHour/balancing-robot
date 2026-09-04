@@ -7,6 +7,8 @@
 
 // Definitions live here (were in balancing_robot.ino); externs in serial_commands.h
 float accel_z_world_mps2 = 0.0f;
+bool statusMonitoring = false;
+bool debugMonitoring = false;
 
 // ===== Print Welcome Banner =====
 void printWelcomeBanner() {

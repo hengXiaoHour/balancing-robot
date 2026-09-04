@@ -18,6 +18,9 @@ float azBias = 0.0f, azScale = 1.0f;
 float baro_altitude_scale = 1.0f;
 float accel_z_bias_cal_mps2 = 0.0f;
 
+// NVS handle defined here (was in balancing_robot.ino); extern in calibration.h
+Preferences prefs;
+
 // ===== Print calibration menu =====
 void printCalibrationMenu() {
   Serial.println("\n========================================");

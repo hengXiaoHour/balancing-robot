@@ -6,6 +6,10 @@ static volatile RC_Data espnow_data;
 static volatile uint32_t espnow_seq = 0;
 volatile bool espnow_connected = false;
 static volatile unsigned long last_espnow_update = 0;
+
+// Throttle gating state defined here (were in balancing_robot.ino); externs in esp_now_handler.h
+bool throttle_gate_ready = false;
+float last_throttle = 0.0f;
 static volatile int last_rssi = 0;
 static volatile unsigned long last_rssi_update = 0;
 static unsigned long connection_lost_time = 0;
