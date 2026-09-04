@@ -65,13 +65,13 @@ h1, h2, h3, .brand {
 .content { flex: 1; display: flex; min-height: 0; position: relative; }
 /* Offline gate: dims the dead dashboard until a link is up */
 #offlineOverlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 200;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-top: 12vh;
+  padding: 16px;
   background: rgba(0,0,0,0.82);
 }
 .offline-card {
