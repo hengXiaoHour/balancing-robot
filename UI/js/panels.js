@@ -159,7 +159,7 @@ function drawCompass(yaw) {
   ctx.font = 'bold 12px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  var pts = [['N', 0, -radius + 14, '#ff4d4d'], ['E', radius - 14, 0, '#f0f4ff'], ['S', 0, radius - 14, '#f0f4ff'], ['W', -radius + 14, 0, '#f0f4ff']];
+  var pts = [['N', 0, -radius + 14, '#ff4d4d'], ['E', radius - 14, 0, '#f0f4ff'], ['S', 0, radius - 22, '#f0f4ff'], ['W', -radius + 14, 0, '#f0f4ff']];
   pts.forEach(function (p) {
     ctx.fillStyle = p[3];
     ctx.fillText(p[0], p[1], p[2]);

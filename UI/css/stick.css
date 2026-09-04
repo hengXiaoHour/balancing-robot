@@ -1,7 +1,7 @@
 /* Joystick instrument: square plate, crosshair drawn in canvas (stick.js) */
 .joystick-wrap {
-  width: min(100%, calc(100dvh - 330px));
-  max-width: 440px;
+  width: min(100%, calc(100dvh - 190px));
+  max-width: 640px;
   min-width: 160px;
   margin: 0 auto;
   user-select: none;
@@ -32,7 +32,7 @@
 }
 .control-grid {
   display: grid;
-  grid-template-columns: minmax(160px, min(52dvh, 440px)) minmax(220px, 1fr);
+  grid-template-columns: minmax(160px, min(78dvh, 640px)) minmax(220px, 1fr);
   gap: 16px;
   align-items: center;
 }

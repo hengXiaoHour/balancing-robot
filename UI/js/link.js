@@ -31,6 +31,10 @@ function setConnectionStatus(connected) {
   statusEl.textContent = connected ? 'CONNECTED (' + transportTag() + ')' : 'DISCONNECTED';
   statusEl.classList.toggle('connected', connected);
   statusEl.classList.toggle('disconnected', !connected);
+  // Mode badge is intent, not live state — dim it while offline so it can't
+  // read as an active condition next to DISCONNECTED.
+  var badge = document.getElementById('vehicleBadge');
+  if (badge) badge.style.opacity = connected ? '1' : '0.45';
 }
 function showError(msg) {
   var errorEl = document.getElementById('errorMessage');

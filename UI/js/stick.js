@@ -8,7 +8,7 @@ var stickDragging = false;
 
 function sizeStick() {
   var rect = stickCanvas.getBoundingClientRect();
-  var side = Math.max(160, Math.min(rect.width || 300, 440));
+  var side = Math.max(160, Math.min(rect.width || 300, 640));
   stickCanvas.width = side;
   stickCanvas.height = side;
   stickCanvas.style.height = side + 'px';
@@ -66,7 +66,7 @@ function drawStick() {
     stickCtx.beginPath(); stickCtx.moveTo(cx, cy); stickCtx.lineTo(stickX, stickY); stickCtx.stroke();
   }
   // knob: dark fill, red ring when linked / gray idle, hot core dot
-  var knobR = Math.max(18, Math.min(30, w * 0.07));
+  var knobR = Math.max(18, Math.min(34, w * 0.07));
   stickCtx.fillStyle = '#101010';
   stickCtx.beginPath();
   stickCtx.arc(stickX, stickY, knobR, 0, Math.PI * 2);
