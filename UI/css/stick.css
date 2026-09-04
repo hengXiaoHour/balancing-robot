@@ -67,6 +67,11 @@
 }
 @media (max-width: 768px) {
   /* Control tab never scrolls: natural-height card, stick capped to fit */
-  #panel-control .card { min-height: 0; margin-bottom: 0; }
+  #panel-control .card { min-height: 0; margin-bottom: 0; padding: 10px; }
+  .control-grid { gap: 10px; }
   .joystick-wrap { max-width: 320px; }
+  #joystick1 { margin: 0 auto; }
+  .stick-readout { line-height: 1.7; }
+  .ro-row { padding: 1px 0; }
+  .arm-wide { min-height: 44px; }
 }

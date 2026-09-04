@@ -19,6 +19,7 @@ function showPanel(name) {
   document.querySelectorAll('.panel-view').forEach(function (p) { p.classList.remove('active'); });
   var el = document.getElementById('panel-' + name);
   if (el) el.classList.add('active');
+  if (name === 'control' && typeof sizeStick === 'function') requestAnimationFrame(sizeStick);
   if (name === 'status' || name === 'graph') {
     if (!window.angleChartInstance) {
       setTimeout(function () { initializeAngleChart(); }, 100);
@@ -492,6 +493,7 @@ function offlineConnect(t) {
 function offlineDismiss() {
   offlineDismissed = true;
   document.getElementById('offlineOverlay').style.display = 'none';
+  if (typeof sizeStick === 'function') requestAnimationFrame(sizeStick);
 }
 function syncOfflineOverlay() {
   if (offlineDismissed) return;

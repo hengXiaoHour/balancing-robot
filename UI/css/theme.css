@@ -212,6 +212,8 @@ button.control-btn.armed { background: var(--red); border-color: var(--red); col
   }
   .main-content { padding: 12px 16px 24px 16px; }
   .main-content { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); scroll-padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  /* Control tab is fluid-fitted (see sizeStick) — no dead scroll space */
+  .main-content:has(#panel-control.active) { padding-bottom: 12px; overflow-y: hidden; }
   .card { margin-bottom: 16px; }
   /* Touch-first sizing: min 44px targets */
   button.control-btn, .console-clear-btn, #fullscreenBtn, #armBtn,

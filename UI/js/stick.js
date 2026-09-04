@@ -21,8 +21,21 @@ function yawWithDeadzone(normX, normY, fullScale) {
 function sizeStick() {
   var rect = stickCanvas.getBoundingClientRect();
   var side = Math.max(160, Math.min(rect.width || 300, 640));
+  if (window.innerWidth < 768) {
+    // Fluid fit: stick takes exactly the leftover vertical room so the
+    // control tab never scrolls on short phones nor floats on tall ones.
+    var card = document.querySelector('#panel-control .card');
+    var wrapH = document.querySelector('.joystick-wrap').getBoundingClientRect().height;
+    var nonStick = card ? card.getBoundingClientRect().height - wrapH : 300;
+    var mc2 = document.querySelector('.main-content');
+    var padV = 24;
+    if (mc2) { var mcs = getComputedStyle(mc2); padV = parseFloat(mcs.paddingTop) + parseFloat(mcs.paddingBottom); }
+    var room = (mc2 ? mc2.clientHeight : window.innerHeight) - padV - nonStick;
+    side = Math.max(160, Math.min(side, 320, room));
+  }
   stickCanvas.width = side;
   stickCanvas.height = side;
+  stickCanvas.style.width = side + 'px';
   stickCanvas.style.height = side + 'px';
   stickMax = side / 2 - 32;
   if (!stickDragging) { stickX = side / 2; stickY = side / 2; }
