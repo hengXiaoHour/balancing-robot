@@ -39,3 +39,23 @@ void initIMU() {
   }
   delay(500);
 }
+
+// ===== MPU INITIALIZATION RETRY (moved from balancing_robot.ino verbatim) =====
+void retryMPUInitialization() {
+  Serial.println("[INFO] Attempting to retry MPU initialization...");
+
+  // Re-initialize I2C bus
+  Wire.begin(I2C_SDA, I2C_SCL);
+  delay(100);
+
+  // Attempt to re-initialize MPU object
+  if (mpu.initialize()) {
+    mpuInitialized = true;
+    Serial.println("[OK] MPU successfully re-initialized");
+    filterInitialized = false;  // Reset filter to warm up from next reading
+    Serial.println("[INFO] Filter state reset - will warm up from next reading");
+  } else {
+    Serial.println("[ERROR] MPU re-initialization failed - check sensor connection");
+    mpuInitialized = false;
+  }
+}

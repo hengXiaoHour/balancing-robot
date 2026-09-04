@@ -10,7 +10,13 @@
 extern IMU_Custom mpu;
 extern bool mpuInitialized;
 
+// Owned by the .ino control loop, touched by retry (definition in balancing_robot.ino)
+extern bool filterInitialized;
+
 // Bring up I2C bus + IMU, set mpuInitialized (see imu.cpp)
 void initIMU();
+
+// Re-attempt IMU init if boot failed (see imu.cpp)
+void retryMPUInitialization();
 
 #endif
