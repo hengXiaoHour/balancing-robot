@@ -95,9 +95,9 @@ function armHoldClick() {
     syncOfflineOverlay();
     return;
   }
+  if (armHoldDone) { armHoldDone = false; return; } // hold already armed — swallow the release click
   if (state.armed) toggleArm();          // tap to disarm, instant
-  else if (!armHoldDone) showError('Hold 1s to ARM');
-  armHoldDone = false;
+  else showError('Hold 1s to ARM');
 }
 function toggleArm() {
   if (!isConnected) {
