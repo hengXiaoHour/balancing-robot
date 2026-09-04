@@ -40,6 +40,7 @@
 #include "src/utils/i2c_scan.h"  // scanI2CBus()
 #include "src/system/prefs.h"  // PID save/load/reset (NVS)
 #include "src/system/battery.h"  // Battery voltage + monitoring
+#include "src/system/led.h"  // Status LED (boot test)
 #include "src/system/imu.h"  // IMU object + init
 #include "src/system/state.h"  // shared live state (attitude, sensors, setpoints)
 #include "src/system/control_task.h"  // 1kHz Core-0 control loop
@@ -94,17 +95,8 @@ void setup() {
 
   Serial.println("[MODE] Active vehicle mode: BALANCING_ROBOT");
   
-  // Test LED functionality
-  Serial.printf("[LED TEST] Testing LED on pin %d...\n", LOW_VOLTAGE_LED_PIN);
-  pinMode(LOW_VOLTAGE_LED_PIN, OUTPUT);
-  digitalWrite(LOW_VOLTAGE_LED_PIN, LED_ON_LEVEL);  // LED ON
-  delay(500);
-  digitalWrite(LOW_VOLTAGE_LED_PIN, LED_OFF_LEVEL); // LED OFF
-  delay(500);
-  digitalWrite(LOW_VOLTAGE_LED_PIN, LED_ON_LEVEL);  // LED ON again
-  delay(500);
-  digitalWrite(LOW_VOLTAGE_LED_PIN, LED_OFF_LEVEL); // LED OFF
-  Serial.println("[LED TEST] LED test complete");
+  // Test LED functionality (see system/led.cpp)
+  ledBootTest();
   
   // Configure motor outputs based on selected vehicle mode
   initVehicleMotors();

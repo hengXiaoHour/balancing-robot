@@ -1,4 +1,5 @@
 #include "battery.h"
+#include "led.h"  // ledSet / ledPollBlink
 
 // Definitions live here (were in balancing_robot.ino); externs in battery.h
 float battery_voltage = 0.0f;
@@ -8,8 +9,6 @@ int battery_sample_index = 0;
 bool batteryFilterPrimed = false;
 float lastValidBatteryRawVoltage = 0.0f;
 BatteryState batteryState = BATTERY_NORMAL;
-unsigned long lastLEDBlink = 0;
-bool ledState = false;
 
 // ===== BATTERY VOLTAGE MANAGEMENT FUNCTIONS =====
 void updateBatteryVoltage() {
@@ -69,7 +68,7 @@ void updateBatteryMonitoring() {
   if (initStartTime == 0) initStartTime = millis();
 
   if (battery_voltage < 3.0f || (millis() - initStartTime) < 2000) {
-    digitalWrite(LOW_VOLTAGE_LED_PIN, LED_OFF_LEVEL);
+    ledSet(false);
     return;
   }
 
@@ -99,9 +98,9 @@ void updateBatteryMonitoring() {
       pinMode(LOW_VOLTAGE_LED_PIN, OUTPUT);
 
       if (espnow_connected) {
-        digitalWrite(LOW_VOLTAGE_LED_PIN, LED_ON_LEVEL);
+        ledSet(true);
       } else {
-        digitalWrite(LOW_VOLTAGE_LED_PIN, LED_OFF_LEVEL);
+        ledSet(false);
       }
 
       if (battery_voltage <= LOW_VOLTAGE_THRESHOLD) {
@@ -118,12 +117,7 @@ void updateBatteryMonitoring() {
       break;
 
     case BATTERY_LOW_CONFIRMED:
-      unsigned long now = millis();
-      if (now - lastLEDBlink >= 500) {
-        ledState = !ledState;
-        digitalWrite(LOW_VOLTAGE_LED_PIN, ledState ? LED_ON_LEVEL : LED_OFF_LEVEL);
-        lastLEDBlink = now;
-      }
+      ledPollBlink();
       break;
   }
 }
