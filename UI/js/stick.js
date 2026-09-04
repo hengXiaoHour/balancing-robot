@@ -145,6 +145,11 @@ function updateDisplay() {
 stickCanvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 stickCanvas.addEventListener('mousedown', function (e) { e.preventDefault(); stickDragging = true; stickUpdate(e.clientX, e.clientY); });
 stickCanvas.addEventListener('mousemove', function (e) { if (stickDragging) { e.preventDefault(); stickUpdate(e.clientX, e.clientY); } });
+// Release outside the border must never leave the stick deflected:
+// mouseup/touchend land on window when the pointer is released off-canvas.
+window.addEventListener('mouseup', function () { if (stickDragging) stickReset(); });
+window.addEventListener('blur', function () { if (stickDragging) stickReset(); });
+window.addEventListener('touchend', function () { if (stickDragging) stickReset(); });
 stickCanvas.addEventListener('mouseup', function (e) { if (e) e.preventDefault(); stickReset(); });
 stickCanvas.addEventListener('mouseleave', function () { if (stickDragging) stickReset(); });
 stickCanvas.addEventListener('touchstart', function (e) { e.preventDefault(); stickDragging = true; stickUpdate(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
