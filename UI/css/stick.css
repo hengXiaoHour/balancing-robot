@@ -1,8 +1,9 @@
 /* Joystick instrument: square plate, crosshair drawn in canvas (stick.js) */
 .joystick-wrap {
-  width: 100%;
+  width: min(100%, calc(100dvh - 330px));
   max-width: 440px;
-  margin: 0;
+  min-width: 160px;
+  margin: 0 auto;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -22,11 +23,16 @@
   touch-action: none;
   overscroll-behavior: none;
 }
-/* Desktop: stick left, data + arm right — stick stays square, sized by
-   viewport height so the tab fills the screen without distortion */
+/* CONTROL tab fills the viewport: card takes full height, content spreads */
+#panel-control .card {
+  min-height: calc(100dvh - 190px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
 .control-grid {
   display: grid;
-  grid-template-columns: minmax(260px, min(52dvh, 440px)) minmax(220px, 1fr);
+  grid-template-columns: minmax(160px, min(52dvh, 440px)) minmax(220px, 1fr);
   gap: 16px;
   align-items: center;
 }
