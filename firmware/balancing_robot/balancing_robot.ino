@@ -273,27 +273,8 @@ void setup() {
     Serial.println("[DEBUG] I2C scan complete\n");
   }
   
-  // Load calibration bias from preferences
-  prefs.begin("mpu6050", true);  // Read-only mode
-  gyroBiasY = prefs.getFloat("gyroBiasY", prefs.getFloat("gyroBias", 0.0f));
-  gyroBiasX = prefs.getFloat("gyroBiasX", 0.0f);
-  gyroBiasZ = prefs.getFloat("gyroBiasZ", 0.0f);
-  axBias = prefs.getFloat("axBias", 0.0f);
-  axScale = prefs.getFloat("axScale", 1.0f);
-  ayBias = prefs.getFloat("ayBias", 0.0f);
-  ayScale = prefs.getFloat("ayScale", 1.0f);
-  azBias = prefs.getFloat("azBias", 0.0f);
-  azScale = prefs.getFloat("azScale", 1.0f);
-  baro_altitude_scale = prefs.getFloat("baroScale", 1.0f);
-  accel_z_bias_cal_mps2 = prefs.getFloat("altAzBias", 0.0f);
-  trim_pitch = prefs.getFloat("trim_pitch", 0.0f);
-  trim_roll = prefs.getFloat("trim_roll", 0.0f);
-  prefs.end();
-  
-  Serial.println("[OK] Calibration bias loaded from preferences");
-  Serial.println("[BARO_CAL] Loaded offsets from NVS:");
-  Serial.print("[BARO_CAL] baroScale(avg) = "); Serial.println(baro_altitude_scale, 5);
-  Serial.print("[BARO_CAL] accelZBias_mps2(avg) = "); Serial.println(accel_z_bias_cal_mps2, 5);
+  // Load calibration bias from NVS (see sensors/calibration.cpp)
+  loadCalibrationBias();
   
   // Load PID values from preferences
   loadPIDFromPreferences();
@@ -309,24 +290,6 @@ void setup() {
   
   // DO NOT init filter here - sensors not warmed up yet
   // Will init after control loop starts with stable accel data
-  
-  // Print all loaded bias values
-  Serial.println("\n===== Loaded Calibration Bias =====");
-  Serial.print("Gyro Bias X: "); Serial.println(gyroBiasX);
-  Serial.print("Gyro Bias Y: "); Serial.println(gyroBiasY);
-  Serial.print("Gyro Bias Z: "); Serial.println(gyroBiasZ);
-  Serial.print("Accel X Bias: "); Serial.println(axBias);
-  Serial.print("Accel X Scale: "); Serial.println(axScale);
-  Serial.print("Accel Y Bias: "); Serial.println(ayBias);
-  Serial.print("Accel Y Scale: "); Serial.println(ayScale);
-  Serial.print("Accel Z Bias: "); Serial.println(azBias);
-  Serial.print("Accel Z Scale: "); Serial.println(azScale);
-  Serial.print("Baro Scale: "); Serial.println(baro_altitude_scale, 5);
-  Serial.print("Alt Z-Accel Bias (m/s^2): "); Serial.println(accel_z_bias_cal_mps2, 5);
-  Serial.println("\n===== Trimmed Angle Bias =====");
-  Serial.print("Trim Pitch: "); Serial.print(trim_pitch, 4); Serial.println("Ã‚Â°");
-  Serial.print("Trim Roll: "); Serial.print(trim_roll, 4); Serial.println("Ã‚Â°");
-  Serial.println("===================================\n");
   
   // Create mutex for shared data
   dataLock = xSemaphoreCreateMutex();

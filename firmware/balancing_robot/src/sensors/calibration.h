@@ -22,6 +22,14 @@ extern Preferences prefs;
 extern int16_t mpu_accelX, mpu_accelY, mpu_accelZ;
 extern int16_t mpu_gyroX, mpu_gyroY, mpu_gyroZ;
 
+// Bias values loaded from NVS at boot (definitions in balancing_robot.ino;
+// written by calibration routines, read here)
+extern float gyroBiasX, gyroBiasY, gyroBiasZ;
+extern float axBias, axScale, ayBias, ayScale, azBias, azScale;
+extern float baro_altitude_scale;
+extern float accel_z_bias_cal_mps2;
+extern float trim_pitch, trim_roll;
+
 // Calibration data storage
 struct CalibrationData {
   // Step 1: Stationary level
@@ -57,6 +65,7 @@ bool validateAccelOrientationForStep();
 void processCalibrationStep(const String& command);
 void recordCalibrationStep();
 void advanceCalibrationStep();
+void loadCalibrationBias();  // read NVS biases at boot (called from setup())
 void updateCalibration();
 void saveGyroCalibrationToPreferences();
 void saveAccelCalibrationToPreferences();
