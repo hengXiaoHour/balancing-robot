@@ -5,6 +5,16 @@
 // ===== Kalman Filter Initialization State =====
 static bool kalman_initialized = false;
 
+// 6x6 covariance matrix defined here (was in balancing_robot.ino); extern in kalman_filter.h
+float P[6][6] = {
+  {1, 0, 0, 0, 0, 0},
+  {0, 1, 0, 0, 0, 0},
+  {0, 0, 1, 0, 0, 0},
+  {0, 0, 0, 1, 0, 0},
+  {0, 0, 0, 0, 1, 0},
+  {0, 0, 0, 0, 0, 1}
+};
+
 // ===== Impact Detection State =====
 unsigned long lastImpactTime = 0;
 const unsigned long IMPACT_BOOST_DURATION = 800;  // milliseconds to boost accel trust post-impact

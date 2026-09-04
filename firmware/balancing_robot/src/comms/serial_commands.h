@@ -34,7 +34,6 @@ extern float pidOutput_Right;
 extern float pidIntegral;
 extern int16_t accelX, accelY, accelZ;
 extern int16_t gyroX, gyroY;
-extern unsigned long lastLoopTime;
 extern unsigned long lastPIDUpdateTime;  // For pausing telemetry on PID updates
 extern float KP, KI, KD;  // PID gains
 extern float KP_Pitch, KI_Pitch, KD_Pitch;  // Pitch axis gains

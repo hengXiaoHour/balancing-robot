@@ -37,9 +37,11 @@
 #endif
 #include "src/sensors/calibration.h"
 #include "src/utils/timing.h"
+#include "src/utils/i2c_scan.h"  // scanI2CBus()
 #include "src/system/prefs.h"  // PID save/load/reset (NVS)
 #include "src/system/battery.h"  // Battery voltage + monitoring
 #include "src/system/imu.h"  // IMU object + init
+#include "src/system/state.h"  // shared live state (attitude, sensors, setpoints)
 #include "src/system/control_task.h"  // 1kHz Core-0 control loop
 
 #include "src/sensors/battery_state.h"  // BatteryState enum + LOW_VOLTAGE_THRESHOLD
@@ -58,38 +60,8 @@ extern volatile bool espnow_connected;
 
 // ===== GLOBAL VARIABLE DECLARATIONS (Core Control Variables) =====
 
-// Global Variables
-unsigned long lastLoopTime = 0;
-bool filterInitialized = false;
-// Arm/motor state: defined in control/motor_control.cpp
-// Monitoring flags: defined in comms/serial_commands.cpp
-float pitch_setpoint = 0.0;
-float roll_setpoint = 0.0;
-float yaw_setpoint = 0.0;
-
-// Sensor variables
-int16_t accelX, accelY, accelZ;
-int16_t gyroX, gyroY, gyroZ;
-
-// Raw MPU data
-int16_t mpu_accelX, mpu_accelY, mpu_accelZ;
-int16_t mpu_gyroX, mpu_gyroY, mpu_gyroZ;
-
-// Attitude filter variables
-float pitch = 0.0, roll = 0.0, yaw = 0.0;
-float pitch_final = 0.0, roll_final = 0.0;
-float pitch_bias = 0.0, roll_bias = 0.0, yaw_bias = 0.0;
-float trim_pitch = 0.0;
-float trim_roll = 0.0;
-float P[6][6] = {
-  {1, 0, 0, 0, 0, 0},
-  {0, 1, 0, 0, 0, 0},
-  {0, 0, 1, 0, 0, 0},
-  {0, 0, 0, 1, 0, 0},
-  {0, 0, 0, 0, 1, 0},
-  {0, 0, 0, 0, 0, 1}
-};
-float dt = 0.02;
+// Global Variables: live state now defined in system/state.cpp
+// (lastLoopTime was write-only — setup() wrote it, nobody read it — deleted)
 
 // PID state + per-axis gains + velocity estimation: defined in control/pid_controller.cpp
 // (pidLastError was dead — deleted, no references anywhere)
@@ -98,9 +70,7 @@ float dt = 0.02;
 
 // Motor test mode: defined in control/motor_control.cpp
 
-// Filter variables
-float filtered_accelX = 0.0, filtered_accelY = 0.0, filtered_accelZ = 0.0;
-float filtered_gyroX = 0.0, filtered_gyroY = 0.0, filtered_gyroZ = 0.0;
+// Filter I/O: defined in system/state.cpp
 
 // Battery voltage monitoring: defined in system/battery.cpp
 
@@ -108,9 +78,7 @@ float filtered_gyroX = 0.0, filtered_gyroY = 0.0, filtered_gyroZ = 0.0;
 
 // Telemetry timestamp: defined in comms/serial_pid_commands.cpp
 
-// Failsafe filtering
-float filtered_pitch = 0.0;
-float filtered_roll = 0.0;
+// Failsafe filtering: defined in system/state.cpp
 
 // Arm hysteresis: defined in control/motor_control.cpp
 
@@ -152,30 +120,9 @@ void setup() {
   // Barometer disabled - removed
   Serial.println("[INFO] Config settings loaded");
   
-  // ===== I2C BUS SCAN =====
+  // ===== I2C BUS SCAN (see utils/i2c_scan.cpp) =====
   if (debugMonitoring) {
-    Serial.println("\n[DEBUG] Scanning I2C bus...");
-    Serial.printf("[DEBUG] I2C pins - SDA: GPIO %d, SCL: GPIO %d\n", I2C_SDA, I2C_SCL);
-    byte error, address;
-    int nDevices = 0;
-    for(address = 1; address < 127; address++ ) {
-      Wire.beginTransmission(address);
-      error = Wire.endTransmission();
-      if (error == 0) {
-        Serial.printf("[DEBUG] I2C device found at address 0x%02X", address);
-        if (address == 0x68) Serial.print(" (IMU/I2C device)");
-        Serial.println();
-        nDevices++;
-      } else if (error == 4) {
-        Serial.printf("[DEBUG] Unknown error at address 0x%02X\n", address);
-      }
-    }
-    if (nDevices == 0) {
-      Serial.println("[DEBUG] No I2C devices found!");
-    } else {
-      Serial.printf("[DEBUG] Found %d I2C device(s)\n", nDevices);
-    }
-    Serial.println("[DEBUG] I2C scan complete\n");
+    scanI2CBus();
   }
   
   // Load calibration bias from NVS (see sensors/calibration.cpp)
@@ -226,8 +173,6 @@ void setup() {
   // Print welcome message
   printWelcomeBanner();;
   printCalibrationMenu();
-  
-  lastLoopTime = millis();
 }
 
 void loop() {
@@ -272,12 +217,8 @@ void loop() {
   }
 
   
-  // Periodic MPU6050 initialization retry (every 30 seconds if not initialized)
-  static unsigned long lastMPURetry = 0;
-  if (!mpuInitialized && (millis() - lastMPURetry > 30000)) {
-    lastMPURetry = millis();
-    retryMPUInitialization();
-  }
+  // Periodic MPU6050 initialization retry (every 30s if not initialized, see imu.cpp)
+  pollMpuRetry();
   
   // Small delay to prevent Core 1 from starving other tasks
   delay(1);
