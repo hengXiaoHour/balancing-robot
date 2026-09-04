@@ -70,9 +70,16 @@
   #define MOTOR_MIN_PWM 2000 // Minimum motor PWM duty (0-4095) - prevents motor from stalling
 
 
-  // Status LED pin
+  // Status LED: WS2812 addressable RGB on GPIO8 (NOT a plain HIGH/LOW LED)
   #define LOW_VOLTAGE_LED_PIN 8
-  #define LED_ON_LEVEL HIGH
+  #define STATUS_LED_RGB 1
+  #define LED_ON_R 0
+  #define LED_ON_G 64
+  #define LED_ON_B 0      // dim green = ON / connected
+  #define LED_BLINK_R 64
+  #define LED_BLINK_G 0
+  #define LED_BLINK_B 0   // dim red = low-battery blink
+  #define LED_ON_LEVEL HIGH   // unused in RGB mode, kept for compatibility
   #define LED_OFF_LEVEL LOW
 
   // Balancing robot motor driver pins (adjust to your wiring)
