@@ -70,15 +70,18 @@ void handleWebSocketCommand(const String& jsonStr) {
   // Simple JSON parsing without ArduinoJson to avoid library conflicts
   // Parse format: {"command":"value"} or {"pitch":0.5,"roll":0.3,"yaw":0.1,"throttle":50,"arm":true}
 
-  // Handle joystick/control commands (now speed-based for cascaded control)
+  // Handle joystick/control commands. UI sends stick degrees; firmware fans
+  // them out to BOTH control paths: angle setpoints (single/dual PID,
+  // cascade angle mode) and speed setpoints (cascade velocity loop).
   if (jsonStr.indexOf("\"pitch\":") != -1) {
     int start = jsonStr.indexOf("\"pitch\":") + 8;
     int end = jsonStr.indexOf(",", start);
     if (end == -1) end = jsonStr.indexOf("}", start);
     String pitchStr = jsonStr.substring(start, end);
     float pitchInput = pitchStr.toFloat() * CONTROLLER_PITCH_SIGN;
-    // Joystick pitch input now sets desired forward/backward speed (m/s)
-    // Map joystick range (-1 to 1) to speed range (-2 to 2 m/s)
+    // Angle-mode path: stick degrees -> lean target (deg)
+    pitch_setpoint = constrain(pitchInput, -ESPNOW_MAX_PITCH, ESPNOW_MAX_PITCH);
+    // Cascade path: stick degrees -> desired forward/backward speed (m/s)
     #if JOYSTICK_SWAP_ROLL_PITCH_INPUT
     speed_y_setpoint = pitchInput * 2.0f;
     #else
@@ -91,8 +94,9 @@ void handleWebSocketCommand(const String& jsonStr) {
     if (end == -1) end = jsonStr.indexOf("}", start);
     String rollStr = jsonStr.substring(start, end);
     float rollInput = rollStr.toFloat() * CONTROLLER_ROLL_SIGN;
-    // Joystick roll input now sets desired lateral speed (m/s)
-    // Map joystick range (-1 to 1) to speed range (-2 to 2 m/s)
+    // Angle-mode path: stick degrees -> lean target (deg)
+    roll_setpoint = constrain(rollInput, -ESPNOW_MAX_ROLL, ESPNOW_MAX_ROLL);
+    // Cascade path: stick degrees -> desired lateral speed (m/s)
     #if JOYSTICK_SWAP_ROLL_PITCH_INPUT
     speed_x_setpoint = rollInput * 2.0f;
     #else
@@ -106,7 +110,9 @@ void handleWebSocketCommand(const String& jsonStr) {
     String yawStr = jsonStr.substring(start, end);
     float yawInput = yawStr.toFloat() * CONTROLLER_YAW_SIGN;
     #if JOYSTICK_YAW_INPUT_ENABLED
-    yaw_setpoint = yawInput;
+    // Yaw is always rate mode: updateYawPID() reads yaw_rate_target (deg/s)
+    yaw_rate_target = constrain(yawInput, -ESPNOW_MAX_YAW_RATE, ESPNOW_MAX_YAW_RATE);
+    yaw_setpoint = yaw_rate_target;
     #else
     yaw_setpoint = 0.0f;
     yaw_rate_target = 0.0f;
