@@ -970,7 +970,8 @@
     const normY = y / stickMax;
     if (vehicle === 'balancing') {
       // Y -> pitch / speed setpoint, X -> yaw. Throttle held at arm value.
-      state.pitch = normY * maxRollPitchAngle;
+      // Negated: canvas Y is down-positive, lean target is forward-positive.
+      state.pitch = -normY * maxRollPitchAngle;
       state.roll = 0;
       state.yaw = normX * 360;
       state.throttle = state.armed ? 0.2 : 0;
@@ -981,8 +982,8 @@
       state.pitch = 0;
       state.roll = 0;
     } else {
-      // drone: stick -> pitch/roll, throttle via slider
-      state.pitch = normY * maxRollPitchAngle;
+      // drone: stick -> pitch/roll, throttle via slider (same canvas convention as balancing)
+      state.pitch = -normY * maxRollPitchAngle;
       state.roll = normX * maxRollPitchAngle;
       state.yaw = 0;
       state.throttle = state.armed ? droneThrottlePct / 100 : 0;

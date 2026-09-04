@@ -67,7 +67,7 @@
 #define CONTROLLER_YAW_SIGN -1.0f
 
 // ===== WEBSOCKET STICK DIRECTION (0 = raw, 1 = invert; WebUI only) =====
-#define WS_PITCH_INPUT_INVERT 1  // WebUI sends nose-up-positive; set 0 if forward feels reversed
+#define WS_PITCH_INPUT_INVERT 0  // WebUI sends pre-oriented values; keep 0 (raw)
 #define WS_ROLL_INPUT_INVERT 0
 #define WS_YAW_INPUT_INVERT 0
 
