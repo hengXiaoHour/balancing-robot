@@ -19,4 +19,7 @@ void initIMU();
 // Re-attempt IMU init if boot failed (see imu.cpp)
 void retryMPUInitialization();
 
+// Non-blocking 30s periodic retry poll for loop() (see imu.cpp)
+void pollMpuRetry();
+
 #endif

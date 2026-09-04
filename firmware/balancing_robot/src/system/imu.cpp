@@ -59,3 +59,12 @@ void retryMPUInitialization() {
     mpuInitialized = false;
   }
 }
+
+// ===== Periodic retry poll: call from loop() (moved from .ino verbatim) =====
+void pollMpuRetry() {
+  static unsigned long lastMPURetry = 0;
+  if (!mpuInitialized && (millis() - lastMPURetry > 30000)) {
+    lastMPURetry = millis();
+    retryMPUInitialization();
+  }
+}
