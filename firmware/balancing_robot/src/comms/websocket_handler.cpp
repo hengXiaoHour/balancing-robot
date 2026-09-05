@@ -11,6 +11,9 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 // WebSocket connection flag
 bool webSocketConnected = false;
 
+// WS message log flag (serial `ws_debug` toggles; default OFF — stick streams would flood serial)
+bool wsDebugMonitoring = false;
+
 // ===== Telemetry rate limiting (local to this TU) =====
 unsigned long lastTelemetryTime = 0;
 const unsigned long TELEMETRY_INTERVAL = 100;  // Send every 100ms
@@ -51,13 +54,13 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t l
       for(size_t i = 0; i < length; i++) {
         msg += (char)payload[i];
       }
-      Serial.print("[WS] Received: "); Serial.println(msg);
+      if (wsDebugMonitoring) { Serial.print("[WS] Received: "); Serial.println(msg); }
       handleWebSocketCommand(msg);
       break;
     }
 
     case WStype_BIN:
-      Serial.println("[WS] Binary data received (not supported)");
+      if (wsDebugMonitoring) Serial.println("[WS] Binary data received (not supported)");
       break;
 
     default:

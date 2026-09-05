@@ -84,6 +84,9 @@ extern WebSocketsServer webSocket;
 // WebSocket connection flag
 extern bool webSocketConnected;
 
+// WS message log flag (serial `ws_debug` toggles; default OFF)
+extern bool wsDebugMonitoring;
+
 // ===== WebSocket API (see websocket_handler.cpp) =====
 void initWebSocket();
 void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length);

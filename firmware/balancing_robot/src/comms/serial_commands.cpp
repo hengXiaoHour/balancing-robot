@@ -88,6 +88,7 @@ void printWelcomeBanner() {
   Serial.println("  test_motor     - Wheel test: LEFT fwd/rev then RIGHT fwd/rev, 60%, 2s each");
   Serial.println("  status         - Toggle sensor monitoring");
   Serial.println("  debug          - Toggle debug information");
+  Serial.println("  ws_debug       - Toggle WebSocket message log (default OFF)");
   Serial.println("\nWiFi & OTA Commands:");
   Serial.println("  wifi/wifi_status - Show WiFi status");
   Serial.println("  wifi_sta/sta   - Switch to STA mode (connect to WiFi)");
@@ -226,6 +227,14 @@ void handleSerialCommand() {
         Serial.println("\n[DEBUG] Debug monitoring ENABLED - Type 'debug' again to disable");
       } else {
         Serial.println("\n[DEBUG] Debug monitoring DISABLED\n");
+      }
+    }
+    else if (command == "ws_debug") {
+      wsDebugMonitoring = !wsDebugMonitoring;  // Toggle WebSocket message log
+      if (wsDebugMonitoring) {
+        Serial.println("\n[WS] Message log ENABLED - Type 'ws_debug' again to disable");
+      } else {
+        Serial.println("\n[WS] Message log DISABLED\n");
       }
     }
     // ===== SPEED SETPOINT CONTROL (Cascaded Control) =====

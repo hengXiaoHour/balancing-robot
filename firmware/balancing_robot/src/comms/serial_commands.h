@@ -22,6 +22,7 @@ extern bool motorsArmed;
 extern bool motorsActive;
 extern bool statusMonitoring;
 extern bool debugMonitoring;
+extern bool wsDebugMonitoring;  // defined in comms/websocket_handler.cpp
 extern float pitch, roll, yaw;  // 3D angles
 extern float filtered_pitch;    // Low-pass filtered pitch for failsafe check
 extern float filtered_roll;     // Low-pass filtered roll for failsafe check
