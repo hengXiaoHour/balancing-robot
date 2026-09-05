@@ -74,7 +74,7 @@
 #define ROBOT_MAX_PITCH_SETPOINT_DEG 15.0f  // Firmware hard cap; UI maxAngle (default 10) stays under this
 #define ROBOT_PITCH_INPUT_DEADBAND_DEG 0.6f
 #define ROBOT_YAW_INPUT_DEADBAND 0.10f
-#define ROBOT_MAX_ACTUAL_TILT_DEG 5.0f
+#define ROBOT_MAX_ACTUAL_TILT_DEG 15.0f
 #define ROBOT_TILT_GUARD_BAND_DEG 1.0f
 #define ROBOT_SETPOINT_SLEW_DEG_PER_S 40.0f  // Max setpoint change rate
 
@@ -87,7 +87,7 @@
 #define JOYSTICK_YAW_INPUT_ENABLED 1
 
 // ===== CONTROLLER INPUT SIGN (-1.0f reverses an axis) =====
-#define CONTROLLER_PITCH_SIGN 1.0f
+#define CONTROLLER_PITCH_SIGN -1.0f
 #define CONTROLLER_ROLL_SIGN 1.0f  // NOT USED: roll disabled
 #define CONTROLLER_YAW_SIGN -1.0f
 
