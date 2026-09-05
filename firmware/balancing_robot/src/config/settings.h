@@ -41,10 +41,6 @@
 #define DEFAULT_KI_YAW 0.2
 #define DEFAULT_KD_YAW 5.0
 
-#define PID_MAX 4095           // Maximum PID output (motor speed limit)
-#define PID_INTEGRAL_LIMIT 500  // Integral windup protection
-#define PID_CONTROL_LOOP_HZ 1000  // Control loop frequency in Hz
-
 // ===== CASCADE PID (only used if ENABLE_CASCADE_PID = 1) =====
 #define CASCADE_MODE_ANGLE_CONTROL 1  // 1 = angle mode, 0 = direct rate mode
 #define CASCADE_MAX_RATE_SETPOINT 90.0f
@@ -69,6 +65,10 @@
 #define CASCADE_ROLL_RATE_KP 0.0
 #define CASCADE_ROLL_RATE_KI 0.0
 #define CASCADE_ROLL_RATE_KD 0.0
+
+#define PID_MAX 4095           // Maximum PID output (motor speed limit)
+#define PID_INTEGRAL_LIMIT 500  // Integral windup protection
+#define PID_CONTROL_LOOP_HZ 1000  // Control loop frequency in Hz
 
 // ===== BALANCING ROBOT INPUT SAFETY LIMITS =====
 #define ROBOT_MAX_PITCH_SETPOINT_DEG 15.0f  // Firmware hard cap; UI maxAngle (default 10) stays under this
