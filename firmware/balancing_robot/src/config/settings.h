@@ -46,7 +46,7 @@
 #define CONTROLLER_EXPO 1.0f  // 0.0 = linear, 1.0 = strong expo
 
 // ===== BALANCING ROBOT INPUT SAFETY LIMITS =====
-#define ROBOT_MAX_PITCH_SETPOINT_DEG 10.0f
+#define ROBOT_MAX_PITCH_SETPOINT_DEG 15.0f  // Firmware hard cap; UI maxAngle (default 10) stays under this
 #define ROBOT_PITCH_INPUT_DEADBAND_DEG 0.6f
 #define ROBOT_YAW_INPUT_DEADBAND 0.10f
 #define ROBOT_MAX_ACTUAL_TILT_DEG 5.0f
@@ -123,8 +123,8 @@
 #define CONTROLLER_MAC_4 0xEE
 #define CONTROLLER_MAC_5 0xFF
 
-// ESP-NOW setpoint limits
-#define ESPNOW_MAX_PITCH 12.0f
+// ESP-NOW setpoint limits (WS pitch shares ESPNOW_MAX_PITCH parse cap)
+#define ESPNOW_MAX_PITCH 15.0f
 #define ESPNOW_MAX_ROLL 12.0f
 #define ESPNOW_MAX_YAW_RATE 100.0f
 #define ESPNOW_THROTTLE_MAX 100.0f

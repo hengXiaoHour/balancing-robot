@@ -6,6 +6,7 @@ var vehicle = localStorage.getItem('vehicleType') || 'balancing';
 if (['balancing', 'rccar', 'drone'].indexOf(vehicle) === -1) vehicle = 'balancing';
 var maxRollPitchAngle = parseFloat(localStorage.getItem('maxAngle') || '10');
 if (!isFinite(maxRollPitchAngle)) maxRollPitchAngle = 10;
+maxRollPitchAngle = Math.max(5, Math.min(15, maxRollPitchAngle));
 var yawDeadzoneDeg = parseFloat(localStorage.getItem('yawDeadzone') || '10');
 if (!isFinite(yawDeadzoneDeg)) yawDeadzoneDeg = 10;
 var yawRateMax = parseFloat(localStorage.getItem('yawRate') || '100');
@@ -92,7 +93,7 @@ function resetStickState() {
 
 // ===== Settings =====
 function updateMaxAngle(v) {
-  maxRollPitchAngle = Math.max(5, Math.min(45, parseFloat(v) || 10));
+  maxRollPitchAngle = Math.max(5, Math.min(15, parseFloat(v) || 10));
   localStorage.setItem('maxAngle', String(maxRollPitchAngle));
   document.getElementById('maxAngleValue').textContent = maxRollPitchAngle + '\u00B0';
   var s = document.getElementById('maxAngleSlider');

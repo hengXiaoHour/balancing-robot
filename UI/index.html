@@ -235,8 +235,8 @@
           </div>
           <div class="card">
             <h3>STICK RANGE</h3>
-            <label style="font-size: 12px; color: #8A8A8A;">Max Roll/Pitch Angle: <span id="maxAngleValue" style="color: #F2F2F2; font-weight: bold;">10&deg;</span><span class="help-icon" tabindex="0">?<span class="tip">Full stick deflection = this lean angle. Range 5&deg; - 45&deg;. Saved locally in browser.</span></span></label>
-            <input type="range" id="maxAngleSlider" min="5" max="45" value="10" oninput="updateMaxAngle(this.value)">
+            <label style="font-size: 12px; color: #8A8A8A;">Max Roll/Pitch Angle: <span id="maxAngleValue" style="color: #F2F2F2; font-weight: bold;">10&deg;</span><span class="help-icon" tabindex="0">?<span class="tip">Full stick deflection = this lean angle. Range 5&deg; - 15&deg; (firmware hard cap 15&deg;). Saved locally in browser.</span></span></label>
+            <input type="range" id="maxAngleSlider" min="5" max="15" value="10" oninput="updateMaxAngle(this.value)">
             <label style="font-size: 12px; color: #8A8A8A; margin-top: 10px; display: block;">Yaw Deadzone: <span id="yawDeadzoneValue" style="color: #F2F2F2; font-weight: bold;">10&deg;</span><span class="help-icon" tabindex="0">?<span class="tip">Stick lean off fore-aft before yaw kicks in. 0&deg; = raw, no deadzone. Saved locally.</span></span></label>
             <input type="range" id="yawDeadzoneSlider" min="0" max="45" value="10" oninput="updateYawDeadzone(this.value)">
             <label style="font-size: 12px; color: #8A8A8A; margin-top: 10px; display: block;">Yaw Rate: <span id="yawRateValue" style="color: #F2F2F2; font-weight: bold;">100&deg;/S</span><span class="help-icon" tabindex="0">?<span class="tip">Full sideways stick = this spin rate. Balancing mode only. Saved locally.</span></span></label>
