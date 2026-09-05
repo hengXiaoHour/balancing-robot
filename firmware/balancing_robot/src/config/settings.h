@@ -21,6 +21,8 @@
 #define ENABLE_CASCADE_PID 0  // 1 = cascade (angle + rate), 0 = single angle PID
 
 // ===== PID GAINS (single source of truth — boot + reset agree) =====
+// Each DEFAULT seeds ALL axes (pitch/roll/yaw) at boot, reset, and NVS fallback;
+// live per-axis values diverge after WebUI tuning.
 #define DEFAULT_KP 8.0   // Proportional: response strength to angle error
 #define DEFAULT_KI 0.2   // Integral: long-term drift correction
 #define DEFAULT_KD 5.0   // Derivative: oscillation damping (gyro rate)
