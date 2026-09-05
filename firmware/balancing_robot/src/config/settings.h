@@ -85,6 +85,13 @@
 // ===== SERIAL =====
 #define SERIAL_BAUD 115200  // Must match your serial monitor setting
 
+// ===== WIFI (STA + AP + OTA) — sole WiFi config, consumed by comms/wifi_ota.h =====
+// NOTE: real credentials live only in the local working copy, never in git.
+#define WIFI_SSID "YOUR_WIFI_SSID"          // Change to your WiFi network name
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"  // Change to your WiFi password
+#define AP_SSID "ESP32_QUAD"           // Access Point name when in AP mode
+#define AP_PASSWORD "12345678"         // Access Point password
+
 // ===== FILTER PARAMETERS =====
 #define GYRO_LPF_ALPHA 1.0f       // Gyroscope software low-pass
 #define ACCEL_LPF_ALPHA 0.1f      // Accelerometer software low-pass

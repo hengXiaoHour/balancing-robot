@@ -32,8 +32,8 @@ compiles `.cpp` files under the sketch `src/` directory).
 
 ## `src/comms/` — outside world
 - `serial_commands.h/.cpp`: USB CLI (`status`, `load`, `save`, `i2c_scan`…).
-- `wifi_ota.h/.cpp`: WiFi + OTA. NOTE: real SSID/password live here
-  **uncommitted, local-only** — HEAD carries placeholders.
+- `wifi_ota.h/.cpp`: WiFi + OTA. NOTE: real SSID/password live in
+  `src/config/settings.h` **uncommitted, local-only** — HEAD carries placeholders.
 - `websocket_handler.h/.cpp`: WebSocket server on :81 (telemetry out,
   PID tuning in). `esp_now_handler.h/.cpp`: ESP-NOW joystick input.
 

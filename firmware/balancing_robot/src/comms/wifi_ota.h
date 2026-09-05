@@ -3,13 +3,21 @@
 
 #include <WiFi.h>
 #include <ArduinoOTA.h>
+#include "../config/settings.h"  // WIFI_SSID / WIFI_PASSWORD / AP_SSID / AP_PASSWORD (sole config)
 
-// ===== WiFi Configuration =====
-// NOTE: real credentials live only in the local working copy, never in git.
-#define WIFI_SSID "YOUR_WIFI_SSID"          // Change to your WiFi network name
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"  // Change to your WiFi password
-#define AP_SSID "ESP32_QUAD"           // Access Point name when in AP mode
-#define AP_PASSWORD "12345678"         // Access Point password
+// Fallbacks only if settings.h is ever bypassed — normal builds take values from settings.h.
+#ifndef WIFI_SSID
+#define WIFI_SSID "YOUR_WIFI_SSID"
+#endif
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#endif
+#ifndef AP_SSID
+#define AP_SSID "ESP32_QUAD"
+#endif
+#ifndef AP_PASSWORD
+#define AP_PASSWORD "12345678"
+#endif
 
 // WiFi mode (definitions in wifi_ota.cpp)
 extern bool useAPMode;  // false = STA mode (default), true = AP mode
