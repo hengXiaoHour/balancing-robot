@@ -1,5 +1,5 @@
 #include "../config/settings.h"  // FIRST: ENABLE_CASCADE_PID / CASCADE_MODE_ANGLE_CONTROL
-#include "serial_commands.h"  // KP.., cascade vars, savePIDToPreferences(), lastPIDUpdateTime
+#include "serial_commands.h"  // cascade vars, savePIDToPreferences(), lastPIDUpdateTime
 #include "serial_pid_commands.h"
 #include "../control/cascade_pid_controller.h"  // pitch/roll_rate_target (rate mode)
 
@@ -9,32 +9,8 @@ unsigned long lastPIDUpdateTime = 0;
 // ===== PID-tuning commands (moved from handleSerialCommand() verbatim) =====
 // Returns true when the command was handled.
 bool handlePIDCommand(const String& command) {
-    if (command.startsWith("set p ")) {
-      float value = command.substring(6).toFloat();
-      KP = value;
-      lastPIDUpdateTime = millis();
-      savePIDToPreferences();
-      Serial.print("\n[PID] KP updated to: "); Serial.println(KP);
-      Serial.println("Telemetry paused for 5 seconds...");
-    }
-    else if (command.startsWith("set i ")) {
-      float value = command.substring(6).toFloat();
-      KI = value;
-      lastPIDUpdateTime = millis();
-      savePIDToPreferences();
-      Serial.print("\n[PID] KI updated to: "); Serial.println(KI);
-      Serial.println("Telemetry paused for 5 seconds...");
-    }
-    else if (command.startsWith("set d ")) {
-      float value = command.substring(6).toFloat();
-      KD = value;
-      lastPIDUpdateTime = millis();
-      savePIDToPreferences();
-      Serial.print("\n[PID] KD updated to: "); Serial.println(KD);
-      Serial.println("Telemetry paused for 5 seconds...");
-    }
-    // PITCH AXIS TUNING (separate)
-    else if (command.startsWith("pitch_p ") || command.startsWith("pp ")) {
+    // PITCH AXIS TUNING
+    if (command.startsWith("pitch_p ") || command.startsWith("pp ")) {
       float value = (command.indexOf("pitch_p") >= 0) ? command.substring(8).toFloat() : command.substring(3).toFloat();
       KP_Pitch = value;
       lastPIDUpdateTime = millis();

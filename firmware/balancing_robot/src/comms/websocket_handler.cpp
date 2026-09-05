@@ -150,14 +150,14 @@ void handleWebSocketCommand(const String& jsonStr) {
         motorsActive = true;
         throttle = 0.0f;  // Minimum throttle on arm
         broadcastConsoleMessage("[INFO] Balancing Robot ARMED via WebSocket - Motors ready");
-        pidIntegral = 0;
+        pidIntegral_Pitch = 0;
       }
     }
     else if (!armCmd && motorsArmed) {
       motorsArmed = false;
       motorsActive = false;
       throttle = 0.0f;
-      pidIntegral = 0.0f;
+      pidIntegral_Pitch = 0.0f;
       stopMotors();
       broadcastConsoleMessage("[INFO] Balancing Robot DISARMED via WebSocket");
     }

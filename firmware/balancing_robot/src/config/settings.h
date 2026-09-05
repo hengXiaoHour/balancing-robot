@@ -18,14 +18,13 @@
 #include "imu_select.h"
 
 // ===== CONTROL MODE =====
-#define ENABLE_CASCADE_PID 0  // 1 = cascade (angle + rate), 0 = single angle PID
+#define ENABLE_CASCADE_PID 0  // 1 = cascade (angle + rate), 0 = dual angle PID
 
 // ===== PID GAINS (single source of truth — boot + reset agree) =====
-// DEFAULT_KP/KI/KD seed the legacy single-PID globals. Each axis has its own
-// seed below (boot, reset, NVS fallback); live values diverge after WebUI tuning.
-#define DEFAULT_KP 8.0   // Legacy single PID proportional
-#define DEFAULT_KI 0.2   // Legacy single PID integral
-#define DEFAULT_KD 5.0   // Legacy single PID derivative
+// Each axis seeds its own NVS keys at boot/reset; live values diverge after tuning.
+// Pitch is the balancing axis; roll forced straight, yaw runs rate mode.
+// NOTE: NVS still holds stale legacy "KP"/"KI"/"KD" keys from older builds —
+// harmless leftovers, never read by this firmware.
 
 // Pitch axis seeds (the balance axis — tune here first)
 #define DEFAULT_KP_PITCH 8.0
@@ -94,10 +93,10 @@
 
 // ===== WIFI (STA + AP + OTA) — sole WiFi config, consumed by comms/wifi_ota.h =====
 // NOTE: real credentials live only in the local working copy, never in git.
-#define WIFI_SSID "YOUR_WIFI_SSID"          // Change to your WiFi network name
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"  // Change to your WiFi password
+#define WIFI_SSID "YOUR_WIFI_SSID"
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 #define AP_SSID "ESP32_BALANCING"      // Access Point name when in AP mode
-#define AP_PASSWORD "12345678"         // Access Point password
+#define AP_PASSWORD "12345678"
 
 // ===== FILTER PARAMETERS =====
 #define GYRO_LPF_ALPHA 1.0f       // Gyroscope software low-pass

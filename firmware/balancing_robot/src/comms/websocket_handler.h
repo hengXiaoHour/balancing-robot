@@ -25,7 +25,7 @@ extern float pitch_setpoint;
 extern float roll_setpoint;
 extern float yaw_setpoint;
 extern float throttle;
-extern float pidIntegral;
+extern float pidIntegral_Pitch;
 
 // Angle/sensor variables
 extern float pitch;

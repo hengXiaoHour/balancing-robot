@@ -5,8 +5,7 @@
 #include <Preferences.h>
 #include "../config/settings.h"  // ENABLE_CASCADE_PID, CASCADE_*_KP/... defaults
 
-// PID gains (definitions in balancing_robot.ino)
-extern float KP, KI, KD;
+// PID gains (definitions in control/pid_controller.cpp)
 extern float KP_Pitch, KI_Pitch, KD_Pitch;
 extern float KP_Roll, KI_Roll, KD_Roll;
 extern float KP_Yaw, KI_Yaw, KD_Yaw;

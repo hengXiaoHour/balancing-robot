@@ -145,14 +145,14 @@ void handleSerialCommand() {
         motorsActive = true;
         throttle = 0.0f;  // Minimum throttle on arm
         Serial.println("\n[INFO] Balancing Robot ARMED - Motors ready");
-        pidIntegral = 0;
+        pidIntegral_Pitch = 0;
       }
     }
     else if (command == "disarm") {
       motorsArmed = false;
       motorsActive = false;
       throttle = 0.0f;  // Reset throttle on disarm
-      pidIntegral = 0.0;  // Reset integral on disarm
+      pidIntegral_Pitch = 0.0;  // Reset integral on disarm
       stopMotors();
       Serial.println("\n[INFO] Balancing Robot DISARMED - Motors stopped");
     }

@@ -5,11 +5,6 @@ void savePIDToPreferences() {
   Preferences prefs;
   prefs.begin("pid_tuning", false);  // false = read-write mode
 
-  // Save general PID gains
-  prefs.putFloat("KP", KP);
-  prefs.putFloat("KI", KI);
-  prefs.putFloat("KD", KD);
-
   // Save Pitch PID gains
   prefs.putFloat("KP_Pitch", KP_Pitch);
   prefs.putFloat("KI_Pitch", KI_Pitch);
@@ -54,10 +49,6 @@ void savePIDToPreferences() {
 
 void resetPIDToDefaults() {
   // Reset to default values from settings.h
-  KP = DEFAULT_KP;
-  KI = DEFAULT_KI;
-  KD = DEFAULT_KD;
-
   KP_Pitch = DEFAULT_KP_PITCH;
   KI_Pitch = DEFAULT_KI_PITCH;
   KD_Pitch = DEFAULT_KD_PITCH;
@@ -103,11 +94,6 @@ void resetPIDToDefaults() {
 void loadPIDFromPreferences() {
   Preferences prefs;
   prefs.begin("pid_tuning", true);  // true = read-only mode
-
-  // Load general PID gains with defaults
-  KP = prefs.getFloat("KP", DEFAULT_KP);
-  KI = prefs.getFloat("KI", DEFAULT_KI);
-  KD = prefs.getFloat("KD", DEFAULT_KD);
 
   // Load Pitch PID gains with defaults
   KP_Pitch = prefs.getFloat("KP_Pitch", DEFAULT_KP_PITCH);

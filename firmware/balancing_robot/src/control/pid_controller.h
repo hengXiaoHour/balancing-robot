@@ -19,12 +19,6 @@ extern float gyroBiasX;
 extern float gyroBiasZ;
 extern float filtered_accelX, filtered_accelY;  // Pre-filtered accel (velocity estimation)
 
-// SINGLE PID (calculates one output for pitch)
-extern float pidError;
-extern float pidIntegral;
-extern float pidOutput;
-extern float KP, KI, KD;  // Single PID tuning
-
 // DUAL PID - PITCH AXIS
 extern float pidError_Pitch;
 extern float pidIntegral_Pitch;
@@ -76,7 +70,6 @@ extern float KP_Rate_X, KI_Rate_X, KD_Rate_X;  // Forward/backward rate PID
 extern float KP_Rate_Y, KI_Rate_Y, KD_Rate_Y;  // Left/right rate PID
 
 // ===== PID API (see pid_controller.cpp) =====
-void updateSinglePID();
 float getAdaptivePitchP(float baseKp);
 float getAdaptivePitchI(float baseKi);
 float getAdaptivePitchD(float baseKd);

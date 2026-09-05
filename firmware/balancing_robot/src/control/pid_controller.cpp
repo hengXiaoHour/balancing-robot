@@ -2,8 +2,6 @@
 #include "pid_controller.h"
 
 // Definitions live here (were in balancing_robot.ino); externs in pid_controller.h
-float KP = DEFAULT_KP, KI = DEFAULT_KI, KD = DEFAULT_KD;
-float pidError = 0.0f, pidIntegral = 0.0f, pidOutput = 0.0f;
 float pidError_Pitch = 0.0f, pidIntegral_Pitch = 0.0f, pidOutput_Pitch = 0.0f;
 float KP_Pitch = DEFAULT_KP_PITCH, KI_Pitch = DEFAULT_KI_PITCH, KD_Pitch = DEFAULT_KD_PITCH;
 float pidError_Roll = 0.0f, pidIntegral_Roll = 0.0f, pidOutput_Roll = 0.0f;
@@ -22,33 +20,6 @@ float accel_x_filtered = 0.0f, accel_y_filtered = 0.0f;
 float accelAlpha = 0.1f, velDecay = 0.9f;
 
 // ===== Update Single PID Controller (PITCH ONLY) =====
-void updateSinglePID() {
-  // Calculate error using pitch angle (forward/backward tilt)
-  pidError = pitch_setpoint - PITCH_ANGLE_RAW_USED;
-
-  // Proportional term
-  float pTerm = KP * pidError;
-
-  // Integral term (anti-windup)
-  pidIntegral += pidError * dt;
-  pidIntegral = constrain(pidIntegral, -500, 500);
-  float iTerm = KI * pidIntegral;
-
-  // Derivative term using gyro rate (angular velocity in deg/s)
-  // Convert gyro to deg/s (sensitivity: 16.4 for ±2000°/s)
-  // Gyro Y is inverted, so negate it to match pitch convention
-  float gyroRate = (-GYRO_PITCH_RATE_USED / 16.4f) - GYRO_PITCH_BIAS_USED;
-  // D term should oppose the velocity (negative feedback for damping)
-  float dTerm = -KD * gyroRate;  // Negative sign for proper damping
-
-  // Compute single PID output
-  pidOutput = pTerm + iTerm + dTerm;
-
-  // Apply motor scaling to compensate for gear bias
-  pidOutput_Left = pidOutput * motorScale_Left;
-  pidOutput_Right = pidOutput * motorScale_Right;
-}
-
 // ===== Adaptive PID Gains =====
 // For balancing robot mode - no throttle adaptation needed
 float getAdaptivePitchP(float baseKp) {
@@ -134,14 +105,12 @@ void updateDualPID() {
   // Roll PID output
   pidOutput_Roll = pTerm_Roll + iTerm_Roll + dTerm_Roll;
 
-  // Yaw is calculated separately (used by both single and cascade PID modes)
+  // Yaw is calculated separately (shared by dual and cascade modes)
   updateYawPID();
 
-  // Store pitch output for compatibility
-  pidOutput = pidOutput_Pitch;
 }
 
-// ===== YAW PID CONTROLLER (Separate function for use in both single and cascade modes) =====
+// ===== YAW PID CONTROLLER (separate function, shared by dual and cascade modes) =====
 void updateYawPID() {
   // ===== YAW AXIS CONTROL (Rate-Only, uses gyroZ feedback) =====
   // Rate-only: measure actual yaw rate from gyro
