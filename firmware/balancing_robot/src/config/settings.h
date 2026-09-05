@@ -77,7 +77,6 @@
 #define ROBOT_MAX_ACTUAL_TILT_DEG 15.0f
 #define ROBOT_TILT_GUARD_BAND_DEG 1.0f
 #define ROBOT_SETPOINT_SLEW_DEG_PER_S 40.0f  // Max setpoint change rate
-#define ROBOT_PITCH_INPUT_EXPO 2.0f  // Stick expo: 1 = linear, 2 = gentle center, full ends
 
 // ===== ESP-NOW JOYSTICK DEADZONES (raw ADC, stick ±2048) =====
 #define ESPNOW_PITCH_DEADZONE 200
