@@ -58,17 +58,17 @@ void resetPIDToDefaults() {
   KI = DEFAULT_KI;
   KD = DEFAULT_KD;
 
-  KP_Pitch = DEFAULT_KP;
-  KI_Pitch = DEFAULT_KI;
-  KD_Pitch = DEFAULT_KD;
+  KP_Pitch = DEFAULT_KP_PITCH;
+  KI_Pitch = DEFAULT_KI_PITCH;
+  KD_Pitch = DEFAULT_KD_PITCH;
 
-  KP_Roll = DEFAULT_KP;
-  KI_Roll = DEFAULT_KI;
-  KD_Roll = DEFAULT_KD;
+  KP_Roll = DEFAULT_KP_ROLL;
+  KI_Roll = DEFAULT_KI_ROLL;
+  KD_Roll = DEFAULT_KD_ROLL;
 
-  KP_Yaw = DEFAULT_KP;
-  KI_Yaw = DEFAULT_KI;
-  KD_Yaw = DEFAULT_KD;
+  KP_Yaw = DEFAULT_KP_YAW;
+  KI_Yaw = DEFAULT_KI_YAW;
+  KD_Yaw = DEFAULT_KD_YAW;
 
   yaw_rate_target = 0.0f;
   pitch_rate_target = 0.0f;
@@ -110,19 +110,19 @@ void loadPIDFromPreferences() {
   KD = prefs.getFloat("KD", DEFAULT_KD);
 
   // Load Pitch PID gains with defaults
-  KP_Pitch = prefs.getFloat("KP_Pitch", DEFAULT_KP);
-  KI_Pitch = prefs.getFloat("KI_Pitch", DEFAULT_KI);
-  KD_Pitch = prefs.getFloat("KD_Pitch", DEFAULT_KD);
+  KP_Pitch = prefs.getFloat("KP_Pitch", DEFAULT_KP_PITCH);
+  KI_Pitch = prefs.getFloat("KI_Pitch", DEFAULT_KI_PITCH);
+  KD_Pitch = prefs.getFloat("KD_Pitch", DEFAULT_KD_PITCH);
 
   // Load Roll PID gains with defaults
-  KP_Roll = prefs.getFloat("KP_Roll", DEFAULT_KP);
-  KI_Roll = prefs.getFloat("KI_Roll", DEFAULT_KI);
-  KD_Roll = prefs.getFloat("KD_Roll", DEFAULT_KD);
+  KP_Roll = prefs.getFloat("KP_Roll", DEFAULT_KP_ROLL);
+  KI_Roll = prefs.getFloat("KI_Roll", DEFAULT_KI_ROLL);
+  KD_Roll = prefs.getFloat("KD_Roll", DEFAULT_KD_ROLL);
 
   // Load Yaw PID gains with defaults
-  KP_Yaw = prefs.getFloat("KP_Yaw", DEFAULT_KP);
-  KI_Yaw = prefs.getFloat("KI_Yaw", DEFAULT_KI);
-  KD_Yaw = prefs.getFloat("KD_Yaw", DEFAULT_KD);
+  KP_Yaw = prefs.getFloat("KP_Yaw", DEFAULT_KP_YAW);
+  KI_Yaw = prefs.getFloat("KI_Yaw", DEFAULT_KI_YAW);
+  KD_Yaw = prefs.getFloat("KD_Yaw", DEFAULT_KD_YAW);
 
   #if ENABLE_CASCADE_PID
   // Load cascade pitch angle loop gains

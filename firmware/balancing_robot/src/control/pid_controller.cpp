@@ -5,11 +5,11 @@
 float KP = DEFAULT_KP, KI = DEFAULT_KI, KD = DEFAULT_KD;
 float pidError = 0.0f, pidIntegral = 0.0f, pidOutput = 0.0f;
 float pidError_Pitch = 0.0f, pidIntegral_Pitch = 0.0f, pidOutput_Pitch = 0.0f;
-float KP_Pitch = DEFAULT_KP, KI_Pitch = DEFAULT_KI, KD_Pitch = DEFAULT_KD;
+float KP_Pitch = DEFAULT_KP_PITCH, KI_Pitch = DEFAULT_KI_PITCH, KD_Pitch = DEFAULT_KD_PITCH;
 float pidError_Roll = 0.0f, pidIntegral_Roll = 0.0f, pidOutput_Roll = 0.0f;
-float KP_Roll = DEFAULT_KP, KI_Roll = DEFAULT_KI, KD_Roll = DEFAULT_KD;
+float KP_Roll = DEFAULT_KP_ROLL, KI_Roll = DEFAULT_KI_ROLL, KD_Roll = DEFAULT_KD_ROLL;
 float pidIntegral_Yaw = 0.0f, pidOutput_Yaw = 0.0f;
-float KP_Yaw = DEFAULT_KP, KI_Yaw = DEFAULT_KI, KD_Yaw = DEFAULT_KD;
+float KP_Yaw = DEFAULT_KP_YAW, KI_Yaw = DEFAULT_KI_YAW, KD_Yaw = DEFAULT_KD_YAW;
 float yaw_rate_target = 0.0f;
 float LOW_THROTTLE_THRESHOLD = 15.0f;
 // Velocity estimation state (used by updateVelocityEstimation)

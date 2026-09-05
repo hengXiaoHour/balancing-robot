@@ -21,11 +21,26 @@
 #define ENABLE_CASCADE_PID 0  // 1 = cascade (angle + rate), 0 = single angle PID
 
 // ===== PID GAINS (single source of truth — boot + reset agree) =====
-// Each DEFAULT seeds ALL axes (pitch/roll/yaw) at boot, reset, and NVS fallback;
-// live per-axis values diverge after WebUI tuning.
-#define DEFAULT_KP 8.0   // Proportional: response strength to angle error
-#define DEFAULT_KI 0.2   // Integral: long-term drift correction
-#define DEFAULT_KD 5.0   // Derivative: oscillation damping (gyro rate)
+// DEFAULT_KP/KI/KD seed the legacy single-PID globals. Each axis has its own
+// seed below (boot, reset, NVS fallback); live values diverge after WebUI tuning.
+#define DEFAULT_KP 8.0   // Legacy single PID proportional
+#define DEFAULT_KI 0.2   // Legacy single PID integral
+#define DEFAULT_KD 5.0   // Legacy single PID derivative
+
+// Pitch axis seeds (the balance axis — tune here first)
+#define DEFAULT_KP_PITCH 8.0
+#define DEFAULT_KI_PITCH 0.2
+#define DEFAULT_KD_PITCH 5.0
+
+// Roll axis seeds (roll output forced off on balancing robot)
+#define DEFAULT_KP_ROLL 8.0
+#define DEFAULT_KI_ROLL 0.2
+#define DEFAULT_KD_ROLL 5.0
+
+// Yaw axis seeds (yaw runs rate mode, deg/s)
+#define DEFAULT_KP_YAW 8.0
+#define DEFAULT_KI_YAW 0.2
+#define DEFAULT_KD_YAW 5.0
 
 #define PID_MAX 4095           // Maximum PID output (motor speed limit)
 #define PID_INTEGRAL_LIMIT 500  // Integral windup protection
