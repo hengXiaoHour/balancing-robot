@@ -53,7 +53,7 @@
 #define CASCADE_PITCH_ANGLE_KP 0.0
 #define CASCADE_PITCH_ANGLE_KI 0.0
 #define CASCADE_PITCH_ANGLE_KD 0.0
-// Pitch inner rate loop
+// Pitch inner rate loop (inner response: raise toward 50->120 for rate-mode responsiveness)
 #define CASCADE_PITCH_RATE_KP 0.0
 #define CASCADE_PITCH_RATE_KI 0.0
 #define CASCADE_PITCH_RATE_KD 0.0

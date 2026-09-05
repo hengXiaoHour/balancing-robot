@@ -15,45 +15,11 @@
  */
 
 // ===== UNIFIED CASCADE PID GAINS =====
-#ifndef CASCADE_PITCH_ANGLE_KP
-#define CASCADE_PITCH_ANGLE_KP 0.0
-#endif
-#ifndef CASCADE_PITCH_ANGLE_KI
-#define CASCADE_PITCH_ANGLE_KI 0.0
-#endif
-#ifndef CASCADE_PITCH_ANGLE_KD
-#define CASCADE_PITCH_ANGLE_KD 0.0
-#endif
-#ifndef CASCADE_PITCH_RATE_KP
-#define CASCADE_PITCH_RATE_KP 0.0  // Inner loop response: 50->120 for rate mode responsiveness
-#endif
-#ifndef CASCADE_PITCH_RATE_KI
-#define CASCADE_PITCH_RATE_KI 0.0
-#endif
-#ifndef CASCADE_PITCH_RATE_KD
-#define CASCADE_PITCH_RATE_KD 0.0
-#endif
+// Single source: src/config/settings.h (included above). No fallbacks here —
+// if a CASCADE_* gain is missing there, compilation fails loudly instead of
+// silently running a 0.0 gain.
 
-#ifndef CASCADE_ROLL_ANGLE_KP
-#define CASCADE_ROLL_ANGLE_KP 0.0
-#endif
-#ifndef CASCADE_ROLL_ANGLE_KI
-#define CASCADE_ROLL_ANGLE_KI 0.0
-#endif
-#ifndef CASCADE_ROLL_ANGLE_KD
-#define CASCADE_ROLL_ANGLE_KD 0.0
-#endif
-#ifndef CASCADE_ROLL_RATE_KP
-#define CASCADE_ROLL_RATE_KP 0.0
-#endif
-#ifndef CASCADE_ROLL_RATE_KI
-#define CASCADE_ROLL_RATE_KI 0.0
-#endif
-#ifndef CASCADE_ROLL_RATE_KD
-#define CASCADE_ROLL_RATE_KD 0.0
-#endif
-
-// Yaw control uses single PID parameters (KP_Yaw, KI_Yaw, KD_Yaw from NVS)
+// Yaw control uses per-axis dual-PID parameters (KP_Yaw, KI_Yaw, KD_Yaw from NVS)
 
 // From balancing_robot.ino - sensor data
 extern float pitch, roll, yaw;
