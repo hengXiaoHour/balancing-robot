@@ -51,6 +51,25 @@
 #define CASCADE_RATE_INTEGRAL_LIMIT 200
 #define CASCADE_ANGLE_INTEGRAL_LIMIT 100
 
+// Cascade gain seeds (dormant while ENABLE_CASCADE_PID = 0; tune when enabling).
+// cascade_pid_controller.h keeps #ifndef fallbacks that defer to these.
+// Pitch outer angle loop
+#define CASCADE_PITCH_ANGLE_KP 0.0
+#define CASCADE_PITCH_ANGLE_KI 0.0
+#define CASCADE_PITCH_ANGLE_KD 0.0
+// Pitch inner rate loop
+#define CASCADE_PITCH_RATE_KP 0.0
+#define CASCADE_PITCH_RATE_KI 0.0
+#define CASCADE_PITCH_RATE_KD 0.0
+// Roll outer angle loop
+#define CASCADE_ROLL_ANGLE_KP 0.0
+#define CASCADE_ROLL_ANGLE_KI 0.0
+#define CASCADE_ROLL_ANGLE_KD 0.0
+// Roll inner rate loop
+#define CASCADE_ROLL_RATE_KP 0.0
+#define CASCADE_ROLL_RATE_KI 0.0
+#define CASCADE_ROLL_RATE_KD 0.0
+
 // ===== BALANCING ROBOT INPUT SAFETY LIMITS =====
 #define ROBOT_MAX_PITCH_SETPOINT_DEG 15.0f  // Firmware hard cap; UI maxAngle (default 10) stays under this
 #define ROBOT_PITCH_INPUT_DEADBAND_DEG 0.6f
