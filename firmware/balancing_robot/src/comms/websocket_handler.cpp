@@ -148,7 +148,7 @@ void handleWebSocketCommand(const String& jsonStr) {
       } else {
         motorsArmed = true;
         motorsActive = true;
-        throttle = MIN_THROTTLE;  // Set to minimum throttle on arm
+        throttle = 0.0f;  // Minimum throttle on arm
         broadcastConsoleMessage("[INFO] Balancing Robot ARMED via WebSocket - Motors ready");
         pidIntegral = 0;
       }

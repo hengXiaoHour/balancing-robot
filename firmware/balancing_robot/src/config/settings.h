@@ -35,9 +35,6 @@
 #define CASCADE_RATE_INTEGRAL_LIMIT 200
 #define CASCADE_ANGLE_INTEGRAL_LIMIT 100
 
-// ===== THROTTLE =====
-#define MIN_THROTTLE 0.0f  // Minimum throttle when armed
-
 // ===== BALANCING ROBOT INPUT SAFETY LIMITS =====
 #define ROBOT_MAX_PITCH_SETPOINT_DEG 15.0f  // Firmware hard cap; UI maxAngle (default 10) stays under this
 #define ROBOT_PITCH_INPUT_DEADBAND_DEG 0.6f
@@ -120,13 +117,6 @@
 #define ESPNOW_MAX_PITCH 15.0f
 #define ESPNOW_MAX_ROLL 12.0f
 #define ESPNOW_MAX_YAW_RATE 100.0f
-#define ESPNOW_THROTTLE_MAX 100.0f
-#define ESPNOW_THROTTLE_MIN 0.0f
-
-// ESP-NOW throttle shaping (piecewise curve around stick center)
-#define ESPNOW_THROTTLE_MID_PERCENT 30.0f
-#define ESPNOW_THROTTLE_LOW_EXPO 1.8f   // >1.0 = gentler near low stick
-#define ESPNOW_THROTTLE_HIGH_EXPO 0.7f  // <1.0 = stronger above center
 
 // ===== IMU RANGES =====
 #define ANGLE_WRAP_ENABLED 1  // Wrap angles to ±180°

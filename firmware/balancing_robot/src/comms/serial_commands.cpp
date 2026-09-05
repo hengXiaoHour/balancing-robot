@@ -143,7 +143,7 @@ void handleSerialCommand() {
       } else {
         motorsArmed = true;
         motorsActive = true;
-        throttle = MIN_THROTTLE;  // Set to minimum throttle on arm
+        throttle = 0.0f;  // Minimum throttle on arm
         Serial.println("\n[INFO] Balancing Robot ARMED - Motors ready");
         pidIntegral = 0;
       }

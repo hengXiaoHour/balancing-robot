@@ -18,18 +18,20 @@ static volatile bool need_send_feedback = false;   // Flag to send feedback with
 static unsigned long last_discovery_sent = 0;  // For discovery packet intervals
 
 static inline float mapESPNOWThrottlePercent(float throttle_input) {
+  // Shaping values live here (were ESPNOW_THROTTLE_* in settings.h)
+  const float THR_MAX = 100.0f, THR_MIN = 0.0f;
   float stick = constrain(throttle_input, -1.0f, 1.0f);
-  float mid = constrain(ESPNOW_THROTTLE_MID_PERCENT, ESPNOW_THROTTLE_MIN, ESPNOW_THROTTLE_MAX);
+  float mid = constrain(30.0f, THR_MIN, THR_MAX);
 
   if (stick <= 0.0f) {
     float t = stick + 1.0f;  // [-1..0] -> [0..1]
-    float shaped = powf(t, ESPNOW_THROTTLE_LOW_EXPO);
-    return ESPNOW_THROTTLE_MIN + shaped * (mid - ESPNOW_THROTTLE_MIN);
+    float shaped = powf(t, 1.8f);  // >1.0 = gentler near low stick
+    return THR_MIN + shaped * (mid - THR_MIN);
   }
 
   float t = stick;  // [0..1]
-  float shaped = powf(t, ESPNOW_THROTTLE_HIGH_EXPO);
-  return mid + shaped * (ESPNOW_THROTTLE_MAX - mid);
+  float shaped = powf(t, 0.7f);  // <1.0 = stronger above center
+  return mid + shaped * (THR_MAX - mid);
 }
 
 // ===== INITIALIZE ESP-NOW =====
@@ -272,7 +274,7 @@ void updateESPNOWDataOnly() {
         motorsActive = false;
         throttle_gate_ready = false;
         last_throttle = 0.0f;
-        throttle = ESPNOW_THROTTLE_MIN;
+        throttle = 0.0f;
         Serial.println("[INFO] Balancing robot ARMED via ESP-NOW");
       }
     } else {
