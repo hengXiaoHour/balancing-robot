@@ -133,6 +133,12 @@ void applyVehicleInputLimits() {
   float measured_pitch = PITCH_ANGLE_FINAL_USED;
   float raw_setpoint = constrain(pitch_setpoint, -ROBOT_MAX_PITCH_SETPOINT_DEG, ROBOT_MAX_PITCH_SETPOINT_DEG);
 
+  // Expo: soften small stick inputs, keep full deflection authority.
+  // shaped = sign * max * (|raw| / max)^EXPO — 10° stick at EXPO 2 leans ~6.7°.
+  float expo_mag = fabsf(raw_setpoint) / ROBOT_MAX_PITCH_SETPOINT_DEG;  // 0..1
+  expo_mag = powf(constrain(expo_mag, 0.0f, 1.0f), ROBOT_PITCH_INPUT_EXPO);
+  raw_setpoint = copysignf(expo_mag * ROBOT_MAX_PITCH_SETPOINT_DEG, raw_setpoint);
+
   roll_setpoint = 0.0f;
 
   // Soft guard: only block outward commands near/over tilt boundary.
