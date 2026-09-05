@@ -89,7 +89,7 @@
 // NOTE: real credentials live only in the local working copy, never in git.
 #define WIFI_SSID "YOUR_WIFI_SSID"          // Change to your WiFi network name
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"  // Change to your WiFi password
-#define AP_SSID "ESP32_QUAD"           // Access Point name when in AP mode
+#define AP_SSID "ESP32_BALANCING"      // Access Point name when in AP mode
 #define AP_PASSWORD "12345678"         // Access Point password
 
 // ===== FILTER PARAMETERS =====

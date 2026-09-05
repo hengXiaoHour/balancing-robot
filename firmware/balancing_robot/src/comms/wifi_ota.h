@@ -13,7 +13,7 @@
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 #endif
 #ifndef AP_SSID
-#define AP_SSID "ESP32_QUAD"
+#define AP_SSID "ESP32_BALANCING"
 #endif
 #ifndef AP_PASSWORD
 #define AP_PASSWORD "12345678"
