@@ -37,13 +37,6 @@
 
 // ===== THROTTLE =====
 #define MIN_THROTTLE 0.0f  // Minimum throttle when armed
-#define THROTTLE_GATE_ENABLED 1
-#define THROTTLE_GATE_MIN_INPUT -1885     // Stick must go below this to arm
-#define THROTTLE_GATE_RELEASE_INPUT -1700  // Stick must rise above this to start
-
-// ===== CONTROLLER INPUT CURVE (0 = linear, 1 = exponential) =====
-#define CONTROLLER_INPUT_CURVE 1
-#define CONTROLLER_EXPO 1.0f  // 0.0 = linear, 1.0 = strong expo
 
 // ===== BALANCING ROBOT INPUT SAFETY LIMITS =====
 #define ROBOT_MAX_PITCH_SETPOINT_DEG 15.0f  // Firmware hard cap; UI maxAngle (default 10) stays under this
