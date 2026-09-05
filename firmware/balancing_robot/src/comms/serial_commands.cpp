@@ -321,7 +321,7 @@ void printTelemetryStatus() {
     Serial.print(pidOutput_Right, 0); Serial.print(" | ");
     Serial.print("Vbat: "); Serial.print(battery_voltage, 2); Serial.print("V | ");
     Serial.print("Az: "); Serial.print(accel_z_world_mps2, 2); Serial.print("m/s2 | ");
-    Serial.print("[COMP] Filter: "); Serial.print(filterExecutionTime); Serial.print("us (avg: ");
+    Serial.print("[FILT] Exec: "); Serial.print(filterExecutionTime); Serial.print("us (avg: ");
     Serial.print(avgFilterTime, 1); Serial.print("us) | Heap: "); Serial.print(freeHeapMemory);
     Serial.print("B (min: "); Serial.print(minFreeHeap); Serial.print("B) | Load: ");
     float cpuLoad = (avgFilterTime / 10000.0) * 100.0;
