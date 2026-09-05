@@ -115,6 +115,5 @@ Hierarchy is size + weight + tracking, not color. Labels are muted 11px mono tra
 | `UI/js/stick.js` | ~112 | Stick canvas, per-vehicle mapping, select-bug fix listeners |
 | `UI/js/panels.js` | ~385 | Panel switching, PID/trim/calibration actions, gauges, battery, ARM, fullscreen |
 | `UI/manifest.webmanifest` | ~10 | Install metadata: fullscreen, landscape |
-| `UI/quadcopter.html` | legacy | Untouched fallback single-file build |
 
 Rules: plain `<script>` tags in dependency order (no modules, works over file://). Element ids are the JS contract — rename in both or neither. WS message shapes must match `firmware/balancing_robot/src/comms/websocket_handler.cpp`.

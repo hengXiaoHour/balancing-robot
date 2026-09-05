@@ -1,5 +1,5 @@
 // stick.js — single joystick canvas + mappings per vehicle + select-bug fix listeners.
-// Depends on state.js (state, vehicle, isConnected, maxRollPitchAngle, droneThrottlePct).
+// Depends on state.js (state, vehicle, isConnected, maxRollPitchAngle).
 var stickCanvas = document.getElementById('joystick1');
 var stickCtx = stickCanvas.getContext('2d');
 var stickMax = 100;
@@ -208,18 +208,12 @@ function applyStickOutput() {
     state.roll = 0;
     state.yaw = yawWithDeadzone(normX, normY, yawRate() * odFactor);
     state.throttle = state.armed ? 0.2 : 0;
-  } else if (vehicle === 'rccar') {
-    // Y -> throttle 0-100%, X -> yaw / steer
+  } else {
+    // rccar: Y -> throttle 0-100%, X -> yaw / steer
     state.throttle = Math.max(0, Math.min(1, (1 - normY) / 2));
     state.yaw = normX * 45;
     state.pitch = 0;
     state.roll = 0;
-  } else {
-    // drone: stick -> pitch/roll, throttle via slider (same canvas convention as balancing)
-    state.pitch = -normY * maxRollPitchAngle;
-    state.roll = normX * maxRollPitchAngle;
-    state.yaw = 0;
-    state.throttle = state.armed ? droneThrottlePct / 100 : 0;
   }
   updateDisplay();
   drawStick();
@@ -231,11 +225,8 @@ function stickReset() {
   if (vehicle === 'balancing') {
     state.pitch = 0; state.yaw = 0; state.roll = 0;
     state.throttle = state.armed ? 0.2 : 0;
-  } else if (vehicle === 'rccar') {
-    state.throttle = 0; state.yaw = 0; state.pitch = 0; state.roll = 0;
   } else {
-    state.pitch = 0; state.roll = 0; state.yaw = 0;
-    state.throttle = state.armed ? droneThrottlePct / 100 : 0;
+    state.throttle = 0; state.yaw = 0; state.pitch = 0; state.roll = 0;
   }
   updateDisplay();
   drawStick();

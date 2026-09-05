@@ -109,7 +109,6 @@ function toggleArm() {
   renderArm();
   if (state.armed) {
     if (vehicle === 'balancing') state.throttle = 0.2;
-    else if (vehicle === 'drone') state.throttle = droneThrottlePct / 100;
     else state.throttle = 0;
   } else {
     state.throttle = 0;
