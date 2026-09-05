@@ -20,14 +20,10 @@ const unsigned long TELEMETRY_INTERVAL = 100;  // Send every 100ms
 
 // ===== Initialize WebSocket Server =====
 void initWebSocket() {
-  Serial.println("\n===== WebSocket Setup =====");
-
   // Setup WebSocket server
   webSocket.begin();
   webSocket.onEvent(handleWebSocketEvent);
-  Serial.println("[WS] WebSocket server started on port 81");
-
-  Serial.println("=============================\n");
+  Serial.println("[WS] ready :81");
 }
 
 // ===== WebSocket Event Handler =====

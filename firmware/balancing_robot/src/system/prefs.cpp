@@ -147,5 +147,4 @@ void loadPIDFromPreferences() {
   #endif
 
   prefs.end();
-  Serial.println("[OK] PID values loaded from NVS preferences");
 }

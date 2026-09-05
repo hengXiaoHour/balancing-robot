@@ -9,28 +9,26 @@ const unsigned long WIFI_RECONNECT_INTERVAL = 5000;  // Try to reconnect every 5
 
 // ===== Initialize WiFi (STA Mode by Default) =====
 void initWiFi() {
-  Serial.println("\n===== WiFi & OTA Setup =====");
-
   if (useAPMode) {
     // AP Mode
-    Serial.println("[WiFi] Starting in AP mode...");
     WiFi.mode(WIFI_AP);
     WiFi.softAP(AP_SSID, AP_PASSWORD);
-    Serial.print("[WiFi-AP] SSID: "); Serial.println(AP_SSID);
-    Serial.print("[WiFi-AP] Password: "); Serial.println(AP_PASSWORD);
-    Serial.print("[WiFi-AP] IP: "); Serial.println(WiFi.softAPIP());
+    Serial.print("[WIFI] AP ");
+    Serial.print(AP_SSID);
+    Serial.print(" at ");
+    Serial.println(WiFi.softAPIP());
   } else {
     // STA Mode (default)
-    Serial.println("[WiFi] Starting in STA mode...");
-    Serial.print("[WiFi-STA] Connecting to: "); Serial.println(WIFI_SSID);
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    Serial.print("[WIFI] connecting to ");
+    Serial.print(WIFI_SSID);
+    Serial.println("...");
     wifiLastConnectionAttempt = millis();
   }
 
   delay(500);
   setupOTA();
-  Serial.println("=============================\n");
 }
 
 // ===== Handle WiFi Connection (STA Mode) =====
@@ -40,19 +38,22 @@ void handleWiFiConnection() {
     return;
   }
 
-  // In STA mode, check connection status
+  // In STA mode, announce the IP once per connection; retry silently
+  static bool wifiAnnounced = false;
   if (WiFi.status() == WL_CONNECTED) {
-    // Connected, nothing to do
+    if (!wifiAnnounced) {
+      wifiAnnounced = true;
+      Serial.print("[WIFI] connected at ");
+      Serial.println(WiFi.localIP());
+    }
     return;
   }
+  wifiAnnounced = false;
 
   // Not connected, try to reconnect periodically
   if (millis() - wifiLastConnectionAttempt > WIFI_RECONNECT_INTERVAL) {
-    if (WiFi.status() != WL_CONNECTED) {
-      Serial.print("[WiFi] Reconnecting to "); Serial.println(WIFI_SSID);
-      WiFi.reconnect();
-      wifiLastConnectionAttempt = millis();
-    }
+    WiFi.reconnect();
+    wifiLastConnectionAttempt = millis();
   }
 }
 
@@ -91,8 +92,7 @@ void setupOTA() {
   });
 
   ArduinoOTA.begin();
-  Serial.println("[OTA] Ready for updates");
-  Serial.println("[OTA] Use Arduino IDE Tools > Port > Network Ports to flash");
+  Serial.println("[OTA] ready");
 }
 
 // ===== Print WiFi Status =====

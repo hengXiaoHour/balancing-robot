@@ -60,14 +60,13 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  Serial.println("[MODE] Active vehicle mode: BALANCING_ROBOT");
+  Serial.println("[BOOT] balancing robot");
 
   ledBootTest();
   initVehicleMotors();
 
   analogReadResolution(12);
   initIMU();
-  Serial.println("[INFO] Config settings loaded");
 
   if (debugMonitoring) {
     scanI2CBus();
@@ -75,10 +74,6 @@ void setup() {
 
   loadCalibrationBias();
   loadPIDFromPreferences();
-
-  #if ENABLE_CASCADE_PID
-  Serial.println("[CASCADE_PID] Cascade gains loaded from NVS (or defaults if not saved)");
-  #endif
 
   #if !ENABLE_ESPNOW
   initWiFi();
@@ -96,19 +91,17 @@ void setup() {
     0
   );
 
-  Serial.println("[OK] Control loop task created on Core 0");
-  Serial.println("[OK] Serial/telemetry running on Core 1\n");
-
   #if ENABLE_WEBSOCKET_CONTROL
   initWebSocket();
   #endif
 
   #if ENABLE_ESPNOW
   initESPNOW();
+  #else
+  Serial.println("[ESPNOW] off");
   #endif
 
-  printWelcomeBanner();
-  printCalibrationMenu();
+  Serial.println("[READY] type help");
 }
 
 void loop() {

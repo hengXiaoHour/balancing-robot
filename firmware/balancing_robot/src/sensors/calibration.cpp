@@ -21,18 +21,6 @@ float accel_z_bias_cal_mps2 = 0.0f;
 // NVS handle defined here (was in balancing_robot.ino); extern in calibration.h
 Preferences prefs;
 
-// ===== Print calibration menu =====
-void printCalibrationMenu() {
-  Serial.println("\n========================================");
-  Serial.println("6-Step Sensor Calibration");
-  Serial.println("========================================");
-  Serial.println("\nType 'calibrate' to start calibration");
-  Serial.println("\nDuring calibration:");
-  Serial.println("  'save'  - Record current step");
-  Serial.println("  'abort' - Cancel calibration");
-  Serial.println("========================================\n");
-}
-
 // (Gyro flow: see calibration_gyro.cpp)
 // (Accel start + validation + save: see calibration_accel.cpp)
 
@@ -292,7 +280,7 @@ void loadCalibrationBias() {
   trim_pitch = prefs.getFloat("trim_pitch", 0.0f);
   trim_roll = prefs.getFloat("trim_roll", 0.0f);
   prefs.end();
-
+#if PRINT_CALIBRATION_ON_STARTUP
   Serial.println("[OK] Calibration bias loaded from preferences");
   Serial.println("[BARO_CAL] Loaded offsets from NVS:");
   Serial.print("[BARO_CAL] baroScale(avg) = "); Serial.println(baro_altitude_scale, 5);
@@ -315,4 +303,5 @@ void loadCalibrationBias() {
   Serial.print("Trim Pitch: "); Serial.print(trim_pitch, 4); Serial.println("°");
   Serial.print("Trim Roll: "); Serial.print(trim_roll, 4); Serial.println("°");
   Serial.println("===================================\n");
+#endif
 }

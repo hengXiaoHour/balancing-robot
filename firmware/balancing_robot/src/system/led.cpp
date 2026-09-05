@@ -12,7 +12,6 @@ static void ledWriteRGB(uint8_t, uint8_t, uint8_t) {}  // no-op on plain-LED boa
 #endif
 
 void ledBootTest() {
-  Serial.printf("[LED TEST] Testing LED on pin %d...\n", LOW_VOLTAGE_LED_PIN);
 #ifdef STATUS_LED_RGB
   ledWriteRGB(LED_ON_R, LED_ON_G, LED_ON_B);  // ON (green)
   delay(500);
@@ -31,7 +30,7 @@ void ledBootTest() {
   delay(500);
   digitalWrite(LOW_VOLTAGE_LED_PIN, LED_OFF_LEVEL);  // LED OFF
 #endif
-  Serial.println("[LED TEST] LED test complete");
+  Serial.println("[LED] test ok");
 }
 
 void ledSet(bool on) {

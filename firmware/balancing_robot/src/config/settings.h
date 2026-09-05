@@ -147,7 +147,7 @@
 // ===== STARTUP BEHAVIOR =====
 #define AUTO_LOAD_PID 1               // Auto-load PID from NVS
 #define AUTO_LOAD_CALIBRATION 0       // Auto-load calibration from NVS
-#define PRINT_CALIBRATION_ON_STARTUP 1  // Display loaded calibration values
+#define PRINT_CALIBRATION_ON_STARTUP 0  // 1 = dump loaded cal values at boot (noisy); 0 = quiet boot
 
 // Axis-mapping machinery derives from the INVERT flags above.
 #include "axis_map.h"

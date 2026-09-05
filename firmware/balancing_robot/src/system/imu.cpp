@@ -29,11 +29,11 @@ void initIMU() {
     mpuInitialized = false;
   } else {
     #if ACTIVE_IMU == IMU_SENSOR_MPU6500_SPI
-    Serial.println("[OK] MPU6500 (SPI) initialized");
+    Serial.println("[IMU] init ok (MPU6500 SPI)");
     #elif ACTIVE_IMU == IMU_SENSOR_MPU6500_I2C
-    Serial.println("[OK] MPU6500 (I2C) initialized");
+    Serial.println("[IMU] init ok (MPU6500 I2C)");
     #else
-    Serial.println("[OK] MPU6050 initialized");
+    Serial.println("[IMU] init ok (MPU6050)");
     #endif
     mpuInitialized = true;
   }

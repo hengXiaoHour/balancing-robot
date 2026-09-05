@@ -58,7 +58,6 @@ extern int sampleCount;
 // (Default PID values live in config/settings.h — single source of truth.)
 
 // ===== Calibration API (see calibration.cpp) =====
-void printCalibrationMenu();
 void startGyroCalibration();
 void startAccelCalibration();
 bool validateAccelOrientationForStep();
