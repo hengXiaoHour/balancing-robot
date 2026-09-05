@@ -71,12 +71,12 @@
 #define PID_CONTROL_LOOP_HZ 1000  // Control loop frequency in Hz
 
 // ===== BALANCING ROBOT INPUT SAFETY LIMITS =====
-#define ROBOT_MAX_PITCH_SETPOINT_DEG 15.0f  // Firmware hard cap; UI maxAngle (default 10) stays under this
+#define ROBOT_MAX_PITCH_SETPOINT_DEG 10.0f  // Firmware hard cap; UI maxAngle (default 10) stays under this
 #define ROBOT_PITCH_INPUT_DEADBAND_DEG 0.6f
 #define ROBOT_YAW_INPUT_DEADBAND 0.10f
-#define ROBOT_MAX_ACTUAL_TILT_DEG 15.0f
+#define ROBOT_MAX_ACTUAL_TILT_DEG 7.0f
 #define ROBOT_TILT_GUARD_BAND_DEG 1.0f
-#define ROBOT_SETPOINT_SLEW_DEG_PER_S 120.0f  // Max setpoint change rate
+#define ROBOT_SETPOINT_SLEW_DEG_PER_S 300.0f  // Max setpoint change rate
 
 // ===== ESP-NOW JOYSTICK DEADZONES (raw ADC, stick ±2048) =====
 #define ESPNOW_PITCH_DEADZONE 200
