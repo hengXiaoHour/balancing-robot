@@ -163,6 +163,18 @@ void handleWebSocketCommand(const String& jsonStr) {
     }
   }
 
+  // Handle reboot command: {"reboot":true} — disarm first, then restart
+  if (jsonStr.indexOf("\"reboot\":") != -1) {
+    motorsArmed = false;
+    motorsActive = false;
+    throttle = 0.0f;
+    pidIntegral_Pitch = 0.0f;
+    stopMotors();
+    broadcastConsoleMessage("[INFO] Rebooting via WebSocket...");
+    delay(200);
+    ESP.restart();
+  }
+
   // Handle PID tuning (simple string parsing)
   if (jsonStr.indexOf("\"pid_tune\":") != -1) {
     // Parse PID tuning commands like {"pid_tune":{"pitch_p":1.5,"pitch_i":0.1,"pitch_d":0.5}}

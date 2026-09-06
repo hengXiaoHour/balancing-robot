@@ -26,6 +26,7 @@ void printWelcomeBanner() {
   Serial.println("  help           - Display this help message");
   Serial.println("  arm            - Enable motors");
   Serial.println("  disarm         - Disable motors");
+  Serial.println("  reboot         - Disarm motors and restart ESP32 (also: restart)");
   Serial.println("  t <value>      - Set throttle (0-100%)");
   Serial.println("\nSpeed Setpoint Control (Cascaded):");
   Serial.println("  sp <val>       - Set forward/backward speed (-2 to +2 m/s)");
@@ -172,6 +173,16 @@ void handleSerialCommand() {
       pidIntegral_Pitch = 0.0;  // Reset integral on disarm
       stopMotors();
       Serial.println("\n[INFO] Balancing Robot DISARMED - Motors stopped");
+    }
+    else if (command == "reboot" || command == "restart") {
+      motorsArmed = false;  // safety: never reboot with motors live
+      motorsActive = false;
+      throttle = 0.0f;
+      stopMotors();
+      Serial.println("\n[INFO] Rebooting...");
+      Serial.flush();
+      delay(200);
+      ESP.restart();
     }
     else if (command.startsWith("t ")) {
       float value = command.substring(2).toFloat();
