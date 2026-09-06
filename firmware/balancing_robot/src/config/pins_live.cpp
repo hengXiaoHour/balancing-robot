@@ -129,7 +129,11 @@ bool setStagedPin(const String& name, int gpio, String& err) {
     err = "unknown pin. names: ENA IN1 IN2 ENB IN3 IN4 SDA SCL BAT LED SCK MOSI MISO CS";
     return false;
   }
-  if (gpio < 0 || gpio > 48) { err = "gpio out of range 0-48"; return false; }
+  // -1 = unused: allowed for optional pins (SPI block, BAT, LED).
+  // Motors and I2C are required, so they reject -1.
+  bool optional = isSpiPin(slot) || slot == &g_pin_BAT || slot == &g_pin_LED;
+  if (gpio == -1 && !optional) { err = "that pin is required (only SPI/BAT/LED accept -1 = unused)"; return false; }
+  if (gpio < -1 || gpio > 48) { err = "gpio out of range (-1 = unused, 0-48)"; return false; }
 #if ACTIVE_BOARD == BOARD_PROFILE_ESP32C3
   // C3 has no GPIO 11-19; only 0-10, 20, 21 exist.
   if ((gpio >= 11 && gpio <= 19) || (gpio > 21 && gpio != 48)) {
@@ -151,14 +155,14 @@ bool setStagedPin(const String& name, int gpio, String& err) {
   if (isMotorPin(slot)) {
     const int* m[] = {&g_pin_ENA, &g_pin_IN1, &g_pin_IN2, &g_pin_ENB, &g_pin_IN3, &g_pin_IN4};
     for (auto p : m) {
-      if (p != slot && *p == gpio) { err = "motor pins must be distinct"; return false; }
+      if (p != slot && gpio != -1 && *p == gpio) { err = "motor pins must be distinct"; return false; }
     }
   }
-  // SPI block must stay collision-free.
+  // SPI block must stay collision-free (-1 = unused, never collides).
   if (isSpiPin(slot)) {
     const int* s[] = {&g_pin_SPI_SCK, &g_pin_SPI_MOSI, &g_pin_SPI_MISO, &g_pin_SPI_CS};
     for (auto p : s) {
-      if (p != slot && *p == gpio) { err = "SPI pins must be distinct"; return false; }
+      if (p != slot && gpio != -1 && *p == gpio) { err = "SPI pins must be distinct"; return false; }
     }
   }
   *slot = gpio;

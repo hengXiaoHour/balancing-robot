@@ -6,6 +6,10 @@ MPU6500_SPI_Custom::MPU6500_SPI_Custom()
     : spiSettings(IMU_SPI_CLOCK_HZ, MSBFIRST, SPI_MODE3) {}
 
 bool MPU6500_SPI_Custom::initialize() {
+  if (g_pin_SPI_SCK < 0 || g_pin_SPI_MOSI < 0 ||
+      g_pin_SPI_MISO < 0 || g_pin_SPI_CS < 0) {
+    return false;  // SPI bus unused (-1) — skip probe, I2C drivers are next
+  }
   pinMode(g_pin_SPI_CS, OUTPUT);
   digitalWrite(g_pin_SPI_CS, HIGH);
 

@@ -84,7 +84,7 @@ void printWelcomeBanner() {
   Serial.println("\nOther Commands:");
   Serial.println("  load           - Print current PID values");
   Serial.println("  pins show      - List board pins (live values + NVS/defaults source)");
-  Serial.println("  pin set <N> <gpio> - Stage a pin (ENA IN1 IN2 ENB IN3 IN4 SDA SCL BAT LED SCK MOSI MISO CS)");
+  Serial.println("  pin set <N> <gpio> - Stage a pin (ENA IN1 IN2 ENB IN3 IN4 SDA SCL BAT LED SCK MOSI MISO CS; -1 = unused for SPI/BAT/LED)");
   Serial.println("  pins save      - Persist staged pins to NVS (reboot to apply)");
   Serial.println("  pins reset     - Clear pin overrides, restore board defaults (reboot to apply)");
   Serial.println("  reset_pid      - Reset PID to defaults");

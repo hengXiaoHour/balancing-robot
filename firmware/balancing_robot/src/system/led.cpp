@@ -13,6 +13,7 @@ static void ledWriteRGB(uint8_t, uint8_t, uint8_t) {}  // no-op on plain-LED boa
 #endif
 
 void ledBootTest() {
+  if (g_pin_LED < 0) { Serial.println("[LED] test skipped (LED pin unused)"); return; }
 #ifdef STATUS_LED_RGB
   ledWriteRGB(LED_ON_R, LED_ON_G, LED_ON_B);  // ON (green)
   delay(500);
@@ -35,6 +36,7 @@ void ledBootTest() {
 }
 
 void ledSet(bool on) {
+  if (g_pin_LED < 0) return;  // LED unused
 #ifdef STATUS_LED_RGB
   if (on) ledWriteRGB(LED_ON_R, LED_ON_G, LED_ON_B);
   else ledWriteRGB(0, 0, 0);
@@ -44,10 +46,12 @@ void ledSet(bool on) {
 }
 
 void ledSetRGB(uint8_t r, uint8_t g, uint8_t b) {
+  if (g_pin_LED < 0) return;  // LED unused
   ledWriteRGB(r, g, b);
 }
 
 void ledPollBlink() {
+  if (g_pin_LED < 0) return;  // LED unused
   static unsigned long lastLEDBlink = 0;
   static bool ledState = false;
   unsigned long now = millis();

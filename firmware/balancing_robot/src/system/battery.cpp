@@ -13,6 +13,18 @@ BatteryState batteryState = BATTERY_NORMAL;
 
 // ===== BATTERY VOLTAGE MANAGEMENT FUNCTIONS =====
 void updateBatteryVoltage() {
+  if (g_pin_BAT < 0) {
+    // No battery sense pin: assume the supply is fine so the link LED
+    // and arming logic treat power as healthy (typical for USB bench use).
+    if (!batteryFilterPrimed) {
+      for (int i = 0; i < BATTERY_SAMPLE_SIZE; i++) battery_samples[i] = 4.0f;
+      battery_voltage_filtered = 4.0f;
+      battery_voltage = 4.0f;
+      lastValidBatteryRawVoltage = 4.0f;
+      batteryFilterPrimed = true;
+    }
+    return;
+  }
   int adc_raw = analogRead(g_pin_BAT);
   float raw_voltage = (adc_raw / (float)ADC_MAX) * ADC_REF_VOLTAGE * BATTERY_DIVIDER_RATIO;
 
@@ -96,7 +108,7 @@ void updateBatteryMonitoring() {
 
   switch (batteryState) {
     case BATTERY_NORMAL:
-      pinMode(g_pin_LED, OUTPUT);
+      if (g_pin_LED >= 0) pinMode(g_pin_LED, OUTPUT);
 
       if (espnow_connected || webSocketConnected) {
         ledSet(true);
@@ -109,7 +121,7 @@ void updateBatteryMonitoring() {
         if (lowVoltageCount >= 5) {
           batteryState = BATTERY_LOW_CONFIRMED;
           Serial.println("[BATTERY] LOW BATTERY DETECTED! Voltage has been 3.3V or below for 100ms. LED will blink until battery changed.");
-          pinMode(g_pin_LED, OUTPUT);
+          if (g_pin_LED >= 0) pinMode(g_pin_LED, OUTPUT);
           lowVoltageCount = 0;
         }
       } else {
