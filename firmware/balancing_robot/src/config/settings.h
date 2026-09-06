@@ -12,7 +12,7 @@
 
 // ===== HARDWARE SELECTORS =====
 #define ACTIVE_BOARD 2  // 1=ESP32, 2=ESP32-C3, 3=ESP32-S3
-#define ACTIVE_IMU   1  // 1=MPU6050 (I2C), 2=MPU6500 (SPI), 3=MPU6500 (I2C)
+#define ACTIVE_IMU   0  // 0=auto-detect (SPI first, then I2C by WHO_AM_I), 1=MPU6050 (I2C), 2=MPU6500 (SPI), 3=MPU6500 (I2C)
 
 #include "board_pins.h"
 #include "imu_select.h"
