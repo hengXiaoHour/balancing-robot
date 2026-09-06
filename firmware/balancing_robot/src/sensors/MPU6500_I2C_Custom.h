@@ -2,6 +2,7 @@
 #define MPU6500_I2C_CUSTOM_H
 
 #include <Arduino.h>
+#include "imu_driver.h"
 
 #define MPU6500_I2C_ADDR 0x68
 #define MPU6500_I2C_ADDR_ALT 0x69
@@ -15,28 +16,18 @@
 #define MPU6500_REG_GYRO_CONFIG 0x1B
 #define MPU6500_REG_CONFIG 0x1A
 
-class MPU6500_I2C_Custom {
+class MPU6500_I2C_Custom : public IMU_Driver {
 public:
-  int16_t accelX, accelY, accelZ;
-  int16_t gyroX, gyroY, gyroZ;
-  int16_t temp;
-
-  // Calibration offsets
-  int16_t accelXOffset = 0;
-  int16_t accelYOffset = 0;
-  int16_t accelZOffset = 0;
-  int16_t gyroXOffset = 0;
-  int16_t gyroYOffset = 0;
-  int16_t gyroZOffset = 0;
   uint8_t deviceAddress = MPU6500_I2C_ADDR;
 
   MPU6500_I2C_Custom();
 
-  bool initialize();
-  void readAccel();
-  void readGyro();
-  void readTemp();
-  void readAll();
+  bool initialize() override;
+  const char* driverName() const override { return "MPU6500 I2C"; }
+  void readAccel() override;
+  void readGyro() override;
+  void readTemp() override;
+  void readAll() override;
 
 private:
   bool detectAddress();

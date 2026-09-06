@@ -2,6 +2,7 @@
 #define MPU6050_CUSTOM_H
 
 #include <Arduino.h>
+#include "imu_driver.h"
 
 #define MPU6050_ADDR 0x68
 #define MPU6050_ADDR_ALT 0x69
@@ -15,37 +16,27 @@
 #define MPU6050_REG_GYRO_CONFIG 0x1B
 #define MPU6050_REG_CONFIG 0x1A  // DLPF configuration
 
-class MPU6050_Custom {
+class MPU6050_Custom : public IMU_Driver {
 public:
-  int16_t accelX, accelY, accelZ;
-  int16_t gyroX, gyroY, gyroZ;
-  int16_t temp;
-
-  // Calibration offsets
-  int16_t accelXOffset = 0;
-  int16_t accelYOffset = 0;
-  int16_t accelZOffset = 0;
-  int16_t gyroXOffset = 0;
-  int16_t gyroYOffset = 0;
-  int16_t gyroZOffset = 0;
   uint8_t deviceAddress = MPU6050_ADDR;
 
   MPU6050_Custom();
 
   // Initialize MPU6050
-  bool initialize();
+  bool initialize() override;
+  const char* driverName() const override { return "MPU6050 I2C"; }
 
   // Read accelerometer data
-  void readAccel();
+  void readAccel() override;
 
   // Read gyroscope data
-  void readGyro();
+  void readGyro() override;
 
   // Read temperature
-  void readTemp();
+  void readTemp() override;
 
   // Read all sensor data
-  void readAll();
+  void readAll() override;
 
 private:
   bool detectAddress();

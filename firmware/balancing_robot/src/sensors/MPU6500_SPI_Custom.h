@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include "imu_driver.h"
 
 // MPU6500 register addresses
 #define MPU6500_REG_PWR_MGMT_1    0x6B
@@ -14,27 +15,16 @@
 #define MPU6500_REG_CONFIG        0x1A
 #define MPU6500_REG_USER_CTRL     0x6A
 
-class MPU6500_SPI_Custom {
+class MPU6500_SPI_Custom : public IMU_Driver {
 public:
-  int16_t accelX, accelY, accelZ;
-  int16_t gyroX, gyroY, gyroZ;
-  int16_t temp;
-
-  // Calibration offsets
-  int16_t accelXOffset = 0;
-  int16_t accelYOffset = 0;
-  int16_t accelZOffset = 0;
-  int16_t gyroXOffset = 0;
-  int16_t gyroYOffset = 0;
-  int16_t gyroZOffset = 0;
-
   MPU6500_SPI_Custom();
 
-  bool initialize();
-  void readAccel();
-  void readGyro();
-  void readTemp();
-  void readAll();
+  bool initialize() override;
+  const char* driverName() const override { return "MPU6500 SPI"; }
+  void readAccel() override;
+  void readGyro() override;
+  void readTemp() override;
+  void readAll() override;
 
 private:
   SPISettings spiSettings;

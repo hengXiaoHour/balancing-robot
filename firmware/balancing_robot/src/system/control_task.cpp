@@ -31,15 +31,15 @@ void controlLoopTask(void *pvParameters) {
 
       // Read sensor data (only if MPU is initialized)
       if (mpuInitialized) {
-        mpu.readAll();
+        mpu->readAll();
 
         // Store raw sensor values
-        mpu_accelX = mpu.accelX;
-        mpu_accelY = mpu.accelY;
-        mpu_accelZ = mpu.accelZ;
-        mpu_gyroX = mpu.gyroX;
-        mpu_gyroY = mpu.gyroY;
-        mpu_gyroZ = mpu.gyroZ;
+        mpu_accelX = mpu->accelX;
+        mpu_accelY = mpu->accelY;
+        mpu_accelZ = mpu->accelZ;
+        mpu_gyroX = mpu->gyroX;
+        mpu_gyroY = mpu->gyroY;
+        mpu_gyroZ = mpu->gyroZ;
       } else {
         // Set default values if MPU not available
         mpu_accelX = mpu_accelY = mpu_accelZ = 0;

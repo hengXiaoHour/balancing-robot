@@ -7,6 +7,7 @@
 #include "websocket_handler.h"  // printStateJsonSerial() — shared state JSON for WebUI
 #include "../system/led.h"  // ledBootTest(), ledSet(), ledSetRGB()
 #include "../config/pins_live.h"  // pins show / pin set / pins save|reset (NVS)
+#include "../system/imu.h"  // printImuStatus() for 'imu show'
 #include "wifi_creds.h"  // wifi show / wifi set / wifi save|reset (NVS, passwords masked)
 
 // Definitions live here (were in balancing_robot.ino); externs in serial_commands.h
@@ -37,6 +38,7 @@ void printWelcomeBanner() {
   Serial.println("  calibrate_gyro - Calibrate gyro bias only");
   Serial.println("  calibrate_accel - Calibrate accel scale (4-step)");
   Serial.println("  retry_mpu - Retry MPU6050 initialization");
+  Serial.println("  imu show       - Show IMU detect mode + active driver");
   Serial.println("\nPID Tuning (Pitch Axis):");
   Serial.println("  pitch_p/pp <val> - Set KP_Pitch");
   Serial.println("  pitch_i/pi <val> - Set KI_Pitch");
@@ -131,6 +133,9 @@ void handleSerialCommand() {
     }
     else if (command == "retry_mpu") {
       retryMPUInitialization();
+    }
+    else if (command == "imu show") {
+      printImuStatus();
     }
     else if (command == "test_motor") {
       toggleMotorTest();
