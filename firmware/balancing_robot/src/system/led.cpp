@@ -1,11 +1,12 @@
 #include "led.h"
-#include "../config/settings.h"  // LOW_VOLTAGE_LED_PIN, LED_*_LEVEL, STATUS_LED_RGB, LED_* colors
+#include "../config/settings.h"  // LED_*_LEVEL, STATUS_LED_RGB, LED_* colors
+#include "../config/pins_live.h"  // g_pin_LED live pin (NVS overrides)
 
 #ifdef STATUS_LED_RGB
 // Addressable RGB (WS2812): driven by the core's built-in neopixelWrite,
 // no extra library needed. Note GRB wire order is handled by neopixelWrite.
 static void ledWriteRGB(uint8_t r, uint8_t g, uint8_t b) {
-  neopixelWrite(LOW_VOLTAGE_LED_PIN, r, g, b);
+  neopixelWrite(g_pin_LED, r, g, b);
 }
 #else
 static void ledWriteRGB(uint8_t, uint8_t, uint8_t) {}  // no-op on plain-LED boards
@@ -21,14 +22,14 @@ void ledBootTest() {
   delay(500);
   ledWriteRGB(0, 0, 0);  // OFF
 #else
-  pinMode(LOW_VOLTAGE_LED_PIN, OUTPUT);
-  digitalWrite(LOW_VOLTAGE_LED_PIN, LED_ON_LEVEL);  // LED ON
+  pinMode(g_pin_LED, OUTPUT);
+  digitalWrite(g_pin_LED, LED_ON_LEVEL);  // LED ON
   delay(500);
-  digitalWrite(LOW_VOLTAGE_LED_PIN, LED_OFF_LEVEL);  // LED OFF
+  digitalWrite(g_pin_LED, LED_OFF_LEVEL);  // LED OFF
   delay(500);
-  digitalWrite(LOW_VOLTAGE_LED_PIN, LED_ON_LEVEL);  // LED ON again
+  digitalWrite(g_pin_LED, LED_ON_LEVEL);  // LED ON again
   delay(500);
-  digitalWrite(LOW_VOLTAGE_LED_PIN, LED_OFF_LEVEL);  // LED OFF
+  digitalWrite(g_pin_LED, LED_OFF_LEVEL);  // LED OFF
 #endif
   Serial.println("[LED] test ok");
 }
@@ -38,7 +39,7 @@ void ledSet(bool on) {
   if (on) ledWriteRGB(LED_ON_R, LED_ON_G, LED_ON_B);
   else ledWriteRGB(0, 0, 0);
 #else
-  digitalWrite(LOW_VOLTAGE_LED_PIN, on ? LED_ON_LEVEL : LED_OFF_LEVEL);
+  digitalWrite(g_pin_LED, on ? LED_ON_LEVEL : LED_OFF_LEVEL);
 #endif
 }
 

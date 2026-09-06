@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "motor_control.h"
-#include "../config/settings.h"  // ENA/IN pins, PWM_*, PID_MAX, ROBOT_* limits
+#include "../config/settings.h"  // PWM_*, PID_MAX, ROBOT_* limits
+#include "../config/pins_live.h"  // g_pin_* live pins (NVS overrides)
 
 // Definitions live here (were in balancing_robot.ino); externs in *_handler.h / control_task.h
 bool motorsArmed = false;
@@ -18,12 +19,12 @@ bool testMotorActive = false;  // stubs — test mode disabled in BALANCING_ROBO
 
 // ===== Stop All Motors =====
 void stopMotors() {
-  ledcWrite(ENA, 0);
-  ledcWrite(ENB, 0);
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, LOW);
+  ledcWrite(g_pin_ENA, 0);
+  ledcWrite(g_pin_ENB, 0);
+  digitalWrite(g_pin_IN1, LOW);
+  digitalWrite(g_pin_IN2, LOW);
+  digitalWrite(g_pin_IN3, LOW);
+  digitalWrite(g_pin_IN4, LOW);
 }
 
 // ===== Set Left Motor Speed (±4095 PWM, positive=forward, negative=backward) =====
@@ -32,14 +33,14 @@ void setLeftMotorSpeed(float speed) {
   int pwmValue = (int)fabs(speed);
 
   if (speed >= 0.0f) {
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
+    digitalWrite(g_pin_IN1, HIGH);
+    digitalWrite(g_pin_IN2, LOW);
   } else {
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
+    digitalWrite(g_pin_IN1, LOW);
+    digitalWrite(g_pin_IN2, HIGH);
   }
 
-  ledcWrite(ENA, pwmValue);
+  ledcWrite(g_pin_ENA, pwmValue);
 }
 
 // ===== Set Right Motor Speed (±4095 PWM, positive=forward, negative=backward) =====
@@ -48,14 +49,14 @@ void setRightMotorSpeed(float speed) {
   int pwmValue = (int)fabs(speed);
 
   if (speed >= 0.0f) {
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
+    digitalWrite(g_pin_IN3, HIGH);
+    digitalWrite(g_pin_IN4, LOW);
   } else {
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
+    digitalWrite(g_pin_IN3, LOW);
+    digitalWrite(g_pin_IN4, HIGH);
   }
 
-  ledcWrite(ENB, pwmValue);
+  ledcWrite(g_pin_ENB, pwmValue);
 }
 
 // ===== Balancing-robot (vehicle) mode functions =====
@@ -169,12 +170,12 @@ void applyVehicleInputLimits() {
 }
 
 void initVehicleMotors() {
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
-  ledcAttach(ENA, PWM_FREQ, PWM_RES);
-  ledcAttach(ENB, PWM_FREQ, PWM_RES);
+  pinMode(g_pin_IN1, OUTPUT);
+  pinMode(g_pin_IN2, OUTPUT);
+  pinMode(g_pin_IN3, OUTPUT);
+  pinMode(g_pin_IN4, OUTPUT);
+  ledcAttach(g_pin_ENA, PWM_FREQ, PWM_RES);
+  ledcAttach(g_pin_ENB, PWM_FREQ, PWM_RES);
   setLeftMotorSpeed(0.0f);
   setRightMotorSpeed(0.0f);
 }

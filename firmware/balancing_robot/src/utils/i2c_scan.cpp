@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "i2c_scan.h"
-#include "../config/settings.h"  // I2C_SDA / I2C_SCL pins
+#include "../config/settings.h"  // (kept for I2C_SPEED etc)
+#include "../config/pins_live.h"  // g_pin_SDA/SCL live pins (NVS overrides)
 
 // Device name lookup helper
 const char* getI2CDeviceName(uint8_t address) {
@@ -19,7 +20,7 @@ void scanI2CBus() {
   Serial.println("\n========================================");
   Serial.println("        I2C Bus Scan - Active Devices");
   Serial.println("========================================");
-  Serial.printf("I2C Config - SDA: GPIO %d, SCL: GPIO %d\n\n", I2C_SDA, I2C_SCL);
+  Serial.printf("I2C Config - SDA: GPIO %d, SCL: GPIO %d\n\n", g_pin_SDA, g_pin_SCL);
 
   byte error;
   uint8_t address;

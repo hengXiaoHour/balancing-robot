@@ -6,6 +6,7 @@
 #include "wifi_ota.h"  // switchWiFiMode(), printWiFiStatus()
 #include "websocket_handler.h"  // printStateJsonSerial() — shared state JSON for WebUI
 #include "../system/led.h"  // ledBootTest(), ledSet(), ledSetRGB()
+#include "../config/pins_live.h"  // pins show / pin set / pins save|reset (NVS)
 
 // Definitions live here (were in balancing_robot.ino); externs in serial_commands.h
 float accel_z_world_mps2 = 0.0f;
@@ -78,6 +79,10 @@ void printWelcomeBanner() {
 #endif
   Serial.println("\nOther Commands:");
   Serial.println("  load           - Print current PID values");
+  Serial.println("  pins show      - List board pins (live values + NVS/defaults source)");
+  Serial.println("  pin set <N> <gpio> - Stage a pin (ENA IN1 IN2 ENB IN3 IN4 SDA SCL BAT LED SCK MOSI MISO CS)");
+  Serial.println("  pins save      - Persist staged pins to NVS (reboot to apply)");
+  Serial.println("  pins reset     - Clear pin overrides, restore board defaults (reboot to apply)");
   Serial.println("  reset_pid      - Reset PID to defaults");
   Serial.println("  reset_calibration - Reset calibration to defaults");
   Serial.println("  battery_reset/bat_reset - Reset low voltage warning");
@@ -262,6 +267,38 @@ void handleSerialCommand() {
       speed_y_setpoint = 0.0f;
       yaw_setpoint = 0.0f;
       Serial.println("\n[RSP] All setpoints reset to 0");
+    }
+    else if (command == "pins show") {
+      printPinsToSerial();
+    }
+    else if (command == "pins save") {
+      savePinsToNVS();
+      Serial.println("[PINS] saved to NVS - reboot to apply");
+    }
+    else if (command == "pins reset") {
+      resetPinsToDefaults();
+      Serial.println("[PINS] overrides cleared, defaults restored - reboot to apply");
+    }
+    else if (command.startsWith("pin set ") || command.startsWith("pins set ")) {
+      // Staged in RAM only; 'pins save' persists, reboot applies.
+      String args = command.startsWith("pin set ")
+          ? command.substring(8) : command.substring(9);
+      args.trim();
+      int sp = args.indexOf(' ');
+      if (sp <= 0) {
+        Serial.println("[PINS] usage: pin set <NAME> <gpio>");
+      } else {
+        String pname = args.substring(0, sp);
+        int gpio = args.substring(sp + 1).toInt();
+        String perr;
+        if (setStagedPin(pname, gpio, perr)) {
+          Serial.printf("[PINS] %s staged to GPIO %d (unsaved - 'pins save' + reboot)\n",
+                        pname.c_str(), gpio);
+        } else {
+          Serial.print("[PINS] rejected: ");
+          Serial.println(perr);
+        }
+      }
     }
     else if (handlePIDCommand(command)) {
       // PID-tuning sub-commands (see serial_pid_commands.cpp)

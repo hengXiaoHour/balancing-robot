@@ -1,4 +1,5 @@
 #include "imu.h"
+#include "../config/pins_live.h"  // g_pin_SDA/SCL live pins (NVS overrides)
 
 // Global IMU object
 IMU_Custom mpu;
@@ -9,7 +10,7 @@ bool mpuInitialized = false;
 // ===== IMU INITIALIZATION (moved from setup() verbatim) =====
 void initIMU() {
   // Initialize I2C bus (used by MPU6050 path and optional barometer)
-  Wire.begin(I2C_SDA, I2C_SCL);  // SDA, SCL from config
+  Wire.begin(g_pin_SDA, g_pin_SCL);  // SDA, SCL from config
   Wire.setClock(I2C_SPEED);      // I2C speed from config
 
   // Initialize IMU
@@ -19,11 +20,11 @@ void initIMU() {
     Serial.println("[ERROR] MPU6500 (SPI) not found! Robot cannot be armed until sensor is properly connected and initialized.");
     #elif ACTIVE_IMU == IMU_SENSOR_MPU6500_I2C
     Serial.println("[ERROR] MPU6500 (I2C) not found! Robot cannot be armed until sensor is properly connected and initialized.");
-    Serial.printf("[ERROR] I2C config -> SDA: GPIO %d, SCL: GPIO %d, Speed: %d Hz\n", I2C_SDA, I2C_SCL, I2C_SPEED);
+    Serial.printf("[ERROR] I2C config -> SDA: GPIO %d, SCL: GPIO %d, Speed: %d Hz\n", g_pin_SDA, g_pin_SCL, I2C_SPEED);
     Serial.println("[ERROR] Check wiring + pull-ups, and confirm MPU address (0x68/0x69)");
     #else
     Serial.println("[ERROR] MPU6050 not found! Robot cannot be armed until sensor is properly connected and initialized.");
-    Serial.printf("[ERROR] I2C config -> SDA: GPIO %d, SCL: GPIO %d, Speed: %d Hz\n", I2C_SDA, I2C_SCL, I2C_SPEED);
+    Serial.printf("[ERROR] I2C config -> SDA: GPIO %d, SCL: GPIO %d, Speed: %d Hz\n", g_pin_SDA, g_pin_SCL, I2C_SPEED);
     Serial.println("[ERROR] Check wiring + pull-ups, and confirm MPU address (0x68/0x69)");
     #endif
     mpuInitialized = false;
@@ -45,7 +46,7 @@ void retryMPUInitialization() {
   Serial.println("[INFO] Attempting to retry MPU initialization...");
 
   // Re-initialize I2C bus
-  Wire.begin(I2C_SDA, I2C_SCL);
+  Wire.begin(g_pin_SDA, g_pin_SCL);
   delay(100);
 
   // Attempt to re-initialize MPU object

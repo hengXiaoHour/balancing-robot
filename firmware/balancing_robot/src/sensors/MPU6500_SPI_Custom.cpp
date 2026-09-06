@@ -1,14 +1,15 @@
 #include "MPU6500_SPI_Custom.h"
-#include "../config/settings.h"  // IMU_SPI_CLOCK_HZ + IMU_SPI_* pins (body-free chain)
+#include "../config/settings.h"  // IMU_SPI_CLOCK_HZ (body-free chain)
+#include "../config/pins_live.h"  // g_pin_SPI_* live pins (NVS overrides)
 
 MPU6500_SPI_Custom::MPU6500_SPI_Custom()
     : spiSettings(IMU_SPI_CLOCK_HZ, MSBFIRST, SPI_MODE3) {}
 
 bool MPU6500_SPI_Custom::initialize() {
-  pinMode(IMU_SPI_CS_PIN, OUTPUT);
-  digitalWrite(IMU_SPI_CS_PIN, HIGH);
+  pinMode(g_pin_SPI_CS, OUTPUT);
+  digitalWrite(g_pin_SPI_CS, HIGH);
 
-  SPI.begin(IMU_SPI_SCK_PIN, IMU_SPI_MISO_PIN, IMU_SPI_MOSI_PIN, IMU_SPI_CS_PIN);
+  SPI.begin(g_pin_SPI_SCK, g_pin_SPI_MISO, g_pin_SPI_MOSI, g_pin_SPI_CS);
   delay(50);
 
   uint8_t whoAmI = readRegister(MPU6500_REG_WHO_AM_I);
@@ -79,30 +80,30 @@ void MPU6500_SPI_Custom::readAll() {
 
 void MPU6500_SPI_Custom::writeRegister(uint8_t reg, uint8_t value) {
   SPI.beginTransaction(spiSettings);
-  digitalWrite(IMU_SPI_CS_PIN, LOW);
+  digitalWrite(g_pin_SPI_CS, LOW);
   SPI.transfer(reg & 0x7F);
   SPI.transfer(value);
-  digitalWrite(IMU_SPI_CS_PIN, HIGH);
+  digitalWrite(g_pin_SPI_CS, HIGH);
   SPI.endTransaction();
 }
 
 uint8_t MPU6500_SPI_Custom::readRegister(uint8_t reg) {
   SPI.beginTransaction(spiSettings);
-  digitalWrite(IMU_SPI_CS_PIN, LOW);
+  digitalWrite(g_pin_SPI_CS, LOW);
   SPI.transfer(reg | 0x80);
   uint8_t value = SPI.transfer(0x00);
-  digitalWrite(IMU_SPI_CS_PIN, HIGH);
+  digitalWrite(g_pin_SPI_CS, HIGH);
   SPI.endTransaction();
   return value;
 }
 
 void MPU6500_SPI_Custom::readRegisters(uint8_t reg, uint8_t count, uint8_t* data) {
   SPI.beginTransaction(spiSettings);
-  digitalWrite(IMU_SPI_CS_PIN, LOW);
+  digitalWrite(g_pin_SPI_CS, LOW);
   SPI.transfer(reg | 0x80);
   for (uint8_t i = 0; i < count; i++) {
     data[i] = SPI.transfer(0x00);
   }
-  digitalWrite(IMU_SPI_CS_PIN, HIGH);
+  digitalWrite(g_pin_SPI_CS, HIGH);
   SPI.endTransaction();
 }

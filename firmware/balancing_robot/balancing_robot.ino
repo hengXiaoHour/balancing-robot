@@ -44,6 +44,7 @@
 
 // System
 #include "src/system/prefs.h"
+#include "src/config/pins_live.h"
 #include "src/system/battery.h"
 #include "src/system/led.h"
 #include "src/system/imu.h"
@@ -61,6 +62,11 @@ void setup() {
   delay(1000);
 
   Serial.println("[BOOT] balancing robot");
+
+  loadPinsFromNVS();  // must precede any peripheral init
+  Serial.printf("[PINS] %s (board profile %d)\n",
+                pinsHaveNvsOverrides() ? "NVS overrides" : "defaults",
+                ACTIVE_BOARD);
 
   ledBootTest();
   initVehicleMotors();

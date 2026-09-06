@@ -1,5 +1,6 @@
 #include "battery.h"
 #include "led.h"  // ledSet / ledPollBlink
+#include "../config/pins_live.h"  // g_pin_BAT/LED live pins (NVS overrides)
 
 // Definitions live here (were in balancing_robot.ino); externs in battery.h
 float battery_voltage = 0.0f;
@@ -12,7 +13,7 @@ BatteryState batteryState = BATTERY_NORMAL;
 
 // ===== BATTERY VOLTAGE MANAGEMENT FUNCTIONS =====
 void updateBatteryVoltage() {
-  int adc_raw = analogRead(BATTERY_PIN);
+  int adc_raw = analogRead(g_pin_BAT);
   float raw_voltage = (adc_raw / (float)ADC_MAX) * ADC_REF_VOLTAGE * BATTERY_DIVIDER_RATIO;
 
   if (!batteryFilterPrimed) {
@@ -95,7 +96,7 @@ void updateBatteryMonitoring() {
 
   switch (batteryState) {
     case BATTERY_NORMAL:
-      pinMode(LOW_VOLTAGE_LED_PIN, OUTPUT);
+      pinMode(g_pin_LED, OUTPUT);
 
       if (espnow_connected) {
         ledSet(true);
@@ -108,7 +109,7 @@ void updateBatteryMonitoring() {
         if (lowVoltageCount >= 5) {
           batteryState = BATTERY_LOW_CONFIRMED;
           Serial.println("[BATTERY] LOW BATTERY DETECTED! Voltage has been 3.3V or below for 100ms. LED will blink until battery changed.");
-          pinMode(LOW_VOLTAGE_LED_PIN, OUTPUT);
+          pinMode(g_pin_LED, OUTPUT);
           lowVoltageCount = 0;
         }
       } else {
