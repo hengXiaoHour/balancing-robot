@@ -72,7 +72,7 @@ void toggleMotorTest() {
     return;
   }
   testMotorActive = true;
-  Serial.println("[MOTOR TEST] starting: LEFT fwd/rev, then RIGHT fwd/rev, 60%, 2s each");
+  Serial.println("[MOTOR TEST] starting: LEFT fwd/rev, then RIGHT fwd/rev, 100%, 2s each");
 }
 
 void updateMotorTest() {
@@ -82,7 +82,7 @@ void updateMotorTest() {
   static unsigned long phaseStart = 0;
   static bool wasActive = false;
   static int8_t announcedPhase = -1;
-  const float TEST_PWM = 0.6f * 4095.0f;  // 60% (above MOTOR_MIN_PWM stall floor)
+  const float TEST_PWM = 4095.0f;  // 100% — confirm-gated via 'debug motor'
   const unsigned long PHASE_MS = 2000;
 
   if (!testMotorActive) {

@@ -16,9 +16,9 @@ extern BatteryState batteryState;
 // (LED blink timing moved into led.cpp as function statics)
 
 // Used by battery monitoring (defined elsewhere)
-extern bool debugMonitoring;
 extern volatile bool espnow_connected;
 extern bool webSocketConnected;  // defined in comms/websocket_handler.cpp
+extern bool debugLedMonitoring;  // defined in comms/serial_commands.cpp ('debug led' owns LED)
 
 // ===== Battery API (see battery.cpp) =====
 void updateBatteryVoltage();

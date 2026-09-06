@@ -79,9 +79,7 @@ void controlLoopTask(void *pvParameters) {
           initEKFFilter();
         #endif
         filterInitialized = true;
-        if (debugMonitoring) {
-          Serial.println("[OK] Filter initialized with stable accel data");
-        }
+        Serial.println("[OK] Filter initialized with stable accel data");
       }
 
       // ===== UPDATE FILTER (Choose ONE - comment out other 4) =====
@@ -156,7 +154,9 @@ void controlLoopTask(void *pvParameters) {
           safeToArm = false;
           safeAngleCounter = 0;
           statusMonitoring = false;
-          debugMonitoring = false;
+          debugImuMonitoring = false;
+          debugLedMonitoring = false;
+          testMotorActive = false;
           stopMotors();
 
           // Reset all control variables
@@ -180,7 +180,9 @@ void controlLoopTask(void *pvParameters) {
           safeToArm = false;  // Also reset arm hysteresis on failsafe
           safeAngleCounter = 0;
           statusMonitoring = false;  // Stop status printing on failsafe
-          debugMonitoring = false;   // Stop debug printing on failsafe
+          debugImuMonitoring = false;
+          debugLedMonitoring = false;
+          testMotorActive = false;
           stopMotors();
 
           // Reset all control variables to prevent motor twitching/spin-up

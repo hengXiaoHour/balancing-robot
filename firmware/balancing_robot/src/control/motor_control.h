@@ -29,6 +29,7 @@ extern float pitch_final;  // for PITCH_ANGLE_FINAL_USED in applyVehicleInputLim
 
 void toggleMotorTest();          // switch between normal mode and 2-motor test
 void updateMotorTest();          // empty stub — called from controlLoopTask
+extern bool testMotorActive;     // true while the wheel test runs (failsafe clears it)
 void applyVehicleInputLimits();  // clamp/slew-limit radio stick setpoints
 void initVehicleMotors();        // pin setup for 2-motor drive
 void updateVehicleMotorControl();// cascade/single-PID → left+right motor mix

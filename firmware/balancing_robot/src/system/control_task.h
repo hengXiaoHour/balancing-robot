@@ -42,7 +42,8 @@ extern int16_t accelX, accelY, accelZ;
 extern int16_t gyroX, gyroY, gyroZ;
 extern float axBias, axScale, ayBias, ayScale, azBias, azScale;
 extern bool filterInitialized;
-extern bool debugMonitoring;
+extern bool debugImuMonitoring;  // defined in comms/serial_commands.cpp
+extern bool debugLedMonitoring;  // defined in comms/serial_commands.cpp
 extern bool statusMonitoring;
 extern volatile unsigned long filterExecutionTime;
 extern float avgFilterTime;

@@ -7,13 +7,16 @@
 #include "websocket_handler.h"  // printStateJsonSerial() — shared state JSON for WebUI
 #include "../system/led.h"  // ledBootTest(), ledSet(), ledSetRGB()
 #include "../config/pins_live.h"  // pins show / pin set / pins save|reset (NVS)
-#include "../system/imu.h"  // printImuStatus() for 'imu show'
+#include "../system/imu.h"  // mpu live-driver pointer ('debug imu') + printImuStatus()
 #include "wifi_creds.h"  // wifi show / wifi set / wifi save|reset (NVS, passwords masked)
 
 // Definitions live here (were in balancing_robot.ino); externs in serial_commands.h
 float accel_z_world_mps2 = 0.0f;
 bool statusMonitoring = false;
-bool debugMonitoring = false;
+bool debugImuMonitoring = false;  // 'debug imu' raw-sensor stream (status-style toggle)
+bool debugLedMonitoring = false;  // 'debug led' RGB cycle (status-style toggle)
+static bool motorConfirmPending = false;
+static unsigned long motorConfirmDeadline = 0;
 
 // ===== Print Welcome Banner =====
 void printWelcomeBanner() {
@@ -90,12 +93,10 @@ void printWelcomeBanner() {
   Serial.println("  reset_calibration - Reset calibration to defaults");
   Serial.println("  battery_reset/bat_reset - Reset low voltage warning");
   Serial.println("  i2c_scan       - Scan I2C bus for connected devices");
-  Serial.println("  led test       - Run status LED boot self-test");
-  Serial.println("  led on/off     - Force status LED on or off");
-  Serial.println("  led rgb R G B  - Set status LED color 0-255 (RGB boards only)");
-  Serial.println("  test_motor     - Wheel test: LEFT fwd/rev then RIGHT fwd/rev, 60%, 2s each");
   Serial.println("  status         - Toggle sensor monitoring");
-  Serial.println("  debug          - Toggle debug information");
+  Serial.println("  debug motor    - 100% wheel test (warns, needs 'debug motor yes' confirm)");
+  Serial.println("  debug imu      - Toggle raw accel/gyro stream");
+  Serial.println("  debug led      - Toggle RGB cycle (link LED resumes after)");
   Serial.println("  debug nvs      - Dump raw NVS namespaces (pins/wifi/calib keys)");
   Serial.println("  ws_debug       - Toggle WebSocket message log (default OFF)");
   Serial.println("\nWiFi & OTA Commands:");
@@ -186,13 +187,10 @@ void handleSerialCommand() {
     else if (command == "imu show") {
       printImuStatus();
     }
-    else if (command == "test_motor") {
-      toggleMotorTest();
-    }
     else if (command == "arm") {
       // Check MPU6050 initialization
       if (testMotorActive) {
-        Serial.println("\n[WARN] ARM BLOCKED: Motor test running. Type 'test_motor' to stop.");
+        Serial.println("\n[WARN] ARM BLOCKED: Motor test running. Type 'debug motor' to stop.");
       }
       else if (!mpuInitialized) {
         Serial.println("\n[ERROR] ARM BLOCKED: MPU6050 not initialized! Check sensor connection.");
@@ -260,30 +258,6 @@ void handleSerialCommand() {
     else if (command == "i2c_scan") {
       scanI2CBus();
     }
-    else if (command == "led test") {
-      ledBootTest();
-    }
-    else if (command == "led on") {
-      ledSet(true);
-      Serial.println("[LED] forced ON (battery monitor resumes control next update)");
-    }
-    else if (command == "led off") {
-      ledSet(false);
-      Serial.println("[LED] forced OFF (battery monitor resumes control next update)");
-    }
-    else if (command.startsWith("led rgb ")) {
-#ifdef STATUS_LED_RGB
-      int r, g, b;
-      if (sscanf(command.c_str(), "led rgb %d %d %d", &r, &g, &b) == 3) {
-        ledSetRGB((uint8_t)constrain(r, 0, 255), (uint8_t)constrain(g, 0, 255), (uint8_t)constrain(b, 0, 255));
-        Serial.printf("[LED] color set to R=%d G=%d B=%d\n", constrain(r, 0, 255), constrain(g, 0, 255), constrain(b, 0, 255));
-      } else {
-        Serial.println("[LED] usage: led rgb <0-255> <0-255> <0-255>");
-      }
-#else
-      Serial.println("[LED] this board has a plain LED, no RGB support");
-#endif
-    }
     else if (command == "status") {
       statusMonitoring = !statusMonitoring;  // Toggle status monitoring
       if (statusMonitoring) {
@@ -292,13 +266,50 @@ void handleSerialCommand() {
         Serial.println("\n[INFO] Status monitoring DISABLED\n");
       }
     }
-    else if (command == "debug") {
-      debugMonitoring = !debugMonitoring;  // Toggle debug monitoring
-      if (debugMonitoring) {
-        Serial.println("\n[DEBUG] Debug monitoring ENABLED - Type 'debug' again to disable");
+    else if (command == "debug motor") {
+      if (testMotorActive) {
+        toggleMotorTest();  // stop — no confirm needed to stop
+      } else if (motorsArmed) {
+        motorConfirmPending = false;
+        Serial.println("\n[REFUSED] Disarm first (type 'disarm'), then 'debug motor'");
       } else {
-        Serial.println("\n[DEBUG] Debug monitoring DISABLED\n");
+        motorConfirmPending = true;
+        motorConfirmDeadline = millis() + 15000;
+        Serial.println("\n[DANGER] Wheel test drives BOTH motors at 100% PWM:");
+        Serial.println("         LEFT fwd/rev then RIGHT fwd/rev, 2s each.");
+        Serial.println("         Prop the robot UP so wheels spin freely, keep clear.");
+        Serial.println("         Type 'debug motor yes' within 15s to proceed.");
       }
+    }
+    else if (command == "debug motor yes") {
+      if (testMotorActive) {
+        Serial.println("[MOTOR TEST] already running - 'debug motor' stops it");
+      } else if (!motorConfirmPending || (long)(millis() - motorConfirmDeadline) > 0) {
+        motorConfirmPending = false;
+        Serial.println("[MOTOR TEST] no pending confirm - type 'debug motor' first");
+      } else {
+        motorConfirmPending = false;
+        toggleMotorTest();
+      }
+    }
+    else if (command == "debug imu") {
+      debugImuMonitoring = !debugImuMonitoring;  // Toggle raw-sensor stream
+      if (debugImuMonitoring) {
+        Serial.println("\n[INFO] IMU raw stream ENABLED - Type 'debug imu' again to disable");
+      } else {
+        Serial.println("\n[INFO] IMU raw stream DISABLED\n");
+      }
+    }
+    else if (command == "debug led") {
+      debugLedMonitoring = !debugLedMonitoring;  // Toggle RGB cycle
+      if (debugLedMonitoring) {
+        Serial.println("\n[INFO] LED cycle ENABLED - Type 'debug led' again to disable (link LED resumes)");
+      } else {
+        Serial.println("\n[INFO] LED cycle DISABLED\n");
+      }
+    }
+    else if (command == "debug") {
+      Serial.println("\n[DEBUG] usage: debug motor | debug imu | debug led | debug nvs");
     }
     else if (command == "ws_debug") {
       wsDebugMonitoring = !wsDebugMonitoring;  // Toggle WebSocket message log
@@ -465,5 +476,40 @@ void printTelemetryStatus() {
     Serial.print("B (min: "); Serial.print(minFreeHeap); Serial.print("B) | Load: ");
     float cpuLoad = (avgFilterTime / 10000.0) * 100.0;
     Serial.print(cpuLoad, 1); Serial.println("%");
+  }
+
+  // ===== Rate-limited [IMU] raw-sensor stream ('debug imu' toggle) =====
+  static unsigned long lastImuDbg = 0;
+  if (debugImuMonitoring && (millis() - lastImuDbg >= 200)) {
+    lastImuDbg = millis();
+    if (mpu && mpuInitialized) {
+      Serial.print("[IMU] accel=");
+      Serial.print(mpu->accelX); Serial.print(",");
+      Serial.print(mpu->accelY); Serial.print(",");
+      Serial.print(mpu->accelZ); Serial.print(" gyro=");
+      Serial.print(mpu->gyroX); Serial.print(",");
+      Serial.print(mpu->gyroY); Serial.print(",");
+      Serial.print(mpu->gyroZ); Serial.print(" temp=");
+      Serial.println(mpu->temp);
+    } else {
+      Serial.println("[IMU] no driver (not initialized)");
+    }
+  }
+
+  // ===== LED cycle ('debug led' toggle) =====
+  // Low-battery blink keeps priority; otherwise cycle R/G/B/off every 300ms.
+  // Battery monitor resumes the link LED on next poll after toggle-off.
+  static unsigned long lastLedDbg = 0;
+  static uint8_t ledDbgStep = 0;
+  if (debugLedMonitoring && batteryState != BATTERY_LOW_CONFIRMED &&
+      (millis() - lastLedDbg >= 300)) {
+    lastLedDbg = millis();
+    ledDbgStep = (ledDbgStep + 1) % 4;
+    switch (ledDbgStep) {
+      case 0: ledSetRGB(255, 0, 0); break;
+      case 1: ledSetRGB(0, 255, 0); break;
+      case 2: ledSetRGB(0, 0, 255); break;
+      default: ledSet(false); break;
+    }
   }
 }

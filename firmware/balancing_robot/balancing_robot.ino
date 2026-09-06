@@ -87,10 +87,6 @@ void setup() {
   analogReadResolution(12);
   initIMU();
 
-  if (debugMonitoring) {
-    scanI2CBus();
-  }
-
   loadCalibrationBias();
   loadPIDFromPreferences();
 

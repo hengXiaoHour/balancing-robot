@@ -60,20 +60,6 @@ void updateBatteryVoltage() {
 
   battery_voltage_filtered = (BATTERY_LPF_ALPHA * voltage_average) + ((1.0f - BATTERY_LPF_ALPHA) * battery_voltage_filtered);
   battery_voltage = battery_voltage_filtered;
-
-  if (debugMonitoring) {
-    static unsigned long lastDebugTime = 0;
-    if (millis() - lastDebugTime >= 1000 && millis() < 10000) {
-      Serial.print("[BATTERY DEBUG] Raw ADC: ");
-      Serial.print(adc_raw);
-      Serial.print(", Raw Voltage: ");
-      Serial.print(raw_voltage, 3);
-      Serial.print("V, Filtered: ");
-      Serial.print(battery_voltage, 3);
-      Serial.println("V");
-      lastDebugTime = millis();
-    }
-  }
 }
 
 void updateBatteryMonitoring() {
@@ -81,39 +67,23 @@ void updateBatteryMonitoring() {
   if (initStartTime == 0) initStartTime = millis();
 
   if (battery_voltage < 3.0f || (millis() - initStartTime) < 2000) {
-    ledSet(webSocketConnected);  // link LED works on USB power too (no battery)
+    // USB power / early boot: link LED only ('debug led' cycle owns the LED instead)
+    if (!debugLedMonitoring) ledSet(webSocketConnected);
     return;
   }
 
   static int lowVoltageCount = 0;
 
-  if (debugMonitoring) {
-    static unsigned long lastDebugTime = 0;
-    if (millis() - lastDebugTime >= 2000 && millis() < 30000) {
-      Serial.print("[LED DEBUG] ESP-NOW Connected: ");
-      Serial.print(espnow_connected ? "YES" : "NO");
-      Serial.print(", Battery State: ");
-      Serial.print(batteryState == BATTERY_NORMAL ? "NORMAL" : "LOW");
-      Serial.print(", LED should be: ");
-      if (batteryState == BATTERY_LOW_CONFIRMED) {
-        Serial.println("BLINKING");
-      } else if (espnow_connected) {
-        Serial.println("ON (connected)");
-      } else {
-        Serial.println("OFF (disconnected)");
-      }
-      lastDebugTime = millis();
-    }
-  }
-
   switch (batteryState) {
     case BATTERY_NORMAL:
       if (g_pin_LED >= 0) pinMode(g_pin_LED, OUTPUT);
 
-      if (espnow_connected || webSocketConnected) {
-        ledSet(true);
-      } else {
-        ledSet(false);
+      if (!debugLedMonitoring) {
+        if (espnow_connected || webSocketConnected) {
+          ledSet(true);
+        } else {
+          ledSet(false);
+        }
       }
 
       if (battery_voltage <= LOW_VOLTAGE_THRESHOLD) {
