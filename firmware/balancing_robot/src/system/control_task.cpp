@@ -22,10 +22,10 @@ void controlLoopTask(void *pvParameters) {
       dt = (loopStart - lastLoopTime) / 1000.0;
       lastLoopTime = loopStart;
 
-      // Fast ESP-NOW path (1kHz) for joystick input
-      #if ENABLE_ESPNOW
-      updateESPNOWDataOnly();
-      #endif
+      // Fast ESP-NOW path (1kHz) for joystick input — skipped in WebSocket mode
+      if (commsUseEspNow()) {
+        updateESPNOWDataOnly();
+      }
 
       // Barometer disabled - no updateBarometer() call
 

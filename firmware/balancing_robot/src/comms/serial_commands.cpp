@@ -9,6 +9,7 @@
 #include "../config/pins_live.h"  // pins show / pin set / pins save|reset (NVS)
 #include "../system/imu.h"  // mpu live-driver pointer ('debug imu') + printImuStatus()
 #include "wifi_creds.h"  // wifi show / wifi set / wifi save|reset (NVS, passwords masked)
+#include "comms_mode.h"  // comms show / set / save|reset (NVS link selection)
 
 // Definitions live here (were in balancing_robot.ino); externs in serial_commands.h
 float accel_z_world_mps2 = 0.0f;
@@ -86,9 +87,13 @@ void printWelcomeBanner() {
   Serial.println("\nOther Commands:");
   Serial.println("  load           - Print current PID values");
   Serial.println("  pins show      - List board pins (live values + NVS/defaults source)");
-  Serial.println("  pin set <N> <gpio> - Stage a pin (ENA IN1 IN2 ENB IN3 IN4 SDA SCL BAT LED SCK MOSI MISO CS; -1 = unused for SPI/BAT/LED)");
-  Serial.println("  pins save      - Persist staged pins to NVS (reboot to apply)");
+  Serial.println("  pin set <N> <gpio> - Set a pin, auto-saved (ENA IN1 IN2 ENB IN3 IN4 SDA SCL BAT LED SCK MOSI MISO CS; -1 = unused for SPI/BAT/LED)");
+  Serial.println("  pins save      - Re-persist pins to NVS (rarely needed, pin set auto-saves)");
   Serial.println("  pins reset     - Clear pin overrides, restore board defaults (reboot to apply)");
+  Serial.println("  comms show     - Show link selection (ws/espnow, peer MAC, sta/ap)");
+  Serial.println("  comms set <mode|mac|wifimode> <value> - Stage link selection");
+  Serial.println("  comms save     - Persist link selection to NVS (reboot to apply)");
+  Serial.println("  comms reset    - Clear link overrides back to defaults");
   Serial.println("  reset_pid      - Reset PID to defaults");
   Serial.println("  reset_calibration - Reset calibration to defaults");
   Serial.println("  battery_reset/bat_reset - Reset low voltage warning");
@@ -355,6 +360,38 @@ void handleSerialCommand() {
     else if (command == "pins reset") {
       resetPinsToDefaults();
       Serial.println("[PINS] overrides cleared, defaults restored - reboot to apply");
+    }
+    else if (command == "comms show") {
+      printCommsToSerial();
+    }
+    else if (command == "comms save") {
+      saveCommsToNVS();
+      Serial.println("[COMMS] saved to NVS - reboot to apply");
+    }
+    else if (command == "comms reset") {
+      resetCommsToDefaults();
+      Serial.println("[COMMS] overrides cleared, defaults restored - reboot to apply");
+    }
+    else if (command.startsWith("comms set ")) {
+      // Staged in RAM only; 'comms save' persists, reboot applies.
+      String args = command.substring(10);
+      args.trim();
+      int sp = args.indexOf(' ');
+      if (sp <= 0) {
+        Serial.println("[COMMS] usage: comms set <mode|mac|wifimode> <value>");
+      } else {
+        String kname = args.substring(0, sp);
+        kname.toLowerCase();
+        String cval = args.substring(sp + 1);
+        cval.trim();
+        String cerr;
+        if (setStagedComms(kname, cval, cerr)) {
+          Serial.printf("[COMMS] %s staged (unsaved - 'comms save' + reboot)\n", kname.c_str());
+        } else {
+          Serial.print("[COMMS] rejected: ");
+          Serial.println(cerr);
+        }
+      }
     }
     else if (command.startsWith("pin set ") || command.startsWith("pins set ")) {
       // Auto-saved to NVS; reboot applies.

@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "../config/settings.h"
 #include "imu.h"  // mpu, mpuInitialized
+#include "../comms/comms_mode.h"  // commsUseEspNow() runtime link switch
 #include "../control/motor_control.h"       // stopMotors, applyVehicleInputLimits, updateVehicleMotorControl
 #include "../control/pid_controller.h"      // updateDualPID, applyBraking
 #if ENABLE_CASCADE_PID

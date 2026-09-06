@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "esp_now_handler.h"
+#include "comms_mode.h"  // g_peer_mac runtime controller MAC
 
 static portMUX_TYPE espnow_mux = portMUX_INITIALIZER_UNLOCKED;
 static volatile RC_Data espnow_data;
@@ -62,7 +63,7 @@ void initESPNOW() {
   Serial.printf("[INFO] Flight Controller MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
                 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   Serial.printf("[INFO] Listening for controller with MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
-                CONTROLLER_MAC_0, CONTROLLER_MAC_1, CONTROLLER_MAC_2, CONTROLLER_MAC_3, CONTROLLER_MAC_4, CONTROLLER_MAC_5);
+                g_peer_mac[0], g_peer_mac[1], g_peer_mac[2], g_peer_mac[3], g_peer_mac[4], g_peer_mac[5]);
 
   Serial.println("[INFO] Will auto-announce to controller every 2 seconds until connection...");
 
@@ -81,7 +82,8 @@ void sendDiscoveryPacket() {
   // Create controller peer if not already added
   static bool controller_peer_added = false;
   if (!controller_peer_added) {
-    uint8_t controller_mac[6] = {CONTROLLER_MAC_0, CONTROLLER_MAC_1, CONTROLLER_MAC_2, CONTROLLER_MAC_3, CONTROLLER_MAC_4, CONTROLLER_MAC_5};
+    uint8_t controller_mac[6];
+    memcpy(controller_mac, g_peer_mac, 6);
 
     esp_now_peer_info_t peer_info = {};
     memcpy(peer_info.peer_addr, controller_mac, 6);
@@ -94,7 +96,8 @@ void sendDiscoveryPacket() {
   }
 
   // Send a dummy feedback packet (4 bytes) to announce ourselves
-  uint8_t controller_mac[6] = {CONTROLLER_MAC_0, CONTROLLER_MAC_1, CONTROLLER_MAC_2, CONTROLLER_MAC_3, CONTROLLER_MAC_4, CONTROLLER_MAC_5};
+  uint8_t controller_mac[6];
+  memcpy(controller_mac, g_peer_mac, 6);
   uint8_t dummy_feedback[4] = {0xFF, 0xFF, 0x00, 0x00};  // Indicate discovery packet
   esp_now_send(controller_mac, dummy_feedback, sizeof(dummy_feedback));
 }

@@ -53,6 +53,7 @@
 #include "src/system/control_task.h"
 
 // Comms
+#include "src/comms/comms_mode.h"
 #include "src/comms/serial_commands.h"
 #include "src/comms/wifi_ota.h"
 #include "src/comms/websocket_handler.h"
@@ -76,10 +77,14 @@ void setup() {
 
   loadPinsFromNVS();  // must precede any peripheral init
   loadWifiFromNVS();  // must precede initWiFi()
+  loadCommsFromNVS();  // must precede initWiFi()/initESPNOW()
+  useAPMode = g_comms_ap;  // NVS wifimode selects STA join vs AP hotspot
   Serial.printf("[PINS] %s (board profile %d)\n",
                 pinsHaveNvsOverrides() ? "NVS overrides" : "defaults",
                 ACTIVE_BOARD);
   Serial.printf("[WIFI] creds: %s\n", wifiHasNvsOverrides() ? "NVS overrides" : "defaults");
+  Serial.printf("[COMMS] link: %s (%s)\n", g_comms_espnow ? "espnow" : "ws",
+                commsHasNvsOverrides() ? "NVS overrides" : "defaults");
 
   ledBootTest();
   initVehicleMotors();  // full PWM init (LEDC attach) — safe here, pins already LOW
@@ -90,9 +95,9 @@ void setup() {
   loadCalibrationBias();
   loadPIDFromPreferences();
 
-  #if !ENABLE_ESPNOW
-  initWiFi();
-  #endif
+  if (!commsUseEspNow()) {
+    initWiFi();
+  }
 
   // Filter inits lazily on Core 0 once sensors warm up — not here.
   dataLock = xSemaphoreCreateMutex();
@@ -106,15 +111,17 @@ void setup() {
     0
   );
 
-  #if ENABLE_WEBSOCKET_CONTROL
-  initWebSocket();
-  #endif
+#if ENABLE_WEBSOCKET_CONTROL
+  if (!commsUseEspNow()) {
+    initWebSocket();
+  }
+#endif
 
-  #if ENABLE_ESPNOW
-  initESPNOW();
-  #else
-  Serial.println("[ESPNOW] off");
-  #endif
+  if (commsUseEspNow()) {
+    initESPNOW();
+  } else {
+    Serial.println("[ESPNOW] off");
+  }
 
   Serial.println("[READY] type help");
 }
@@ -123,24 +130,26 @@ void loop() {
   // Core 1: non-critical tasks. Time-critical control runs on Core 0.
   printTelemetryStatus();
 
-  #if !ENABLE_ESPNOW
-  ArduinoOTA.handle();
-  handleWiFiConnection();
-  #endif
+  if (!commsUseEspNow()) {
+    ArduinoOTA.handle();
+    handleWiFiConnection();
+  }
 
-  #if ENABLE_WEBSOCKET_CONTROL
-  handleWebSocketLoop();
-  #endif
+#if ENABLE_WEBSOCKET_CONTROL
+  if (!commsUseEspNow()) {
+    handleWebSocketLoop();
+  }
+#endif
 
-  #if ENABLE_SERIAL_COMMANDS_AND_STATUS
+#if ENABLE_SERIAL_COMMANDS_AND_STATUS
   handleSerialCommand();
-  #endif
+#endif
 
   updateMotorTest();
 
-  #if ENABLE_ESPNOW
-  updateESPNOWService();
-  #endif
+  if (commsUseEspNow()) {
+    updateESPNOWService();
+  }
 
   if (calibrationState != CALIB_IDLE) {
     updateCalibration();
