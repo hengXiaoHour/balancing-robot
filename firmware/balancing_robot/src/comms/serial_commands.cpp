@@ -27,7 +27,6 @@ void printWelcomeBanner() {
   Serial.println("  arm            - Enable motors");
   Serial.println("  disarm         - Disable motors");
   Serial.println("  reboot         - Disarm motors and restart ESP32 (also: restart)");
-  Serial.println("  t <value>      - Set throttle (0-100%)");
   Serial.println("\nSpeed Setpoint Control (Cascaded):");
   Serial.println("  sp <val>       - Set forward/backward speed (-2 to +2 m/s)");
   Serial.println("  sr <val>       - Set left/right speed (-2 to +2 m/s)");
@@ -97,6 +96,7 @@ void printWelcomeBanner() {
   Serial.println("  test_motor     - Wheel test: LEFT fwd/rev then RIGHT fwd/rev, 60%, 2s each");
   Serial.println("  status         - Toggle sensor monitoring");
   Serial.println("  debug          - Toggle debug information");
+  Serial.println("  debug nvs      - Dump raw NVS namespaces (pins/wifi/calib keys)");
   Serial.println("  ws_debug       - Toggle WebSocket message log (default OFF)");
   Serial.println("\nWiFi & OTA Commands:");
   Serial.println("  wifi/wifi_status - Show WiFi status (passwords masked)");
@@ -112,6 +112,54 @@ void printWelcomeBanner() {
 }
 
 // ===== Handle Serial Commands =====
+// Raw NVS dump: shows exactly what survives reboot per namespace, so a
+// stale override (forgotten pin/wifi/calib value) is visible instead of
+// silently changing behavior. Passwords are never printed.
+static void printNvsDebugToSerial() {
+  Serial.println("--- nvs (raw) ---");
+  {
+    Preferences p;
+    bool ok = p.begin("board_pins", true);
+    Serial.printf("board_pins : %s\n", ok ? "present" : "absent (defaults)");
+    if (ok) {
+      const char* keys[] = {"ENA","IN1","IN2","ENB","IN3","IN4","SDA","SCL",
+                            "BAT","LED","SCK","MOSI","MISO","CS"};
+      for (unsigned i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
+        if (p.isKey(keys[i])) Serial.printf("  %s = %d\n", keys[i], p.getInt(keys[i]));
+        else Serial.printf("  %s = <unset>\n", keys[i]);
+      }
+      p.end();
+    }
+  }
+  {
+    Preferences p;
+    bool ok = p.begin("wifi_cfg", true);
+    Serial.printf("wifi_cfg   : %s\n", ok ? "present" : "absent (defaults)");
+    if (ok) {
+      Serial.printf("  ssid = %s\n", p.isKey("ssid") ? p.getString("ssid").c_str() : "<unset>");
+      Serial.printf("  pass = %s\n", p.isKey("pass") ? "********" : "<unset>");
+      Serial.printf("  ap_ssid = %s\n", p.isKey("ap_ssid") ? p.getString("ap_ssid").c_str() : "<unset>");
+      Serial.printf("  ap_pass = %s\n", p.isKey("ap_pass") ? "********" : "<unset>");
+      p.end();
+    }
+  }
+  {
+    Preferences p;
+    bool ok = p.begin("mpu6050", true);
+    Serial.printf("mpu6050    : %s\n", ok ? "present" : "absent (defaults)");
+    if (ok) {
+      const char* keys[] = {"trim_pitch","trim_roll","gyroBiasX","gyroBiasY","gyroBiasZ",
+                            "axBias","axScale","ayBias","ayScale","azBias","azScale",
+                            "baroScale","altAzBias"};
+      for (unsigned i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
+        if (p.isKey(keys[i])) Serial.printf("  %s = %.4f\n", keys[i], p.getFloat(keys[i]));
+        else Serial.printf("  %s = <unset>\n", keys[i]);
+      }
+      p.end();
+    }
+  }
+}
+
 void handleSerialCommand() {
   if (Serial.available() > 0) {
     String raw = Serial.readStringUntil('\n');
@@ -183,11 +231,6 @@ void handleSerialCommand() {
       Serial.flush();
       delay(200);
       ESP.restart();
-    }
-    else if (command.startsWith("t ")) {
-      float value = command.substring(2).toFloat();
-      throttle = constrain(value, 0, 100);
-      Serial.print("\n[THROTTLE] Set to: "); Serial.print((int)throttle); Serial.println("%");
     }
     else if (command.startsWith("trim_pitch ")) {
       float value = command.substring(11).toFloat();
@@ -303,7 +346,7 @@ void handleSerialCommand() {
       Serial.println("[PINS] overrides cleared, defaults restored - reboot to apply");
     }
     else if (command.startsWith("pin set ") || command.startsWith("pins set ")) {
-      // Staged in RAM only; 'pins save' persists, reboot applies.
+      // Auto-saved to NVS; reboot applies.
       String args = command.startsWith("pin set ")
           ? command.substring(8) : command.substring(9);
       args.trim();
@@ -315,13 +358,17 @@ void handleSerialCommand() {
         int gpio = args.substring(sp + 1).toInt();
         String perr;
         if (setStagedPin(pname, gpio, perr)) {
-          Serial.printf("[PINS] %s staged to GPIO %d (unsaved - 'pins save' + reboot)\n",
+          savePinsToNVS();
+          Serial.printf("[PINS] %s set to GPIO %d (saved - reboot to apply)\n",
                         pname.c_str(), gpio);
         } else {
           Serial.print("[PINS] rejected: ");
           Serial.println(perr);
         }
       }
+    }
+    else if (command == "debug nvs") {
+      printNvsDebugToSerial();
     }
     else if (handlePIDCommand(command)) {
       // PID-tuning sub-commands (see serial_pid_commands.cpp)
