@@ -45,6 +45,7 @@
 // System
 #include "src/system/prefs.h"
 #include "src/config/pins_live.h"
+#include "src/comms/wifi_creds.h"
 #include "src/system/battery.h"
 #include "src/system/led.h"
 #include "src/system/imu.h"
@@ -64,9 +65,11 @@ void setup() {
   Serial.println("[BOOT] balancing robot");
 
   loadPinsFromNVS();  // must precede any peripheral init
+  loadWifiFromNVS();  // must precede initWiFi()
   Serial.printf("[PINS] %s (board profile %d)\n",
                 pinsHaveNvsOverrides() ? "NVS overrides" : "defaults",
                 ACTIVE_BOARD);
+  Serial.printf("[WIFI] creds: %s\n", wifiHasNvsOverrides() ? "NVS overrides" : "defaults");
 
   ledBootTest();
   initVehicleMotors();

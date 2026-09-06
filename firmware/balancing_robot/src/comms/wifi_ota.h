@@ -3,7 +3,7 @@
 
 #include <WiFi.h>
 #include <ArduinoOTA.h>
-#include "../config/settings.h"  // WIFI_SSID / WIFI_PASSWORD / AP_SSID / AP_PASSWORD (sole config)
+#include "../config/settings.h"  // WIFI_*/AP_* defaults (live values in wifi_creds.h, NVS overrides)
 
 // Fallbacks only if settings.h is ever bypassed — normal builds take values from settings.h.
 #ifndef WIFI_SSID

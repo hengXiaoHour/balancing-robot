@@ -7,6 +7,7 @@
 #include "websocket_handler.h"  // printStateJsonSerial() — shared state JSON for WebUI
 #include "../system/led.h"  // ledBootTest(), ledSet(), ledSetRGB()
 #include "../config/pins_live.h"  // pins show / pin set / pins save|reset (NVS)
+#include "wifi_creds.h"  // wifi show / wifi set / wifi save|reset (NVS, passwords masked)
 
 // Definitions live here (were in balancing_robot.ino); externs in serial_commands.h
 float accel_z_world_mps2 = 0.0f;
@@ -95,7 +96,11 @@ void printWelcomeBanner() {
   Serial.println("  debug          - Toggle debug information");
   Serial.println("  ws_debug       - Toggle WebSocket message log (default OFF)");
   Serial.println("\nWiFi & OTA Commands:");
-  Serial.println("  wifi/wifi_status - Show WiFi status");
+  Serial.println("  wifi/wifi_status - Show WiFi status (passwords masked)");
+  Serial.println("  wifi show      - Show WiFi config + NVS/defaults source");
+  Serial.println("  wifi set <ssid|pass|ap_ssid|ap_pass> <value> - Stage credential (case-sensitive)");
+  Serial.println("  wifi save      - Persist WiFi config to NVS (reboot to apply)");
+  Serial.println("  wifi reset     - Clear WiFi overrides back to settings.h defaults");
   Serial.println("  wifi_sta/sta   - Switch to STA mode (connect to WiFi)");
   Serial.println("  wifi_ap/ap     - Switch to AP mode (create WiFi hotspot)");
   Serial.println("  (OTA ready: Arduino IDE > Tools > Port > Network Ports)");
@@ -106,7 +111,9 @@ void printWelcomeBanner() {
 // ===== Handle Serial Commands =====
 void handleSerialCommand() {
   if (Serial.available() > 0) {
-    String command = Serial.readStringUntil('\n');
+    String raw = Serial.readStringUntil('\n');
+    raw.trim();
+    String command = raw;  // lowercased dispatch copy; raw keeps case for wifi creds
     command.trim();
     command.toLowerCase();
 
@@ -315,6 +322,38 @@ void handleSerialCommand() {
     // WiFi & OTA Commands
     else if (command == "wifi_status" || command == "wifi") {
       printWiFiStatus();
+    }
+    else if (command == "wifi show") {
+      printWifiConfigMasked();
+    }
+    else if (command == "wifi save") {
+      saveWifiToNVS();
+      Serial.println("[WIFI] saved to NVS - reboot to apply");
+    }
+    else if (command == "wifi reset") {
+      resetWifiToDefaults();
+      Serial.println("[WIFI] overrides cleared, settings.h defaults restored - reboot to apply");
+    }
+    else if (command.startsWith("wifi set ")) {
+      // Value parsed from raw to preserve case (SSID/passwords are case-sensitive).
+      String args = raw.substring(9);
+      args.trim();
+      int sp = args.indexOf(' ');
+      if (sp <= 0) {
+        Serial.println("[WIFI] usage: wifi set <ssid|pass|ap_ssid|ap_pass> <value>");
+      } else {
+        String fname = args.substring(0, sp);
+        fname.toLowerCase();
+        String fvalue = args.substring(sp + 1);
+        fvalue.trim();
+        String werr;
+        if (setStagedWifi(fname, fvalue, werr)) {
+          Serial.printf("[WIFI] %s staged (unsaved - 'wifi save' + reboot)\n", fname.c_str());
+        } else {
+          Serial.print("[WIFI] rejected: ");
+          Serial.println(werr);
+        }
+      }
     }
     else if (command == "wifi_ap" || command == "ap") {
       Serial.println("[WiFi] Switching to AP mode...");

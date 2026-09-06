@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "wifi_ota.h"
+#include "wifi_creds.h"  // g_wifi_ssid/pass, g_ap_ssid/pass (NVS overrides)
 #include "../control/motor_control.h"  // stopMotors()
 
 // WiFi mode
@@ -12,17 +13,17 @@ void initWiFi() {
   if (useAPMode) {
     // AP Mode
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(AP_SSID, AP_PASSWORD);
+    WiFi.softAP(g_ap_ssid.c_str(), g_ap_pass.c_str());
     Serial.print("[WIFI] AP ");
-    Serial.print(AP_SSID);
+    Serial.print(g_ap_ssid);
     Serial.print(" at ");
     Serial.println(WiFi.softAPIP());
   } else {
     // STA Mode (default)
     WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    WiFi.begin(g_wifi_ssid.c_str(), g_wifi_pass.c_str());
     Serial.print("[WIFI] connecting to ");
-    Serial.print(WIFI_SSID);
+    Serial.print(g_wifi_ssid);
     Serial.println("...");
     wifiLastConnectionAttempt = millis();
   }
@@ -101,13 +102,13 @@ void printWiFiStatus() {
 
   if (useAPMode) {
     Serial.println("Mode: AP (Access Point)");
-    Serial.print("SSID: "); Serial.println(AP_SSID);
+    Serial.print("SSID: "); Serial.println(g_ap_ssid);
     Serial.print("IP: "); Serial.println(WiFi.softAPIP());
     Serial.print("Clients: "); Serial.println(WiFi.softAPgetStationNum());
-    Serial.print("OTA Password: "); Serial.println(AP_PASSWORD);
+    Serial.print("Password: "); Serial.println(g_ap_pass.length() ? "********" : "<open>");
   } else {
     Serial.println("Mode: STA (Station)");
-    Serial.print("SSID: "); Serial.println(WIFI_SSID);
+    Serial.print("SSID: "); Serial.println(g_wifi_ssid);
     if (WiFi.status() == WL_CONNECTED) {
       Serial.println("Status: CONNECTED");
       Serial.print("IP: "); Serial.println(WiFi.localIP());
@@ -116,7 +117,7 @@ void printWiFiStatus() {
       Serial.println("Status: DISCONNECTED");
       Serial.print("Attempting to reconnect...");
     }
-    Serial.print("OTA Password: "); Serial.println(WIFI_PASSWORD);
+    Serial.print("Password: "); Serial.println(g_wifi_pass.length() ? "********" : "<open>");
   }
 
   Serial.println("OTA: Ready for updates");
