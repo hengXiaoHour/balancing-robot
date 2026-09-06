@@ -98,7 +98,7 @@ void printWelcomeBanner() {
   Serial.println("  debug imu      - Toggle raw accel/gyro stream");
   Serial.println("  debug led      - Toggle RGB cycle (link LED resumes after)");
   Serial.println("  debug nvs      - Dump raw NVS namespaces (pins/wifi/calib keys)");
-  Serial.println("  ws_debug       - Toggle WebSocket message log (default OFF)");
+  Serial.println("  debug ws       - Toggle WebSocket message log (default OFF)");
   Serial.println("\nWiFi & OTA Commands:");
   Serial.println("  wifi/wifi_status - Show WiFi status (passwords masked)");
   Serial.println("  wifi show      - Show WiFi config + NVS/defaults source");
@@ -309,12 +309,12 @@ void handleSerialCommand() {
       }
     }
     else if (command == "debug") {
-      Serial.println("\n[DEBUG] usage: debug motor | debug imu | debug led | debug nvs");
+      Serial.println("\n[DEBUG] usage: debug motor | debug imu | debug led | debug ws | debug nvs");
     }
-    else if (command == "ws_debug") {
+    else if (command == "debug ws") {
       wsDebugMonitoring = !wsDebugMonitoring;  // Toggle WebSocket message log
       if (wsDebugMonitoring) {
-        Serial.println("\n[WS] Message log ENABLED - Type 'ws_debug' again to disable");
+        Serial.println("\n[WS] Message log ENABLED - Type 'debug ws' again to disable");
       } else {
         Serial.println("\n[WS] Message log DISABLED\n");
       }

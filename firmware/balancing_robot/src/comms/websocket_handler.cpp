@@ -11,7 +11,7 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 // WebSocket connection flag
 bool webSocketConnected = false;
 
-// WS message log flag (serial `ws_debug` toggles; default OFF — stick streams would flood serial)
+// WS message log flag (serial `debug ws` toggles; default OFF — stick streams would flood serial)
 bool wsDebugMonitoring = false;
 
 // ===== Telemetry rate limiting (local to this TU) =====
