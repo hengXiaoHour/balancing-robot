@@ -59,6 +59,16 @@
 #include "src/comms/esp_now_handler.h"
 
 void setup() {
+  // Drive motor pins LOW before anything else so the L298N inputs never
+  // float during boot delays. GPIO-only: ledcAttach() this early hangs
+  // the C3, so full PWM init still happens in initVehicleMotors() below.
+  {
+    const int mp[] = {g_pin_ENA, g_pin_IN1, g_pin_IN2, g_pin_ENB, g_pin_IN3, g_pin_IN4};
+    for (unsigned i = 0; i < sizeof(mp) / sizeof(mp[0]); i++) {
+      pinMode(mp[i], OUTPUT);
+      digitalWrite(mp[i], LOW);
+    }
+  }
   Serial.begin(115200);
   delay(1000);
 
@@ -72,7 +82,7 @@ void setup() {
   Serial.printf("[WIFI] creds: %s\n", wifiHasNvsOverrides() ? "NVS overrides" : "defaults");
 
   ledBootTest();
-  initVehicleMotors();
+  initVehicleMotors();  // full PWM init (LEDC attach) — safe here, pins already LOW
 
   analogReadResolution(12);
   initIMU();
