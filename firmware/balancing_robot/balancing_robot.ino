@@ -152,5 +152,14 @@ void loop() {
 
   pollMpuRetry();
 
+  // Battery + link-LED monitor (10 Hz): drives the status LED from
+  // ESP-NOW / WebSocket link state, blinks on confirmed low battery.
+  static unsigned long lastBatteryPoll = 0;
+  if (millis() - lastBatteryPoll >= 100) {
+    lastBatteryPoll = millis();
+    updateBatteryVoltage();
+    updateBatteryMonitoring();
+  }
+
   delay(1);
 }
