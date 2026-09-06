@@ -44,9 +44,16 @@ void initIMU() {
   Wire.begin(g_pin_SDA, g_pin_SCL);  // SDA, SCL from config
   Wire.setClock(I2C_SPEED);      // I2C speed from config
 
-  // Initialize IMU
+  // Initialize IMU (up to 3 probe rounds: sensor rails/I2C can be slow
+  // right after power-up or flaky on loose wiring)
   delay(100);
-  mpu = probeImu();
+  for (int attempt = 1; attempt <= 3 && !mpu; attempt++) {
+    mpu = probeImu();
+    if (!mpu && attempt < 3) {
+      Serial.printf("[IMU] probe attempt %d/3: no answer, retrying...\n", attempt);
+      delay(250);
+    }
+  }
   if (!mpu) {
     Serial.println("[ERROR] No IMU found! Robot cannot be armed until sensor is properly connected and initialized.");
 #if ACTIVE_IMU == IMU_SENSOR_AUTO
