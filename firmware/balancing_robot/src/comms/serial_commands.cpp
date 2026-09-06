@@ -90,6 +90,7 @@ void printWelcomeBanner() {
   Serial.println("  pin set <N> <gpio> - Set a pin, auto-saved (ENA IN1 IN2 ENB IN3 IN4 SDA SCL BAT LED SCK MOSI MISO CS; -1 = unused for SPI/BAT/LED)");
   Serial.println("  pins save      - Re-persist pins to NVS (rarely needed, pin set auto-saves)");
   Serial.println("  pins reset     - Clear pin overrides, restore board defaults (reboot to apply)");
+  Serial.println("  setup          - Bring-up wizard: pins->IMU->motor->LED->link->WiFi->cal (Enter skips)");
   Serial.println("  comms show     - Show link selection (ws/espnow, peer MAC, sta/ap)");
   Serial.println("  comms set <mode|mac|wifimode> <value> - Stage link selection");
   Serial.println("  comms save     - Persist link selection to NVS (reboot to apply)");
@@ -166,6 +167,293 @@ static void printNvsDebugToSerial() {
   }
 }
 
+// ===== Interactive 'setup' wizard (see handleSerialCommand routing) =====
+// Step-by-step bring-up: pins -> IMU check -> motor check -> LED check ->
+// link selection -> WiFi creds -> calibration. Empty line (Enter) keeps the
+// current value or skips the step; 'quit' aborts (staging already saved stays).
+enum SetupStep : uint8_t {
+  ST_PINS, ST_IMU_ASK, ST_MOTOR_ASK, ST_MOTOR_WAIT, ST_MOTOR_OK,
+  ST_LED_ASK, ST_COMMS_LINK, ST_COMMS_MAC, ST_COMMS_WIFI,
+  ST_WIFI_SSID, ST_WIFI_PASS, ST_CAL_GYRO, ST_CAL_ACCEL, ST_CAL_RUN, ST_DONE
+};
+static bool setupActive = false;
+static SetupStep setupStep = ST_PINS;
+static uint8_t setupPinIdx = 0;
+static String setupTmp = "";
+static bool setupCalGyroDone = false;
+static CalibrationState setupLastCalib = CALIB_IDLE;
+
+struct SetupPin { const char* name; int* slot; };
+static SetupPin setupPins[] = {
+  {"ENA", &g_pin_ENA}, {"IN1", &g_pin_IN1}, {"IN2", &g_pin_IN2},
+  {"ENB", &g_pin_ENB}, {"IN3", &g_pin_IN3}, {"IN4", &g_pin_IN4},
+  {"SDA", &g_pin_SDA}, {"SCL", &g_pin_SCL},
+  {"BAT", &g_pin_BAT}, {"LED", &g_pin_LED},
+  {"SCK", &g_pin_SPI_SCK}, {"MOSI", &g_pin_SPI_MOSI},
+  {"MISO", &g_pin_SPI_MISO}, {"CS", &g_pin_SPI_CS},
+};
+static const uint8_t SETUP_PIN_COUNT = sizeof(setupPins) / sizeof(setupPins[0]);
+
+static void setupAskPin() {
+  Serial.printf("[SETUP] pin %s [%d] (-1 = unused for SPI/BAT/LED, Enter keeps): ",
+                setupPins[setupPinIdx].name, *setupPins[setupPinIdx].slot);
+}
+
+static const char* setupCalibPose(CalibrationState s) {
+  switch (s) {
+    case CALIB_GYRO: return "hold STILL";
+    case CALIB_ACCEL_STEP1: return "pose 1/6 LEVEL still";
+    case CALIB_ACCEL_STEP2: return "pose 2/6 nose DOWN +90deg";
+    case CALIB_ACCEL_STEP3: return "pose 3/6 nose UP -90deg";
+    case CALIB_ACCEL_STEP4: return "pose 4/6 tilt RIGHT +90deg";
+    case CALIB_ACCEL_STEP5: return "pose 5/6 tilt LEFT -90deg";
+    case CALIB_ACCEL_STEP6: return "pose 6/6 UPSIDE DOWN";
+    default: return "";
+  }
+}
+
+static void setupAbort() {
+  debugImuMonitoring = false;
+  debugLedMonitoring = false;
+  if (testMotorActive) toggleMotorTest();
+  setupActive = false;
+  Serial.println("[SETUP] aborted (already-saved values stay)");
+}
+
+static void setupFinish() {
+  debugImuMonitoring = false;
+  debugLedMonitoring = false;
+  setupActive = false;
+}
+
+static void setupWizardHandle(const String& command, const String& raw) {
+  if (command == "quit" || command == "exit") { setupAbort(); return; }
+
+  switch (setupStep) {
+    case ST_PINS: {
+      if (command.length() > 0) {
+        String perr;
+        if (!setStagedPin(String(setupPins[setupPinIdx].name), command.toInt(), perr)) {
+          Serial.print("[SETUP] rejected: ");
+          Serial.println(perr);
+          setupAskPin();
+          return;
+        }
+      }
+      setupPinIdx++;
+      if (setupPinIdx >= SETUP_PIN_COUNT) {
+        savePinsToNVS();
+        Serial.println("[SETUP] pins saved. Checking IMU - raw stream on, wiggle the board.");
+        Serial.println("[SETUP] numbers move with motion? (Enter continues)");
+        debugImuMonitoring = true;
+        setupStep = ST_IMU_ASK;
+      } else {
+        setupAskPin();
+      }
+      return;
+    }
+    case ST_IMU_ASK:
+      debugImuMonitoring = false;
+      Serial.println("[SETUP] 100% wheel test? Prop the robot UP, wheels free. (yes / Enter skips)");
+      setupStep = ST_MOTOR_ASK;
+      return;
+    case ST_MOTOR_ASK:
+      if (command == "yes" || command == "y") {
+        if (motorsArmed) {
+          Serial.println("[SETUP] armed - 'disarm' first, then re-run 'setup'. Aborting.");
+          setupAbort();
+          return;
+        }
+        Serial.println("[SETUP] spinning LEFT fwd/rev then RIGHT fwd/rev at 100%. Enter to check.");
+        toggleMotorTest();
+        setupStep = ST_MOTOR_WAIT;
+      } else {
+        Serial.println("[SETUP] motor skipped. Cycling LED now - watch it. (Enter stops + continues)");
+        debugLedMonitoring = true;
+        setupStep = ST_LED_ASK;
+      }
+      return;
+    case ST_MOTOR_WAIT:
+      if (testMotorActive) {
+        Serial.println("[SETUP] still spinning... Enter to check.");
+      } else {
+        Serial.println("[SETUP] test done. Both wheels spun both ways? (Enter continues)");
+        setupStep = ST_MOTOR_OK;
+      }
+      return;
+    case ST_MOTOR_OK:
+      Serial.println("[SETUP] cycling LED now - watch it. (Enter stops + continues)");
+      debugLedMonitoring = true;
+      setupStep = ST_LED_ASK;
+      return;
+    case ST_LED_ASK:
+      debugLedMonitoring = false;
+      Serial.println("[SETUP] link? (ws = WebUI, espnow = controller. Enter keeps current)");
+      setupStep = ST_COMMS_LINK;
+      return;
+    case ST_COMMS_LINK: {
+      String v = command;
+      if (v.length() == 0) {
+        Serial.printf("[SETUP] keeping %s. WiFi mode? (sta / ap. Enter keeps %s)\n",
+                      g_comms_espnow ? "espnow" : "ws", g_comms_ap ? "ap" : "sta");
+        setupStep = ST_COMMS_WIFI;
+        return;
+      }
+      String cerr;
+      if (!setStagedComms("mode", v, cerr)) {
+        Serial.print("[SETUP] rejected: ");
+        Serial.println(cerr);
+        Serial.println("[SETUP] link? (ws / espnow. Enter keeps current)");
+        return;
+      }
+      saveCommsToNVS();
+      if (g_comms_espnow) {
+        char mac[18];
+        snprintf(mac, 18, "%02X:%02X:%02X:%02X:%02X:%02X",
+                 g_peer_mac[0], g_peer_mac[1], g_peer_mac[2],
+                 g_peer_mac[3], g_peer_mac[4], g_peer_mac[5]);
+        Serial.printf("[SETUP] controller MAC? [%s] (Enter keeps): ", mac);
+        setupStep = ST_COMMS_MAC;
+      } else {
+        Serial.printf("[SETUP] WiFi mode? (sta / ap. Enter keeps %s)\n", g_comms_ap ? "ap" : "sta");
+        setupStep = ST_COMMS_WIFI;
+      }
+      return;
+    }
+    case ST_COMMS_MAC: {
+      if (command.length() > 0) {
+        String cerr;
+        if (!setStagedComms("mac", command, cerr)) {
+          Serial.print("[SETUP] rejected: ");
+          Serial.println(cerr);
+          Serial.println("[SETUP] controller MAC? (AA:BB:CC:DD:EE:FF, Enter keeps)");
+          return;
+        }
+        saveCommsToNVS();
+      }
+      Serial.println("[SETUP] link saved. Gyro cal? Needs a STILL robot. (yes / Enter skips)");
+      setupStep = ST_CAL_GYRO;
+      return;
+    }
+    case ST_COMMS_WIFI: {
+      if (command.length() > 0) {
+        String cerr;
+        if (!setStagedComms("wifimode", command, cerr)) {
+          Serial.print("[SETUP] rejected: ");
+          Serial.println(cerr);
+          Serial.println("[SETUP] WiFi mode? (sta / ap. Enter keeps)");
+          return;
+        }
+        saveCommsToNVS();
+      }
+      if (g_comms_ap) {
+        Serial.printf("[SETUP] hotspot name? [%s] (Enter keeps): ", g_ap_ssid.c_str());
+      } else {
+        Serial.println("[SETUP] WiFi name? (Enter skips WiFi creds)");
+      }
+      setupTmp = "";
+      setupStep = ST_WIFI_SSID;
+      return;
+    }
+    case ST_WIFI_SSID: {
+      if (command.length() == 0) {
+        if (!g_comms_ap) {
+          Serial.println("[SETUP] WiFi skipped. Gyro cal? Needs a STILL robot. (yes / Enter skips)");
+          setupStep = ST_CAL_GYRO;
+        } else {
+          Serial.println("[SETUP] hotspot kept. Gyro cal? Needs a STILL robot. (yes / Enter skips)");
+          setupStep = ST_CAL_GYRO;
+        }
+        return;
+      }
+      setupTmp = raw;  // keep case for SSID
+      Serial.println("[SETUP] password? (Enter keeps current)");
+      setupStep = ST_WIFI_PASS;
+      return;
+    }
+    case ST_WIFI_PASS: {
+      String err;
+      const char* key = g_comms_ap ? "ap_ssid" : "ssid";
+      const char* pkey = g_comms_ap ? "ap_pass" : "pass";
+      if (!setStagedWifi(key, setupTmp, err) ||
+          (command.length() > 0 && !setStagedWifi(pkey, raw, err))) {
+        Serial.print("[SETUP] rejected: ");
+        Serial.println(err);
+      } else {
+        saveWifiToNVS();
+        Serial.println("[SETUP] WiFi saved.");
+      }
+      Serial.println("[SETUP] gyro cal? Needs a STILL robot. (yes / Enter skips)");
+      setupStep = ST_CAL_GYRO;
+      return;
+    }
+    case ST_CAL_GYRO:
+      if (command == "yes" || command == "y") {
+        setupCalGyroDone = false;
+        setupLastCalib = CALIB_IDLE;
+        startGyroCalibration();
+        Serial.println("[SETUP] collecting gyro... Enter to check.");
+        setupStep = ST_CAL_RUN;
+      } else {
+        setupFinish();
+        Serial.println("[SETUP] done, calibration skipped. Reboot to apply all? (yes / Enter later)");
+        setupStep = ST_DONE;
+      }
+      return;
+    case ST_CAL_ACCEL:
+      if (command == "yes" || command == "y") {
+        setupLastCalib = CALIB_IDLE;
+        startAccelCalibration();
+        Serial.println("[SETUP] pose 1/6 LEVEL still, then type save. (abort cancels)");
+        setupStep = ST_CAL_RUN;
+      } else {
+        setupFinish();
+        Serial.println("[SETUP] done. Reboot to apply all? (yes / Enter later)");
+        setupStep = ST_DONE;
+      }
+      return;
+    case ST_CAL_RUN: {
+      if (command == "abort") {
+        processCalibrationStep(command);
+        setupFinish();
+        Serial.println("[SETUP] calibration aborted. Reboot to apply the rest? (yes / Enter later)");
+        setupStep = ST_DONE;
+        return;
+      }
+      if (command == "save") processCalibrationStep(command);
+      if (calibrationState == CALIB_IDLE) {
+        if (!setupCalGyroDone) {
+          setupCalGyroDone = true;
+          Serial.println("[SETUP] gyro done. Accel 6-pose cal? (yes / Enter skips)");
+          setupStep = ST_CAL_ACCEL;
+        } else {
+          setupFinish();
+          Serial.println("[SETUP] all calibrated. Reboot to apply all? (yes / Enter later)");
+          setupStep = ST_DONE;
+        }
+      } else {
+        if (calibrationState != setupLastCalib) {
+          setupLastCalib = calibrationState;
+          Serial.printf("[SETUP] %s, then type save. (abort cancels)\n", setupCalibPose(calibrationState));
+        } else if (calibrationState == CALIB_GYRO) {
+          Serial.println("[SETUP] still collecting... Enter to check.");
+        }
+      }
+      return;
+    }
+    case ST_DONE:
+      if (command == "yes" || command == "y") {
+        stopMotors();
+        Serial.println("[SETUP] rebooting...");
+        delay(100);
+        ESP.restart();
+      } else {
+        Serial.println("[SETUP] done. Reboot later to apply.");
+      }
+      return;
+  }
+}
+
 void handleSerialCommand() {
   if (Serial.available() > 0) {
     String raw = Serial.readStringUntil('\n');
@@ -173,6 +461,12 @@ void handleSerialCommand() {
     String command = raw;  // lowercased dispatch copy; raw keeps case for wifi creds
     command.trim();
     command.toLowerCase();
+
+    // Interactive setup wizard consumes all lines while active
+    if (setupActive) {
+      setupWizardHandle(command, raw);
+      return;
+    }
 
     // Handle calibration commands
     if (calibrationState != CALIB_IDLE) {
@@ -268,7 +562,22 @@ void handleSerialCommand() {
       if (statusMonitoring) {
         Serial.println("\n[INFO] Status monitoring ENABLED - Type 'status' again to disable");
       } else {
-        Serial.println("\n[INFO] Status monitoring DISABLED\n");
+        Serial.println("\n[INFO] Status monitoring DISABLED");
+      }
+    }
+    else if (command == "setup") {
+      if (motorsArmed) {
+        Serial.println("[SETUP] disarm first ('disarm'), then run 'setup'");
+      } else {
+        setupActive = true;
+        setupStep = ST_PINS;
+        setupPinIdx = 0;
+        setupTmp = "";
+        setupCalGyroDone = false;
+        setupLastCalib = CALIB_IDLE;
+        Serial.println("[SETUP] bring-up wizard: pins -> IMU -> motor -> LED -> link -> WiFi -> cal.");
+        Serial.println("[SETUP] Enter = keep/skip, quit = abort.");
+        setupAskPin();
       }
     }
     else if (command == "debug motor") {
