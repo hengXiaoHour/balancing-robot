@@ -18,6 +18,7 @@ extern BatteryState batteryState;
 // Used by battery monitoring (defined elsewhere)
 extern bool debugMonitoring;
 extern volatile bool espnow_connected;
+extern bool webSocketConnected;  // defined in comms/websocket_handler.cpp
 
 // ===== Battery API (see battery.cpp) =====
 void updateBatteryVoltage();

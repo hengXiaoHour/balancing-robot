@@ -69,7 +69,7 @@ void updateBatteryMonitoring() {
   if (initStartTime == 0) initStartTime = millis();
 
   if (battery_voltage < 3.0f || (millis() - initStartTime) < 2000) {
-    ledSet(false);
+    ledSet(webSocketConnected);  // link LED works on USB power too (no battery)
     return;
   }
 
@@ -98,7 +98,7 @@ void updateBatteryMonitoring() {
     case BATTERY_NORMAL:
       pinMode(g_pin_LED, OUTPUT);
 
-      if (espnow_connected) {
+      if (espnow_connected || webSocketConnected) {
         ledSet(true);
       } else {
         ledSet(false);
