@@ -961,17 +961,12 @@ void printTelemetryStatus() {
   }
 
   // ===== Rate-limited [IMU] raw-sensor stream ('debug imu' toggle) =====
-  // Inside setup: rolling 5-line window — every 5th line scrolls the old
-  // batch out of view and relabels the step instead of flooding.
+  // Inside setup the stream runs slower (2Hz) and never clears, so the
+  // latest lines sit at the bottom instead of jumping back and forth.
   static unsigned long lastImuDbg = 0;
-  static uint8_t imuDbgLines = 0;
-  if (debugImuMonitoring && (millis() - lastImuDbg >= 200)) {
+  unsigned long imuDbgGap = setupActive ? 500 : 200;
+  if (debugImuMonitoring && (millis() - lastImuDbg >= imuDbgGap)) {
     lastImuDbg = millis();
-    if (setupActive && imuDbgLines >= 5) {
-      imuDbgLines = 0;
-      setupClear();
-      setupStepHeader();
-    }
     if (mpu && mpuInitialized) {
       Serial.print("[IMU] accel=");
       Serial.print(mpu->accelX); Serial.print(",");
@@ -984,7 +979,6 @@ void printTelemetryStatus() {
     } else {
       Serial.println("[IMU] no driver (not initialized)");
     }
-    imuDbgLines++;
   }
 
   // ===== LED cycle ('debug led' toggle) =====
