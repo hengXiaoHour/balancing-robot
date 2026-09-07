@@ -86,8 +86,8 @@ void printWelcomeBanner() {
 #endif
   Serial.println("\nOther Commands:");
   Serial.println("  load           - Print current PID values");
-  Serial.println("  pins show      - List board pins (live values + NVS/defaults source)");
-  Serial.println("  pin set <N> <gpio> - Set a pin, auto-saved (ENA IN1 IN2 ENB IN3 IN4 SDA SCL BAT LED SCK MOSI MISO CS; -1 = unused for SPI/BAT/LED)");
+  Serial.println("  pins show      - List board pins + copy-paste edit line (live values + NVS/defaults source)");
+  Serial.println("  pin set <N> <gpio> - Single: pin set ENA 5 (batch: pin set ENA=5 IN1=6 ...; paste the pins-show edit line)");
   Serial.println("  pins save      - Re-persist pins to NVS (rarely needed, pin set auto-saves)");
   Serial.println("  pins reset     - Clear pin overrides, restore board defaults (reboot to apply)");
   Serial.println("  setup          - Bring-up wizard: pins->IMU->motor->LED->link->WiFi->cal (Enter skips)");
@@ -181,25 +181,108 @@ enum SetupStep : uint8_t {
 };
 static bool setupActive = false;
 static SetupStep setupStep = ST_PINS;
-static uint8_t setupPinIdx = 0;
 static String setupTmp = "";
 static bool setupCalGyroDone = false;
 static CalibrationState setupLastCalib = CALIB_IDLE;
 
-struct SetupPin { const char* name; int* slot; };
-static SetupPin setupPins[] = {
-  {"ENA", &g_pin_ENA}, {"IN1", &g_pin_IN1}, {"IN2", &g_pin_IN2},
-  {"ENB", &g_pin_ENB}, {"IN3", &g_pin_IN3}, {"IN4", &g_pin_IN4},
-  {"SDA", &g_pin_SDA}, {"SCL", &g_pin_SCL},
-  {"BAT", &g_pin_BAT}, {"LED", &g_pin_LED},
-  {"SCK", &g_pin_SPI_SCK}, {"MOSI", &g_pin_SPI_MOSI},
-  {"MISO", &g_pin_SPI_MISO}, {"CS", &g_pin_SPI_CS},
-};
-static const uint8_t SETUP_PIN_COUNT = sizeof(setupPins) / sizeof(setupPins[0]);
+// ===== 'pin set' single + batch (shared by CLI and setup wizard) =====
+// Accepted: pin set ENA 5 | pin set ENA=5 | batch: pin set ENA=5 IN1=6 ...
+// Paste-friendly: the whole 'pins show' block can follow 'pin set ' —
+// unknown words (motors/i2c/misc/spi/source/labels) are skipped, only
+// known NAME + value pairs are applied. All-or-nothing: any reject rolls
+// back every pin in the line and nothing is saved.
+static bool isBatchPinName(const String& t) {
+  return t == "ena" || t == "in1" || t == "in2" || t == "enb" || t == "in3" ||
+         t == "in4" || t == "sda" || t == "scl" || t == "bat" || t == "led" ||
+         t == "sck" || t == "mosi" || t == "miso" || t == "cs";
+}
 
-static void setupAskPin() {
-  Serial.printf("[SETUP] pin %s [%d] (-1 = unused for SPI/BAT/LED, Enter keeps)\n",
-                setupPins[setupPinIdx].name, *setupPins[setupPinIdx].slot);
+static bool isBatchInt(const String& s, int& out) {
+  if (s.length() == 0 || s.length() > 4) return false;
+  int i = 0;
+  if (s.charAt(0) == '-') { if (s.length() == 1) return false; i = 1; }
+  for (; i < s.length(); i++) {
+    char c = s.charAt(i);
+    if (c < '0' || c > '9') return false;
+  }
+  out = s.toInt();
+  return true;
+}
+
+static void handlePinSetArgs(const String& args, const char* tag) {
+  String norm = args;
+  norm.replace("=", " ");
+  norm.replace(":", " ");
+  norm.replace(",", " ");
+  norm.replace(";", " ");
+  String toks[30];
+  uint8_t tc = 0;
+  int L = norm.length();
+  int i = 0;
+  while (i < L && tc < 30) {
+    while (i < L && norm.charAt(i) == ' ') i++;
+    if (i >= L) break;
+    int j = i;
+    while (j < L && norm.charAt(j) != ' ') j++;
+    toks[tc++] = norm.substring(i, j);
+    i = j;
+  }
+  struct PinEdit { String name; int gpio; };
+  PinEdit edits[14];
+  uint8_t ec = 0;
+  for (uint8_t k = 0; k < tc && ec < 14; k++) {
+    String t = toks[k];
+    t.toLowerCase();
+    if (!isBatchPinName(t)) continue;  // skip labels, source line, stray numbers
+    if (k + 1 >= tc) {
+      Serial.printf("[%s] rejected: %s needs a value (usage: pin set %s <gpio>)\n\n", tag, t.c_str(), t.c_str());
+      return;
+    }
+    int gpio = 0;
+    if (!isBatchInt(toks[k + 1], gpio)) {
+      Serial.printf("[%s] rejected: %s has no numeric value after it\n\n", tag, t.c_str());
+      return;
+    }
+    edits[ec++] = {t, gpio};
+    k++;  // consume value
+  }
+  if (ec == 0) {
+    Serial.println("[PINS] usage: pin set <NAME> <gpio>  (batch: pin set ENA=5 IN1=6 ...)");
+    Serial.println();
+    return;
+  }
+  int snap[] = {g_pin_ENA, g_pin_IN1, g_pin_IN2, g_pin_ENB, g_pin_IN3, g_pin_IN4,
+                g_pin_SDA, g_pin_SCL, g_pin_BAT, g_pin_LED,
+                g_pin_SPI_SCK, g_pin_SPI_MOSI, g_pin_SPI_MISO, g_pin_SPI_CS};
+  for (uint8_t e = 0; e < ec; e++) {
+    String perr;
+    if (!setStagedPin(edits[e].name, edits[e].gpio, perr)) {
+      g_pin_ENA = snap[0]; g_pin_IN1 = snap[1]; g_pin_IN2 = snap[2];
+      g_pin_ENB = snap[3]; g_pin_IN3 = snap[4]; g_pin_IN4 = snap[5];
+      g_pin_SDA = snap[6]; g_pin_SCL = snap[7]; g_pin_BAT = snap[8];
+      g_pin_LED = snap[9]; g_pin_SPI_SCK = snap[10]; g_pin_SPI_MOSI = snap[11];
+      g_pin_SPI_MISO = snap[12]; g_pin_SPI_CS = snap[13];
+      Serial.print("[");
+      Serial.print(tag);
+      Serial.print("] rejected: ");
+      Serial.println(perr);
+      Serial.println();
+      return;
+    }
+  }
+  savePinsToNVS();
+  for (uint8_t e = 0; e < ec; e++) {
+    Serial.printf("[%s] %s = %d\n", tag, edits[e].name.c_str(), edits[e].gpio);
+  }
+  Serial.println("[PINS] saved - reboot to apply");
+  Serial.println();
+}
+
+static void setupShowPins() {
+  printPinsToSerial();
+  Serial.println("[SETUP] edit: pin set NAME gpio  (single) or paste the edit line with new values (batch).");
+  Serial.println("[SETUP] 'pins show' reprints, Enter = done, 'abort setup' cancels.");
+  Serial.println();
 }
 
 static const char* setupCalibPose(CalibrationState s) {
@@ -237,29 +320,23 @@ static void setupWizardHandle(const String& command, const String& raw) {
 
   switch (setupStep) {
     case ST_PINS: {
-      if (command.length() > 0) {
-        String perr;
-        int v = command.toInt();
-        if (!setStagedPin(String(setupPins[setupPinIdx].name), v, perr)) {
-          Serial.print("[SETUP] rejected: ");
-          Serial.println(perr);
-          setupAskPin();
-          return;
-        }
-        Serial.printf("[SETUP] %s = %d\n\n", setupPins[setupPinIdx].name, v);
-      } else {
-        Serial.printf("[SETUP] %s kept (%d)\n\n",
-                      setupPins[setupPinIdx].name, *setupPins[setupPinIdx].slot);
-      }
-      setupPinIdx++;
-      if (setupPinIdx >= SETUP_PIN_COUNT) {
+      if (command.length() == 0) {
         savePinsToNVS();
-        Serial.println("\n[SETUP] pins saved. Checking IMU - raw stream on, wiggle the board.");
+        Serial.println("\n[SETUP] pins done. Checking IMU - raw stream on, wiggle the board.");
         Serial.println("[SETUP] numbers move with motion? (Enter continues)");
         debugImuMonitoring = true;
         setupStep = ST_IMU_ASK;
+      } else if (command == "pins show") {
+        setupShowPins();
+      } else if (command.startsWith("pin set ") || command.startsWith("pins set ")) {
+        String args = command.startsWith("pin set ")
+            ? command.substring(8) : command.substring(9);
+        handlePinSetArgs(args, "SETUP");
+        Serial.println("[SETUP] more edits, 'pins show' reprints, or Enter = done.");
+        Serial.println();
       } else {
-        setupAskPin();
+        Serial.println("[SETUP] pins step: 'pin set NAME gpio', batch edit, 'pins show', or Enter = done.");
+        Serial.println();
       }
       return;
     }
@@ -595,14 +672,13 @@ void handleSerialCommand() {
       } else {
         setupActive = true;
         setupStep = ST_PINS;
-        setupPinIdx = 0;
         setupTmp = "";
         setupCalGyroDone = false;
         setupLastCalib = CALIB_IDLE;
         Serial.println("\n[SETUP] bring-up wizard: pins -> IMU -> motor -> LED -> link -> WiFi -> cal.");
         Serial.println("[SETUP] Enter = keep/skip, 'abort setup' cancels anytime.");
         Serial.println();
-        setupAskPin();
+        setupShowPins();
       }
     }
     else if (command == "abort setup") {
@@ -731,26 +807,11 @@ void handleSerialCommand() {
       }
     }
     else if (command.startsWith("pin set ") || command.startsWith("pins set ")) {
-      // Auto-saved to NVS; reboot applies.
+      // Single + batch, auto-saved to NVS; reboot applies.
       String args = command.startsWith("pin set ")
           ? command.substring(8) : command.substring(9);
       args.trim();
-      int sp = args.indexOf(' ');
-      if (sp <= 0) {
-        Serial.println("[PINS] usage: pin set <NAME> <gpio>");
-      } else {
-        String pname = args.substring(0, sp);
-        int gpio = args.substring(sp + 1).toInt();
-        String perr;
-        if (setStagedPin(pname, gpio, perr)) {
-          savePinsToNVS();
-          Serial.printf("[PINS] %s set to GPIO %d (saved - reboot to apply)\n",
-                        pname.c_str(), gpio);
-        } else {
-          Serial.print("[PINS] rejected: ");
-          Serial.println(perr);
-        }
-      }
+      handlePinSetArgs(args, "PINS");
     }
     else if (command == "debug nvs") {
       printNvsDebugToSerial();

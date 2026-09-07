@@ -177,6 +177,10 @@ void printPinsToSerial() {
   Serial.printf("misc   : BAT=%d LED=%d\n", g_pin_BAT, g_pin_LED);
   Serial.printf("spi    : SCK=%d MOSI=%d MISO=%d CS=%d\n",
                 g_pin_SPI_SCK, g_pin_SPI_MOSI, g_pin_SPI_MISO, g_pin_SPI_CS);
+  Serial.printf("edit   : pin set ENA=%d IN1=%d IN2=%d ENB=%d IN3=%d IN4=%d SDA=%d SCL=%d BAT=%d LED=%d SCK=%d MOSI=%d MISO=%d CS=%d\n",
+                g_pin_ENA, g_pin_IN1, g_pin_IN2, g_pin_ENB, g_pin_IN3, g_pin_IN4,
+                g_pin_SDA, g_pin_SCL, g_pin_BAT, g_pin_LED,
+                g_pin_SPI_SCK, g_pin_SPI_MOSI, g_pin_SPI_MISO, g_pin_SPI_CS);
   Serial.printf("source : %s (board profile %d)\n",
                 pinsHaveNvsOverrides() ? "NVS overrides" : "defaults",
                 ACTIVE_BOARD);
