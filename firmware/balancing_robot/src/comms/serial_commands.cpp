@@ -279,8 +279,10 @@ static void handlePinSetArgs(const String& args, const char* tag) {
 }
 
 static void setupPinsHelp() {
-  Serial.println("[SETUP] edit: pin set NAME gpio  (single) or paste the edit line with new values (batch).");
-  Serial.println("[SETUP] 'pins show' reprints, Enter = done, 'abort setup' cancels.");
+  Serial.println();
+  Serial.println("[SETUP] please copy the \"pin set ...\" edit line above, paste it as your");
+  Serial.println("[SETUP] next command, edit the numbers to match your wiring, then hit Enter.");
+  Serial.println("[SETUP] (single edit: pin set NAME gpio | 'pins show' reprints | Enter = done)");
   Serial.println();
 }
 
