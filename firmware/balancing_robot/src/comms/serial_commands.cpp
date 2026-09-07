@@ -324,6 +324,13 @@ static void setupStepHeader() {
   Serial.println();
 }
 
+// Transition helper: the new step's header prints BEFORE its prompt, so the
+// prompt always sits under the step it belongs to (never under the old one).
+static void setupNext(SetupStep s) {
+  setupStep = s;
+  setupStepHeader();
+}
+
 static const char* setupCalibPose(CalibrationState s) {
   switch (s) {
     case CALIB_GYRO: return "hold STILL";
@@ -357,10 +364,10 @@ static void setupWizardHandle(const String& command, const String& raw) {
     case ST_PINS: {
       if (command.length() == 0) {
         savePinsToNVS();
-        Serial.println("\n[SETUP] pins done. Checking IMU - raw stream on, wiggle the board.");
-        Serial.println("[SETUP] numbers move with motion? (Enter continues)");
         debugImuMonitoring = true;
-        setupStep = ST_IMU_ASK;
+        setupNext(ST_IMU_ASK);
+        Serial.println("[SETUP] pins done. Checking IMU - raw stream on, wiggle the board.");
+        Serial.println("[SETUP] numbers move with motion? (Enter continues)");
       } else if (command == "pins show") {
         setupShowPins();
       } else if (command.startsWith("pin set ") || command.startsWith("pins set ")) {
@@ -375,8 +382,8 @@ static void setupWizardHandle(const String& command, const String& raw) {
     }
     case ST_IMU_ASK:
       debugImuMonitoring = false;
-      Serial.println("\n[SETUP] 100% wheel test? Prop the robot UP, wheels free. (yes / Enter skips)");
-      setupStep = ST_MOTOR_ASK;
+      setupNext(ST_MOTOR_ASK);
+      Serial.println("[SETUP] 100% wheel test? Prop the robot UP, wheels free. (yes / Enter skips)");
       return;
     case ST_MOTOR_ASK:
       if (command == "yes" || command == "y") {
@@ -385,39 +392,39 @@ static void setupWizardHandle(const String& command, const String& raw) {
           setupAbort();
           return;
         }
-        Serial.println("[SETUP] spinning LEFT fwd/rev then RIGHT fwd/rev at 100%. Enter to check.");
         toggleMotorTest();
-        setupStep = ST_MOTOR_WAIT;
+        setupNext(ST_MOTOR_WAIT);
+        Serial.println("[SETUP] spinning LEFT fwd/rev then RIGHT fwd/rev at 100%. Enter to check.");
       } else {
-        Serial.println("\n[SETUP] motor skipped. Cycling LED now - watch it. (Enter stops + continues)");
         debugLedMonitoring = true;
-        setupStep = ST_LED_ASK;
+        setupNext(ST_LED_ASK);
+        Serial.println("[SETUP] motor skipped. Cycling LED now - watch it. (Enter stops + continues)");
       }
       return;
     case ST_MOTOR_WAIT:
       if (testMotorActive) {
         Serial.println("[SETUP] still spinning... Enter to check.");
       } else {
-        Serial.println("\n[SETUP] test done. Both wheels spun both ways? (Enter continues)");
-        setupStep = ST_MOTOR_OK;
+        setupNext(ST_MOTOR_OK);
+        Serial.println("[SETUP] test done. Both wheels spun both ways? (Enter continues)");
       }
       return;
     case ST_MOTOR_OK:
-      Serial.println("\n[SETUP] cycling LED now - watch it. (Enter stops + continues)");
       debugLedMonitoring = true;
-      setupStep = ST_LED_ASK;
+      setupNext(ST_LED_ASK);
+      Serial.println("[SETUP] cycling LED now - watch it. (Enter stops + continues)");
       return;
     case ST_LED_ASK:
       debugLedMonitoring = false;
-      Serial.println("\n[SETUP] link? (ws = WebUI, espnow = controller. Enter keeps current)");
-      setupStep = ST_COMMS_LINK;
+      setupNext(ST_COMMS_LINK);
+      Serial.println("[SETUP] link? (ws = WebUI, espnow = controller. Enter keeps current)");
       return;
     case ST_COMMS_LINK: {
       String v = command;
       if (v.length() == 0) {
-        Serial.printf("\n[SETUP] keeping %s. WiFi mode? (sta / ap. Enter keeps %s)\n",
+        setupNext(ST_COMMS_WIFI);
+        Serial.printf("[SETUP] keeping %s. WiFi mode? (sta / ap. Enter keeps %s)\n",
                       g_comms_espnow ? "espnow" : "ws", g_comms_ap ? "ap" : "sta");
-        setupStep = ST_COMMS_WIFI;
         return;
       }
       String cerr;
@@ -434,11 +441,11 @@ static void setupWizardHandle(const String& command, const String& raw) {
         snprintf(mac, 18, "%02X:%02X:%02X:%02X:%02X:%02X",
                  g_peer_mac[0], g_peer_mac[1], g_peer_mac[2],
                  g_peer_mac[3], g_peer_mac[4], g_peer_mac[5]);
+        setupNext(ST_COMMS_MAC);
         Serial.printf("[SETUP] controller MAC? [%s] (Enter keeps)\n", mac);
-        setupStep = ST_COMMS_MAC;
       } else {
+        setupNext(ST_COMMS_WIFI);
         Serial.printf("[SETUP] WiFi mode? (sta / ap. Enter keeps %s)\n", g_comms_ap ? "ap" : "sta");
-        setupStep = ST_COMMS_WIFI;
       }
       return;
     }
@@ -458,8 +465,8 @@ static void setupWizardHandle(const String& command, const String& raw) {
       } else {
         Serial.println("[SETUP] controller MAC kept\n");
       }
+      setupNext(ST_CAL_GYRO);
       Serial.println("[SETUP] link saved. Gyro cal? Needs a STILL robot. (yes / Enter skips)");
-      setupStep = ST_CAL_GYRO;
       return;
     }
     case ST_COMMS_WIFI: {
@@ -484,25 +491,25 @@ static void setupWizardHandle(const String& command, const String& raw) {
         Serial.println("[SETUP] WiFi name? (Enter skips WiFi creds)");
       }
       setupTmp = "";
-      setupStep = ST_WIFI_SSID;
+      setupNext(ST_WIFI_SSID);
       return;
     }
     case ST_WIFI_SSID: {
       if (command.length() == 0) {
         if (!g_comms_ap) {
-          Serial.println("\n[SETUP] WiFi skipped. Gyro cal? Needs a STILL robot. (yes / Enter skips)");
-          setupStep = ST_CAL_GYRO;
+          setupNext(ST_CAL_GYRO);
+          Serial.println("[SETUP] WiFi skipped. Gyro cal? Needs a STILL robot. (yes / Enter skips)");
         } else {
-          Serial.println("\n[SETUP] hotspot kept. Gyro cal? Needs a STILL robot. (yes / Enter skips)");
-          setupStep = ST_CAL_GYRO;
+          setupNext(ST_CAL_GYRO);
+          Serial.println("[SETUP] hotspot kept. Gyro cal? Needs a STILL robot. (yes / Enter skips)");
         }
         return;
       }
       setupTmp = raw;  // keep case for SSID
       Serial.print("[SETUP] name staged: ");
       Serial.println(setupTmp);
+      setupNext(ST_WIFI_PASS);
       Serial.println("[SETUP] password? (Enter keeps current)");
-      setupStep = ST_WIFI_PASS;
       return;
     }
     case ST_WIFI_PASS: {
@@ -517,8 +524,8 @@ static void setupWizardHandle(const String& command, const String& raw) {
         saveWifiToNVS();
         Serial.println("[SETUP] WiFi saved (password hidden).\n");
       }
+      setupNext(ST_CAL_GYRO);
       Serial.println("[SETUP] gyro cal? Needs a STILL robot. (yes / Enter skips)");
-      setupStep = ST_CAL_GYRO;
       return;
     }
     case ST_CAL_GYRO:
@@ -526,26 +533,26 @@ static void setupWizardHandle(const String& command, const String& raw) {
         setupCalGyroDone = false;
         setupLastCalib = CALIB_IDLE;
         startGyroCalibration();
+        setupNext(ST_CAL_RUN);
         Serial.println("[SETUP] collecting gyro... Enter to check.");
-        setupStep = ST_CAL_RUN;
       } else {
         debugImuMonitoring = false;
         debugLedMonitoring = false;
-        Serial.println("\n[SETUP] done, calibration skipped. Reboot to apply all? (yes / Enter reboots)");
-        setupStep = ST_DONE;
+        setupNext(ST_DONE);
+        Serial.println("[SETUP] done, calibration skipped. Reboot to apply all? (yes / Enter reboots)");
       }
       return;
     case ST_CAL_ACCEL:
       if (command == "yes" || command == "y") {
         setupLastCalib = CALIB_IDLE;
         startAccelCalibration();
+        setupNext(ST_CAL_RUN);
         Serial.println("[SETUP] pose 1/6 LEVEL still, then type save. (abort cancels)");
-        setupStep = ST_CAL_RUN;
       } else {
         debugImuMonitoring = false;
         debugLedMonitoring = false;
-        Serial.println("\n[SETUP] done. Reboot to apply all? (yes / Enter reboots)");
-        setupStep = ST_DONE;
+        setupNext(ST_DONE);
+        Serial.println("[SETUP] done. Reboot to apply all? (yes / Enter reboots)");
       }
       return;
     case ST_CAL_RUN: {
@@ -553,21 +560,21 @@ static void setupWizardHandle(const String& command, const String& raw) {
         processCalibrationStep(command);
         debugImuMonitoring = false;
         debugLedMonitoring = false;
+        setupNext(ST_DONE);
         Serial.println("[SETUP] calibration aborted. Reboot to apply the rest? (yes / Enter reboots)");
-        setupStep = ST_DONE;
         return;
       }
       if (command == "save") processCalibrationStep(command);
       if (calibrationState == CALIB_IDLE) {
         if (!setupCalGyroDone) {
           setupCalGyroDone = true;
-          Serial.println("\n[SETUP] gyro done. Accel 6-pose cal? (yes / Enter skips)");
-          setupStep = ST_CAL_ACCEL;
+          setupNext(ST_CAL_ACCEL);
+          Serial.println("[SETUP] gyro done. Accel 6-pose cal? (yes / Enter skips)");
         } else {
           debugImuMonitoring = false;
           debugLedMonitoring = false;
-          Serial.println("\n[SETUP] all calibrated. Reboot to apply all? (yes / Enter reboots)");
-          setupStep = ST_DONE;
+          setupNext(ST_DONE);
+          Serial.println("[SETUP] all calibrated. Reboot to apply all? (yes / Enter reboots)");
         }
       } else {
         if (calibrationState != setupLastCalib) {
