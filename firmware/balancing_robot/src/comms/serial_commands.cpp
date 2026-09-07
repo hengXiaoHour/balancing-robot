@@ -291,6 +291,33 @@ static void setupClear() {
   for (uint8_t i = 0; i < 50; i++) Serial.println();
 }
 
+// User-facing stage header, printed after every Enter — same idea as the
+// calibration pose labels (pose 1/6 ...), so the current step is always visible.
+static void setupStepHeader() {
+  const char* label = "";
+  switch (setupStep) {
+    case ST_PINS: label = "Step 1/7: Pins"; break;
+    case ST_IMU_ASK: label = "Step 2/7: IMU check"; break;
+    case ST_MOTOR_ASK:
+    case ST_MOTOR_WAIT:
+    case ST_MOTOR_OK: label = "Step 3/7: Motor test"; break;
+    case ST_LED_ASK: label = "Step 4/7: LED test"; break;
+    case ST_COMMS_LINK:
+    case ST_COMMS_MAC:
+    case ST_COMMS_WIFI: label = "Step 5/7: Link selection"; break;
+    case ST_WIFI_SSID:
+    case ST_WIFI_PASS: label = "Step 6/7: WiFi"; break;
+    case ST_CAL_GYRO:
+    case ST_CAL_ACCEL:
+    case ST_CAL_RUN: label = "Step 7/7: Calibration"; break;
+    case ST_DONE: label = "Step 7/7: Done"; break;
+  }
+  Serial.print("[SETUP] --- ");
+  Serial.print(label);
+  Serial.println(" ---");
+  Serial.println();
+}
+
 static const char* setupCalibPose(CalibrationState s) {
   switch (s) {
     case CALIB_GYRO: return "hold STILL";
@@ -318,6 +345,7 @@ static void setupWizardHandle(const String& command, const String& raw) {
   if (command == "quit" || command == "exit" || command == "abort setup") { setupClear(); setupAbort(); return; }
   if (command == "abort" && setupStep != ST_CAL_RUN) { setupClear(); setupAbort(); return; }
   setupClear();
+  setupStepHeader();
 
   switch (setupStep) {
     case ST_PINS: {
@@ -685,6 +713,7 @@ void handleSerialCommand() {
         Serial.println("\n[SETUP] bring-up wizard: pins -> IMU -> motor -> LED -> link -> WiFi -> cal.");
         Serial.println("[SETUP] Enter = keep/skip, 'abort setup' cancels anytime.");
         Serial.println();
+        setupStepHeader();
         setupShowPins();
       }
     }
