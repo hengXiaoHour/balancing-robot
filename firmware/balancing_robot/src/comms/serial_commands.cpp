@@ -271,30 +271,35 @@ static void handlePinSetArgs(const String& args, const char* tag) {
     }
   }
   savePinsToNVS();
+  Serial.printf("[%s] saved", tag);
   for (uint8_t e = 0; e < ec; e++) {
-    Serial.printf("[%s] %s = %d\n", tag, edits[e].name.c_str(), edits[e].gpio);
+    Serial.printf(" %s=%d", edits[e].name.c_str(), edits[e].gpio);
   }
-  Serial.println("[PINS] saved - reboot to apply");
+  Serial.println(" (reboot to apply)");
   Serial.println();
 }
 
-static void setupPinsHelp() {
+static void setupPinsHint() {
+  Serial.println("[SETUP] paste edit line | pin set NAME gpio | pins show | Enter = done");
+  Serial.println();
+}
+
+static void setupPinsGuide() {
   Serial.println();
   Serial.println("[SETUP] please copy the \"pin set ...\" edit line above, paste it as your");
   Serial.println("[SETUP] next command, edit the numbers to match your wiring, then hit Enter.");
-  Serial.println("[SETUP] (single edit: pin set NAME gpio | 'pins show' reprints | Enter = done)");
   Serial.println();
 }
 
 static void setupShowPins() {
   printPinsToSerial();
-  setupPinsHelp();
+  setupPinsHint();
 }
 
 // IDE 2.x serial monitor ignores ANSI clear codes, so scroll the previous
 // step out of view with blank lines (scrollback kept, nothing lost).
 static void setupClear() {
-  for (uint8_t i = 0; i < 50; i++) Serial.println();
+  for (uint8_t i = 0; i < 25; i++) Serial.println();
 }
 
 // User-facing stage header, printed after every Enter — same idea as the
@@ -373,9 +378,9 @@ static void setupWizardHandle(const String& command, const String& raw) {
         String args = command.startsWith("pin set ")
             ? command.substring(8) : command.substring(9);
         handlePinSetArgs(args, "SETUP");
-        setupPinsHelp();
+        setupPinsHint();
       } else {
-        setupPinsHelp();
+        setupPinsHint();
       }
       return;
     }
@@ -735,7 +740,8 @@ void handleSerialCommand() {
         Serial.println("[SETUP] Enter = keep/skip, 'abort setup' cancels anytime.");
         Serial.println();
         setupStepHeader();
-        setupShowPins();
+        printPinsToSerial();
+        setupPinsGuide();
       }
     }
     else if (command == "abort setup") {
