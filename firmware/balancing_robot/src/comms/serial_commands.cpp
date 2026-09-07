@@ -175,7 +175,7 @@ static void printNvsDebugToSerial() {
 // (staging already saved stays). Prompts are full lines with a blank line
 // between steps so serial-monitor output stays readable.
 enum SetupStep : uint8_t {
-  ST_PINS, ST_IMU_ASK, ST_MOTOR_ASK, ST_MOTOR_WAIT, ST_MOTOR_OK,
+  ST_PINS, ST_IMU_ASK, ST_IMU_VIEW, ST_MOTOR_ASK, ST_MOTOR_WAIT, ST_MOTOR_OK,
   ST_LED_ASK, ST_COMMS_LINK, ST_COMMS_MAC, ST_COMMS_WIFI,
   ST_WIFI_SSID, ST_WIFI_PASS, ST_CAL_GYRO, ST_CAL_ACCEL, ST_CAL_RUN, ST_DONE
 };
@@ -303,7 +303,8 @@ static void setupStepHeader() {
   const char* label = "";
   switch (setupStep) {
     case ST_PINS: label = "Step 1/7: Pins"; break;
-    case ST_IMU_ASK: label = "Step 2/7: IMU check"; break;
+    case ST_IMU_ASK:
+    case ST_IMU_VIEW: label = "Step 2/7: IMU check"; break;
     case ST_MOTOR_ASK:
     case ST_MOTOR_WAIT:
     case ST_MOTOR_OK: label = "Step 3/7: Motor test"; break;
@@ -364,10 +365,8 @@ static void setupWizardHandle(const String& command, const String& raw) {
     case ST_PINS: {
       if (command.length() == 0) {
         savePinsToNVS();
-        debugImuMonitoring = true;
         setupNext(ST_IMU_ASK);
-        Serial.println("[SETUP] pins done. Checking IMU - raw stream on, wiggle the board.");
-        Serial.println("[SETUP] numbers move with motion? (Enter continues)");
+        Serial.println("[SETUP] pins done. Show live IMU raw data? (yes = stream on, Enter skips)");
       } else if (command == "pins show") {
         setupShowPins();
       } else if (command.startsWith("pin set ") || command.startsWith("pins set ")) {
@@ -381,6 +380,17 @@ static void setupWizardHandle(const String& command, const String& raw) {
       return;
     }
     case ST_IMU_ASK:
+      if (command == "yes" || command == "y") {
+        debugImuMonitoring = true;
+        setupNext(ST_IMU_VIEW);
+        Serial.println("[SETUP] raw stream on - wiggle the board.");
+        Serial.println("[SETUP] numbers move with motion? (Enter stops + continues)");
+      } else {
+        setupNext(ST_MOTOR_ASK);
+        Serial.println("[SETUP] IMU skipped. 100% wheel test? Prop the robot UP, wheels free. (yes / Enter skips)");
+      }
+      return;
+    case ST_IMU_VIEW:
       debugImuMonitoring = false;
       setupNext(ST_MOTOR_ASK);
       Serial.println("[SETUP] 100% wheel test? Prop the robot UP, wheels free. (yes / Enter skips)");
