@@ -306,12 +306,6 @@ static void setupAbort() {
   Serial.println("\n[SETUP] aborted (already-saved values stay)");
 }
 
-static void setupFinish() {
-  debugImuMonitoring = false;
-  debugLedMonitoring = false;
-  setupActive = false;
-}
-
 static void setupWizardHandle(const String& command, const String& raw) {
   // 'abort setup' cancels from any step; bare 'abort' too, except mid-calibration
   // where it only cancels the calibration run (see ST_CAL_RUN).
@@ -496,8 +490,9 @@ static void setupWizardHandle(const String& command, const String& raw) {
         Serial.println("[SETUP] collecting gyro... Enter to check.");
         setupStep = ST_CAL_RUN;
       } else {
-        setupFinish();
-        Serial.println("\n[SETUP] done, calibration skipped. Reboot to apply all? (yes / Enter later)");
+        debugImuMonitoring = false;
+        debugLedMonitoring = false;
+        Serial.println("\n[SETUP] done, calibration skipped. Reboot to apply all? (yes / Enter reboots)");
         setupStep = ST_DONE;
       }
       return;
@@ -508,16 +503,18 @@ static void setupWizardHandle(const String& command, const String& raw) {
         Serial.println("[SETUP] pose 1/6 LEVEL still, then type save. (abort cancels)");
         setupStep = ST_CAL_RUN;
       } else {
-        setupFinish();
-        Serial.println("\n[SETUP] done. Reboot to apply all? (yes / Enter later)");
+        debugImuMonitoring = false;
+        debugLedMonitoring = false;
+        Serial.println("\n[SETUP] done. Reboot to apply all? (yes / Enter reboots)");
         setupStep = ST_DONE;
       }
       return;
     case ST_CAL_RUN: {
       if (command == "abort") {
         processCalibrationStep(command);
-        setupFinish();
-        Serial.println("[SETUP] calibration aborted. Reboot to apply the rest? (yes / Enter later)");
+        debugImuMonitoring = false;
+        debugLedMonitoring = false;
+        Serial.println("[SETUP] calibration aborted. Reboot to apply the rest? (yes / Enter reboots)");
         setupStep = ST_DONE;
         return;
       }
@@ -528,8 +525,9 @@ static void setupWizardHandle(const String& command, const String& raw) {
           Serial.println("\n[SETUP] gyro done. Accel 6-pose cal? (yes / Enter skips)");
           setupStep = ST_CAL_ACCEL;
         } else {
-          setupFinish();
-          Serial.println("\n[SETUP] all calibrated. Reboot to apply all? (yes / Enter later)");
+          debugImuMonitoring = false;
+          debugLedMonitoring = false;
+          Serial.println("\n[SETUP] all calibrated. Reboot to apply all? (yes / Enter reboots)");
           setupStep = ST_DONE;
         }
       } else {
@@ -543,13 +541,14 @@ static void setupWizardHandle(const String& command, const String& raw) {
       return;
     }
     case ST_DONE:
-      if (command == "yes" || command == "y") {
+      if (command == "yes" || command == "y" || command.length() == 0) {
+        setupActive = false;
         stopMotors();
         Serial.println("\n[SETUP] rebooting...");
         delay(100);
         ESP.restart();
       } else {
-        Serial.println("\n[SETUP] done. Reboot later to apply.");
+        Serial.println("[SETUP] (yes / Enter reboots, 'abort setup' cancels)");
       }
       return;
   }
