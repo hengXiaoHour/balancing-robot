@@ -278,11 +278,15 @@ static void handlePinSetArgs(const String& args, const char* tag) {
   Serial.println();
 }
 
-static void setupShowPins() {
-  printPinsToSerial();
+static void setupPinsHelp() {
   Serial.println("[SETUP] edit: pin set NAME gpio  (single) or paste the edit line with new values (batch).");
   Serial.println("[SETUP] 'pins show' reprints, Enter = done, 'abort setup' cancels.");
   Serial.println();
+}
+
+static void setupShowPins() {
+  printPinsToSerial();
+  setupPinsHelp();
 }
 
 // IDE 2.x serial monitor ignores ANSI clear codes, so scroll the previous
@@ -361,11 +365,9 @@ static void setupWizardHandle(const String& command, const String& raw) {
         String args = command.startsWith("pin set ")
             ? command.substring(8) : command.substring(9);
         handlePinSetArgs(args, "SETUP");
-        Serial.println("[SETUP] more edits, 'pins show' reprints, or Enter = done.");
-        Serial.println();
+        setupPinsHelp();
       } else {
-        Serial.println("[SETUP] pins step: 'pin set NAME gpio', batch edit, 'pins show', or Enter = done.");
-        Serial.println();
+        setupPinsHelp();
       }
       return;
     }
