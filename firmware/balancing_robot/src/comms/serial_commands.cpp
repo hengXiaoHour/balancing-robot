@@ -90,7 +90,7 @@ void printWelcomeBanner() {
   Serial.println("  pin set <N> <gpio> - Single: pin set ENA 5 (batch: pin set ENA=5 IN1=6 ...; paste the pins-show edit line)");
   Serial.println("  pins save      - Re-persist pins to NVS (rarely needed, pin set auto-saves)");
   Serial.println("  pins reset     - Clear pin overrides, restore board defaults (reboot to apply)");
-  Serial.println("  setup          - Bring-up wizard: pins->IMU->motor->LED->link->WiFi->cal (Enter skips)");
+  Serial.println("  setup [step]   - Bring-up wizard (Enter skips); step = pins|imu|motor|led|link|wifi|cal to jump in");
   Serial.println("  abort setup    - Cancel the setup wizard (quit/exit work too)");
   Serial.println("  comms show     - Show link selection (ws/espnow, peer MAC, sta/ap)");
   Serial.println("  comms set <mode|mac|wifimode> <value> - Stage link selection");
@@ -335,6 +335,47 @@ static void setupStepHeader() {
 static void setupNext(SetupStep s) {
   setupStep = s;
   setupStepHeader();
+}
+
+// Print the current step's header + prompt (jump-to-step entry; mid-flow
+// states like VIEW/WAIT/RUN/DONE are not jump targets).
+static void setupPromptCurrent() {
+  setupStepHeader();
+  switch (setupStep) {
+    case ST_PINS:
+      printPinsToSerial();
+      setupPinsGuide();
+      break;
+    case ST_IMU_ASK:
+      Serial.println("[SETUP] Show live IMU raw data? (yes = stream on, Enter skips)");
+      break;
+    case ST_MOTOR_ASK:
+      Serial.println("[SETUP] 100% wheel test? Prop the robot UP, wheels free. (yes / Enter skips)");
+      break;
+    case ST_LED_ASK:
+      debugLedMonitoring = true;
+      Serial.println("[SETUP] cycling LED now - watch it. (Enter stops + continues)");
+      break;
+    case ST_COMMS_LINK:
+      Serial.println("[SETUP] link? (ws = WebUI, espnow = controller. Enter keeps current)");
+      break;
+    case ST_WIFI_SSID:
+      setupTmp = "";
+      if (g_comms_ap) {
+        Serial.print("[SETUP] hotspot name? [");
+        Serial.print(g_ap_ssid.c_str());
+        Serial.println("] (Enter keeps)");
+      } else {
+        Serial.println("[SETUP] WiFi name? (Enter skips WiFi creds)");
+      }
+      break;
+    case ST_CAL_GYRO:
+      Serial.println("[SETUP] gyro cal? Needs a STILL robot. (yes / Enter skips)");
+      break;
+    default:
+      break;
+  }
+  Serial.println();
 }
 
 static const char* setupCalibPose(CalibrationState s) {
@@ -742,6 +783,37 @@ void handleSerialCommand() {
         setupStepHeader();
         printPinsToSerial();
         setupPinsGuide();
+      }
+    }
+    else if (command.startsWith("setup ")) {
+      String target = command.substring(6);
+      target.trim();
+      SetupStep dest = ST_PINS;
+      bool ok = true;
+      if (target == "pins") dest = ST_PINS;
+      else if (target == "imu") dest = ST_IMU_ASK;
+      else if (target == "motor") dest = ST_MOTOR_ASK;
+      else if (target == "led") dest = ST_LED_ASK;
+      else if (target == "link" || target == "comms") dest = ST_COMMS_LINK;
+      else if (target == "wifi") dest = ST_WIFI_SSID;
+      else if (target == "cal" || target == "calib") dest = ST_CAL_GYRO;
+      else ok = false;
+      if (!ok) {
+        Serial.println("[SETUP] usage: setup [pins|imu|motor|led|link|wifi|cal]");
+      } else if (motorsArmed) {
+        Serial.println("[SETUP] disarm first ('disarm'), then run 'setup <step>'");
+      } else {
+        debugImuMonitoring = false;
+        debugLedMonitoring = false;
+        setupActive = true;
+        setupStep = dest;
+        setupTmp = "";
+        setupCalGyroDone = false;
+        setupLastCalib = CALIB_IDLE;
+        setupClear();
+        Serial.println("[SETUP] jumped in mid-wizard: Enter = keep/skip, 'abort setup' cancels.");
+        Serial.println();
+        setupPromptCurrent();
       }
     }
     else if (command == "abort setup") {
