@@ -285,6 +285,12 @@ static void setupShowPins() {
   Serial.println();
 }
 
+// IDE 2.x serial monitor ignores ANSI clear codes, so scroll the previous
+// step out of view with blank lines (scrollback kept, nothing lost).
+static void setupClear() {
+  for (uint8_t i = 0; i < 50; i++) Serial.println();
+}
+
 static const char* setupCalibPose(CalibrationState s) {
   switch (s) {
     case CALIB_GYRO: return "hold STILL";
@@ -309,8 +315,9 @@ static void setupAbort() {
 static void setupWizardHandle(const String& command, const String& raw) {
   // 'abort setup' cancels from any step; bare 'abort' too, except mid-calibration
   // where it only cancels the calibration run (see ST_CAL_RUN).
-  if (command == "quit" || command == "exit" || command == "abort setup") { setupAbort(); return; }
-  if (command == "abort" && setupStep != ST_CAL_RUN) { setupAbort(); return; }
+  if (command == "quit" || command == "exit" || command == "abort setup") { setupClear(); setupAbort(); return; }
+  if (command == "abort" && setupStep != ST_CAL_RUN) { setupClear(); setupAbort(); return; }
+  setupClear();
 
   switch (setupStep) {
     case ST_PINS: {
@@ -674,6 +681,7 @@ void handleSerialCommand() {
         setupTmp = "";
         setupCalGyroDone = false;
         setupLastCalib = CALIB_IDLE;
+        setupClear();
         Serial.println("\n[SETUP] bring-up wizard: pins -> IMU -> motor -> LED -> link -> WiFi -> cal.");
         Serial.println("[SETUP] Enter = keep/skip, 'abort setup' cancels anytime.");
         Serial.println();
