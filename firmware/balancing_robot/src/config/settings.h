@@ -140,7 +140,7 @@
 #define ESPNOW_TIMEOUT 2000      // Connection timeout in ms (failsafe)
 #define ESPNOW_RSSI_TIMEOUT 2000  // RSSI ACK timeout in ms
 
-// Controller MAC address (your transmitter)
+// Controller MAC address (your transmitter — set to your controller's MAC)
 #define CONTROLLER_MAC_0 0xAA
 #define CONTROLLER_MAC_1 0xBB
 #define CONTROLLER_MAC_2 0xCC
