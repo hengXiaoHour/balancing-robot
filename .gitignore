@@ -1,0 +1,22 @@
+# Local WiFi credentials / secrets — never commit real values.
+# settings.h ships with placeholders; put real creds via serial CLI (wifi set / wifi save, NVS).
+*password*
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+
+# Arduino / ESP32 build artifacts
+build/
+*.elf
+*.bin
+*.map
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*~
