@@ -71,5 +71,6 @@ SETUP — vehicle, connection, stick range, calibration:
 
 - `settings.h` in git carries placeholder WiFi/MAC values on purpose.
   Keep it that way — `git add` files explicitly, never `git add -A`.
-- Default AP mode: SSID `ESP32_BALANCING`. Change the default AP
-  password before taking the robot to public places.
+- Default AP mode: SSID `ESP32_BALANCING`, password `balancing123`.
+  Change it on your board over serial (`wifi set ap_pass <yours>` +
+  `wifi save`) before taking the robot to public places.

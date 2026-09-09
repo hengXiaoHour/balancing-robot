@@ -115,7 +115,7 @@
 #define WIFI_SSID "YOUR_WIFI_SSID"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 #define AP_SSID "ESP32_BALANCING"      // Access Point name when in AP mode
-#define AP_PASSWORD "12345678"
+#define AP_PASSWORD "balancing123"  // Access Point password (change via `wifi set ap_pass`)
 
 // ===== FILTER PARAMETERS =====
 #define GYRO_LPF_ALPHA 1.0f       // Gyroscope software low-pass
