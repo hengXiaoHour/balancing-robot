@@ -39,6 +39,26 @@ in NVS via the serial CLI — `settings.h` holds seed defaults only.
 Handy serial commands: `status`, `load`, `reset_pid`, `i2c_scan`,
 `abort setup`, `reboot`. Type `help` on the robot for the full list.
 
+## Web UI
+
+Dark HUD theme, four tabs. Served by the robot on port 80:
+
+CONTROL — square stick, live pitch/roll/yaw, arm bar:
+
+![CONTROL tab](docs/screenshots/ui-control.png)
+
+STATUS — link, battery, IMU, motors:
+
+![STATUS tab](docs/screenshots/ui-status.png)
+
+PID TUNE — pitch/roll/yaw gains, load + reset:
+
+![PID TUNE tab](docs/screenshots/ui-pid.png)
+
+SETUP — vehicle, connection, stick range, calibration:
+
+![SETUP tab](docs/screenshots/ui-setup.png)
+
 ## Layout
 
 - `firmware/balancing_robot/` — Arduino sketch (`src/config`, `sensors`,
