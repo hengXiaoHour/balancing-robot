@@ -1,4 +1,4 @@
-# Balancing Robot 🤖
+# Balancing Robot
 
 ![ESP32](https://img.shields.io/badge/ESP32-C3_black)
 ![C++](https://img.shields.io/badge/Arduino-C%2B%2B-black)
