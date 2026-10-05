@@ -1,9 +1,18 @@
-# Balancing Robot
+# Balancing Robot 🤖
+
+![ESP32](https://img.shields.io/badge/ESP32-C3_black)
+![C++](https://img.shields.io/badge/Arduino-C%2B%2B-black)
+![PID 1kHz](https://img.shields.io/badge/PID-1kHz-black)
+![WebSocket](https://img.shields.io/badge/WebSocket-telemetry-black)
 
 Self-balancing two-wheel robot on ESP32 + L298N + MPU IMU, with a serial
 setup wizard, WiFi Web UI (telemetry + PID tuning), and optional ESP-NOW
 joystick control. Runtime-configurable: pins, WiFi, IMU, and PID all live
 in NVS via the serial CLI — `settings.h` holds seed defaults only.
+
+> Built for real hardware: dual angle PID @ 1 kHz, Madgwick fusion, NVS-persisted
+> config, embedded Web UI served from flash, OTA-ready. See `firmware/ARCHITECTURE.md`
+> for the module map.
 
 ## Hardware
 
@@ -28,10 +37,13 @@ in NVS via the serial CLI — `settings.h` holds seed defaults only.
 4. Set WiFi without touching code: `wifi set ssid <name>`,
    `wifi set pass <password>`, then `wifi save`. Check with `wifi show`
    (passwords stay masked) and `wifi_status`.
-5. Connect to the same network and open the robot's IP at port 80 for
-   the Web UI (live attitude, battery, arm switch, stick control).
+5. In Arduino IDE set Tools → Partition Scheme to "No FS 4MB (2MB APP x2)"
+   (the default 1.2MB app partition is too small for the embedded Web UI).
+6. Connect to the same network — or to the robot's own `ESP32_BALANCING`
+   AP — and open `http://<robot-ip>/` (AP mode: `http://192.168.4.1/`)
+   for the Web UI (live attitude, battery, arm switch, stick control).
    Telemetry/tuning runs over WebSocket port 81.
-6. Tune the balance: start with `DEFAULT_KP_PITCH` / `KI` / `KD` in
+7. Tune the balance: start with `DEFAULT_KP_PITCH` / `KI` / `KD` in
    `settings.h`, or live via serial (`pp` / `pi` / `pd` …) or the Web UI —
    every change auto-saves to NVS. `load` reloads saved values,
    `reset_pid` returns to compiled defaults.
@@ -41,7 +53,12 @@ Handy serial commands: `status`, `load`, `reset_pid`, `i2c_scan`,
 
 ## Web UI
 
-Dark HUD theme, four tabs. Served by the robot on port 80:
+Dark HUD theme, four tabs. Served by the robot itself on port 80 —
+the UI (HTML/CSS/JS/fonts/uPlot) is embedded in the firmware flash via
+`tools/gen_web_assets.py` → `src/web/web_assets.h`. No phone-side file or
+internet connection needed once the phone is on the robot's WiFi. Re-run
+`python3 firmware/balancing_robot/tools/gen_web_assets.py` after editing
+anything under `UI/`, then recompile.
 
 CONTROL — square stick, live pitch/roll/yaw, arm bar:
 
