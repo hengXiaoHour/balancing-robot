@@ -18,20 +18,7 @@
   text-transform: uppercase;
 }
 .header h1 span { color: var(--red-hot); }
-.header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .viswa-mark { flex-shrink: 0; }
-.vehicle-badge {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  color: var(--teal);
-  border: 1px solid var(--border);
-  padding: 4px 8px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.header-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
 /* Help icon + popup tip: replaces inline helper paragraphs (SETUP) */
 .help-icon {
@@ -83,13 +70,12 @@
   letter-spacing: 0.16em;
   border: 1px solid var(--ghost-border);
 }
-/* Connected: white. Disconnected: muted gray. */
+/* Connected: white/teal. Connecting: amber. Disconnected: muted gray. */
 .connection-status.connected { background: transparent; color: var(--teal); border-color: var(--teal); }
+.connection-status.connecting { background: transparent; color: #ffcc00; border-color: #ffcc00; }
 .connection-status.disconnected { background: transparent; color: var(--muted); border-color: var(--ghost-border); }
 
-/* ARM pill: readonly indicator (toggle lives on the CONTROL tab button) */
-#armBtn { background: transparent; color: var(--muted); border: 1px solid var(--ghost-border); cursor: default; }
-#armBtn.armed { background: var(--red); border-color: var(--red); color: #FFFFFF; }
+/* ARM pill styles retired with the one-line header (arm lives on CONTROL). */
 
 #fullscreenBtn {
   background: transparent;
@@ -204,9 +190,31 @@
   letter-spacing: 0.06em;
   color: var(--teal);
 }
-.console-line { margin-bottom: 2px; word-break: break-all; }
+.console-line {
+  margin-bottom: 3px;
+  line-height: 1.55;
+  /* Wrap at word boundaries; break long tokens only when they overflow.
+     break-all chopped words mid-glyph ("reconnectin g."). Hanging indent
+     keeps wrapped continuations visually inside their own line. */
+  word-break: normal;
+  overflow-wrap: anywhere;
+  padding-left: 10px;
+  text-indent: -10px;
+}
 .console-line.err { color: #FF0A0A; font-weight: 700; }
 .console-line.dim { color: var(--muted); }
+.console-line.out { color: var(--text); font-weight: 700; }
+/* Console input: Arduino-IDE-monitor row — type a command, Send/Enter ships it
+   over the live link (raw line on USB serial, {"cli"} on Wi-Fi). */
+.console-input-row { display: flex; gap: 8px; margin-top: 8px; }
+.console-input-row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+.console-input-row .control-btn { flex: 0 0 auto; min-height: 44px; }
 .console-clear-btn {
   margin-top: 6px;
   background: transparent;
@@ -241,14 +249,50 @@
 .instruments .inst { flex: 1; min-width: 150px; display: flex; flex-direction: column; align-items: center; }
 .instruments canvas { background: #000000; border: 1px solid var(--border); max-width: 100%; }
 @media (max-width: 768px) {
-  .header { padding: 8px 10px; gap: 6px; }
-  .header-left, .header-right { gap: 6px; }
-  .connection-status { padding: 4px 8px; font-size: 10px; letter-spacing: 0.1em; display: inline-flex; align-items: center; justify-content: center; }
-  .battery-indicator { padding: 4px 6px; min-height: 44px; gap: 4px; }
-  .vehicle-badge { font-size: 9px; padding: 3px 6px; min-height: 44px; display: inline-flex; align-items: center; }
-  /* Optical centering: all-caps has no descenders, reads high when centered */
-  .connection-status, .vehicle-badge, .battery-indicator { transform: translateY(1px); }
-  #fullscreenBtn { padding: 4px 8px; }
+  /* Header on a phone: ONE row — battery, link pill, fullscreen square.
+     The old two-row ARM/BALANCING pills are gone (arm lives on CONTROL). */
+  .header {
+    padding: 8px 10px;
+    gap: 6px;
+    align-items: stretch;
+    flex-wrap: nowrap;
+  }
+  .header > * {
+    min-height: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform: none;
+  }
+  /* Link pill takes the middle stretch; battery hugs left, icon hugs right. */
+  #connectionStatus { flex: 1 1 auto; min-width: 0; }
+  .battery-indicator { flex: 0 0 auto; }
+  #fullscreenBtn {
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #fullscreenBtn svg { width: 16px; height: 16px; }
+  .connection-status { padding: 4px 8px; font-size: 10px; letter-spacing: 0.1em; }
+  .battery-indicator { padding: 4px 6px; gap: 4px; }
+  /* Fullscreen on a phone: the hole-punch camera sits in the top edge, so the
+     whole UI starts below it. max() keeps the 28px guarantee on devices that
+     report no safe-area inset, without double-counting on ones that do.
+     Normal (non-fullscreen) view is untouched. */
+  html:fullscreen .header, html:-webkit-full-screen .header {
+    padding-top: max(28px, calc(8px + env(safe-area-inset-top, 0px)));
+  }
+  /* uPlot draws its x tick labels at the container's bottom edge: clip any
+     overflow so date fragments can never bleed into the legend checkboxes. */
+  #angleChart { overflow: hidden; }
+  .graph-legend { margin-top: 12px; }
 }
 
 @media (max-width: 768px) {
@@ -262,4 +306,27 @@
   .vehicle-row select { width: 100%; }
   .graph-legend { gap: 8px 16px; }
   #angleChart { height: 260px; }
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  /* CONTROL fills the column: card stretches to the tab bar and spreads its
+     content, so the arm button lands just above the tabs instead of floating
+     mid-screen with dead dotted space below the hint. */
+  .main-content:has(#panel-control.active) { display: flex; flex-direction: column; }
+  .main-content:has(#panel-control.active) > #panel-control.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  .main-content:has(#panel-control.active) #panel-control .card {
+    flex: 1;
+    justify-content: space-evenly;
+  }
+}
+
+@media (max-width: 1023px) and (orientation: landscape) {
+  /* Link pill hugs the fullscreen icon (right) instead of floating centered
+     between battery and icon — same battery-pill-icon order as portrait. */
+  #connectionStatus { margin-left: auto; }
 }

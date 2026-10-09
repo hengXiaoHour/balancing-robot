@@ -1,5 +1,9 @@
 #include "imu.h"
 #include "../config/pins_live.h"  // g_pin_SDA/SCL live pins (NVS overrides)
+#include "../comms/cli_tee.h"
+// Wireless CLI replies (UI console -> {"cli"}): tee USB + WS console.
+#undef Serial
+#define Serial cliTee
 
 // One static object per driver; mpu points at the winner.
 static MPU6500_SPI_Custom imuSpi;

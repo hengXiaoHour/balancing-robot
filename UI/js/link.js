@@ -8,9 +8,12 @@ function escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 function addConsoleMessage(message, cls) {
-  var line = '[' + new Date().toLocaleTimeString('en-US', { hour12: false }) + '] ' + message;
+  // No timestamps: on a 180px phone console they eat a third of every line
+  // and add nothing (wall-clock already lives on the graph tooltip).
+  var line = message;
   var c = 'console-line' + (cls ? ' ' + cls : '');
-  if (!cls && /error|fail|blocked|abort/i.test(message)) c += ' err';
+  if (!cls && /^>>> /.test(message)) c += ' out';
+  else if (!cls && /error|fail|blocked|abort/i.test(message)) c += ' err';
   consoleLines.push({ t: line, c: c });
   if (consoleLines.length > maxConsoleLines) consoleLines.shift();
   var consoleEl = document.getElementById('serialConsole');
@@ -22,17 +25,49 @@ function clearConsole() {
   consoleLines = [];
   document.getElementById('serialConsole').innerHTML = '';
 }
+// Wireless serial monitor input (SERIAL CONSOLE card): same language as the
+// Arduino IDE monitor. USB serial writes the raw line; Wi-Fi sends {"cli"}
+// and the firmware runs it through the real CLI dispatcher, streaming replies
+// back as console frames (see cli_tee.h). Enter key is wired in the markup.
+function sendConsoleLine() {
+  var input = document.getElementById('consoleInput');
+  var line = input ? input.value.trim() : '';
+  if (!line) return;
+  if (!isConnected) { showError('Not connected — command not sent'); return; }
+  addConsoleMessage('>>> ' + line);
+  if (transport === 'serial') {
+    if (!serialWriter) { showError('Serial writer not ready'); return; }
+    serialWrite(line);
+  } else {
+    if (!ws || ws.readyState !== WebSocket.OPEN) { showError('Link is not open'); return; }
+    try {
+      ws.send(JSON.stringify({ cli: line }));
+    } catch (e) {
+      showError('Send failed: ' + (e.message || e));
+      return;
+    }
+  }
+  input.value = '';
+  input.focus();
+}
 
 // ===== Connection =====
 function transportTag() {
   return transport === 'serial' ? 'SER' : 'WS';
 }
-function setConnectionStatus(connected) {
+function setConnectionState(connectionState) {
+  var connected = connectionState === 'connected';
+  var connecting = connectionState === 'connecting';
   isConnected = connected;
   var statusEl = document.getElementById('connectionStatus');
-  statusEl.textContent = connected ? 'CONNECTED (' + transportTag() + ')' : 'DISCONNECTED';
-  statusEl.classList.toggle('connected', connected);
-  statusEl.classList.toggle('disconnected', !connected);
+  if (statusEl) {
+    statusEl.textContent = connected ? 'CONNECTED (' + transportTag() + ')'
+      : connecting ? 'CONNECTING (' + transportTag() + ')'
+      : 'DISCONNECTED';
+    statusEl.classList.toggle('connected', connected);
+    statusEl.classList.toggle('connecting', connecting);
+    statusEl.classList.toggle('disconnected', !connected && !connecting);
+  }
   // Mode badge is intent, not live state — dim it while offline so it can't
   // read as an active condition next to DISCONNECTED.
   var badge = document.getElementById('vehicleBadge');
@@ -46,6 +81,9 @@ function setConnectionStatus(connected) {
   if (kl2) kl2.textContent = connected ? (transport === 'serial' ? 'SER' : 'WI-FI') : '--';
   if (typeof syncOfflineOverlay === 'function') syncOfflineOverlay();
   if (typeof renderArm === 'function') renderArm();
+}
+function setConnectionStatus(connected) {
+  setConnectionState(connected ? 'connected' : 'disconnected');
 }
 var tickTimer = null;
 var pktCount = 0;
@@ -82,67 +120,168 @@ function applyTransportUI() {
   if (wsRow) wsRow.style.display = transport === 'ws' ? '' : 'none';
   if (serialRow) serialRow.style.display = transport === 'serial' ? '' : 'none';
 }
+function clearReconnectTimer() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+}
+function clearWsWatchdog() {
+  if (wsWatchdogTimer) {
+    clearInterval(wsWatchdogTimer);
+    wsWatchdogTimer = null;
+  }
+}
+function resetReconnectBackoff() {
+  reconnectAttempts = 0;
+  reconnectDelay = 1000;
+}
+function detachWebSocketHandlers(socket) {
+  if (!socket) return;
+  socket.onopen = null;
+  socket.onmessage = null;
+  socket.onerror = null;
+  socket.onclose = null;
+}
+function closeWebSocket(socket) {
+  if (!socket) return;
+  detachWebSocketHandlers(socket);
+  if (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN) {
+    try { socket.close(); } catch (e) {}
+  }
+}
+function isCurrentWebSocket(socket, generation) {
+  return transport === 'ws' && ws === socket && wsGeneration === generation;
+}
+function handleWebSocketFailure(socket, generation, reason) {
+  if (!isCurrentWebSocket(socket, generation)) return;
+  console.warn('WebSocket link failed:', reason);
+  clearWsWatchdog();
+  clearReconnectTimer();
+  ws = null;
+  wsGeneration++;
+  closeWebSocket(socket);
+  setConnectionStatus(false);
+  addConsoleMessage(reason + (wsAutoReconnect ? ' — reconnecting.' : '.'));
+  if (wsAutoReconnect) scheduleReconnect();
+}
+function startWsWatchdog(socket, generation) {
+  clearWsWatchdog();
+  var timer = setInterval(function () {
+    if (!isCurrentWebSocket(socket, generation)) {
+      clearInterval(timer);
+      return;
+    }
+    if (socket.readyState !== WebSocket.OPEN) {
+      handleWebSocketFailure(socket, generation, 'WebSocket is no longer open');
+      return;
+    }
+    if (Date.now() - wsLastMessageAt > wsWatchdogTimeout) {
+      handleWebSocketFailure(socket, generation, 'No robot telemetry for ' + (wsWatchdogTimeout / 1000).toFixed(1) + 's');
+    }
+  }, wsWatchdogInterval);
+  wsWatchdogTimer = timer;
+}
 function connectToESP32() {
   var ipInput = document.getElementById('espIpInput').value.trim();
   if (ipInput) {
     espIP = ipInput;
     localStorage.setItem('espIP', espIP);
   }
+  wsAutoReconnect = true;
+  clearReconnectTimer();
+  resetReconnectBackoff();
   attemptConnection();
 }
 function disconnectESP32(silent) {
-  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
-  reconnectAttempts = maxReconnectAttempts;
-  if (ws) { try { ws.close(); } catch (e) {} ws = null; }
+  wsAutoReconnect = false;
+  clearReconnectTimer();
+  clearWsWatchdog();
+  var socket = ws;
+  ws = null;
+  wsGeneration++;
+  closeWebSocket(socket);
   if (transport === 'ws') setConnectionStatus(false);
   if (!silent) addConsoleMessage('Disconnected by user.');
 }
 function attemptConnection() {
+  if (transport !== 'ws' || !wsAutoReconnect) return;
+
+  clearReconnectTimer();
+  clearWsWatchdog();
+  var previousSocket = ws;
+  ws = null;
+  wsGeneration++;
+  closeWebSocket(previousSocket);
+
+  var generation = wsGeneration;
+  var target = espIP;
+  var url = 'ws://' + target + ':81';
+  console.log('Connecting to ESP32 at:', target);
+  addConsoleMessage('Connecting to ' + url + ' ...');
+  setConnectionState('connecting');
+
   try {
-    if (ws) { try { ws.close(); } catch (e) {} }
-    console.log('Connecting to ESP32 at:', espIP);
-    addConsoleMessage('Connecting to ws://' + espIP + ':81 ...');
-    ws = new WebSocket('ws://' + espIP + ':81');
-    ws.onopen = function () {
+    var socket = new WebSocket(url);
+    ws = socket;
+    socket.onopen = function () {
+      if (!isCurrentWebSocket(socket, generation)) {
+        closeWebSocket(socket);
+        return;
+      }
       console.log('WebSocket connected to ESP32');
+      clearReconnectTimer();
+      resetReconnectBackoff();
+      wsLastMessageAt = Date.now();
       setConnectionStatus(true);
-      reconnectAttempts = 0;
-      reconnectDelay = 1000;
-      addConsoleMessage('Connected to ESP32 at ' + espIP);
+      startWsWatchdog(socket, generation);
+      addConsoleMessage('Connected to ESP32 at ' + target);
       loadStateFromDevice();
     };
-    ws.onmessage = function (event) {
+    socket.onmessage = function (event) {
+      if (!isCurrentWebSocket(socket, generation)) return;
       try {
-        handleDeviceMessage(JSON.parse(event.data));
+        var data = JSON.parse(event.data);
+        wsLastMessageAt = Date.now();
+        handleDeviceMessage(data);
       } catch (e) {
         console.error('Failed to parse message:', e);
       }
     };
-    ws.onerror = function (error) {
+    socket.onerror = function (error) {
+      if (!isCurrentWebSocket(socket, generation)) return;
       console.error('WebSocket error:', error);
-      setConnectionStatus(false);
+      handleWebSocketFailure(socket, generation, 'WebSocket error');
     };
-    ws.onclose = function () {
-      console.log('WebSocket disconnected, attempting to reconnect...');
-      if (transport === 'ws') setConnectionStatus(false);
-      if (transport === 'ws') scheduleReconnect();
+    socket.onclose = function () {
+      if (!isCurrentWebSocket(socket, generation)) return;
+      handleWebSocketFailure(socket, generation, 'WebSocket closed');
     };
   } catch (e) {
-    setConnectionStatus(false);
-    console.error('Connection error:', e);
-    scheduleReconnect();
+    if (transport === 'ws' && wsGeneration === generation) {
+      ws = null;
+      setConnectionStatus(false);
+      console.error('Connection error:', e);
+      addConsoleMessage('Connection failed — reconnecting.');
+      if (wsAutoReconnect) scheduleReconnect();
+    }
   }
 }
 function scheduleReconnect() {
+  if (transport !== 'ws' || !wsAutoReconnect || reconnectTimer) return;
   if (reconnectAttempts >= maxReconnectAttempts) {
     console.log('Max reconnect attempts reached, waiting for manual reconnect');
+    addConsoleMessage('Reconnect limit reached — use CONNECT to retry.');
     return;
   }
+  var delay = reconnectDelay;
   reconnectAttempts++;
-  reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay);
-  console.log('Reconnect attempt ' + reconnectAttempts + ' in ' + reconnectDelay.toFixed(0) + 'ms...');
-  if (reconnectTimer) clearTimeout(reconnectTimer);
-  reconnectTimer = setTimeout(attemptConnection, reconnectDelay);
+  reconnectDelay = Math.min(delay * 1.5, maxReconnectDelay);
+  console.log('Reconnect attempt ' + reconnectAttempts + ' in ' + delay.toFixed(0) + 'ms...');
+  reconnectTimer = setTimeout(function () {
+    reconnectTimer = null;
+    attemptConnection();
+  }, delay);
 }
 
 // ===== Shared device-message render (both transports land here) =====
@@ -212,11 +351,8 @@ function handleDeviceMessage(data) {
     if (klb) klb.style.width = Math.min(100, data.loop_rate) + '%';
   }
   if (data.throttle !== undefined) {
-    document.getElementById('telem-throttle').textContent = data.throttle.toFixed(0);
-    var kt = document.getElementById('kpi-thr');
-    if (kt) kt.textContent = data.throttle.toFixed(0);
-    var ktb = document.getElementById('kpi-thr-bar');
-    if (ktb) ktb.style.width = Math.min(100, Math.max(0, data.throttle)) + '%';
+    // Quadcopter-era throttle readouts (telem-throttle, kpi-thr) were removed
+    // from the balancing UI; the value is still accepted on the wire and ignored.
   }
   if (data.filter !== undefined) document.getElementById('telem-filter').textContent = data.filter;
   if (data.filter_time !== undefined) document.getElementById('telem-filter-time').textContent = data.filter_time.toFixed(0);
@@ -369,8 +505,13 @@ function deviceSend(obj) {
     serialSendObject(obj);
     return true;
   }
-  if (!isConnected || !ws || ws.readyState !== WebSocket.OPEN) {
+  if (!isConnected || !ws) {
     showError('Not connected to ESP32');
+    return false;
+  }
+  if (ws.readyState !== WebSocket.OPEN) {
+    handleWebSocketFailure(ws, wsGeneration, 'WebSocket send failed: link is not open');
+    showError('Connection lost — reconnecting');
     return false;
   }
   try {
@@ -378,7 +519,7 @@ function deviceSend(obj) {
     return true;
   } catch (e) {
     console.error('Failed to send command:', e);
-    setConnectionStatus(false);
+    handleWebSocketFailure(ws, wsGeneration, 'WebSocket send failed');
     return false;
   }
 }
@@ -437,14 +578,19 @@ function sendCommand() {
     serialSendStick(cmd);
     return;
   }
-  if (!isConnected || !ws || ws.readyState !== WebSocket.OPEN) {
+  if (!isConnected || !ws) {
     console.log('Not connected, command buffered locally');
+    return;
+  }
+  if (ws.readyState !== WebSocket.OPEN) {
+    handleWebSocketFailure(ws, wsGeneration, 'Command link is no longer open');
     return;
   }
   try {
     ws.send(JSON.stringify(cmd));
   } catch (e) {
     console.error('Failed to send command:', e);
+    handleWebSocketFailure(ws, wsGeneration, 'WebSocket command send failed');
   }
 }
 setInterval(sendCommand, 50);

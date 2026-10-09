@@ -1,19 +1,23 @@
 #include "comms_mode.h"
 #include <Preferences.h>
 #include "../config/settings.h"  // ENABLE_ESPNOW + CONTROLLER_MAC_* seeds
+#include "cli_tee.h"
+// Wireless CLI replies (UI console -> {"cli"}): tee USB + WS console.
+#undef Serial
+#define Serial cliTee
 
 // Live values seed from compile-time defaults, NVS overrides after.
 bool g_comms_espnow = (ENABLE_ESPNOW != 0);
 uint8_t g_peer_mac[6] = {CONTROLLER_MAC_0, CONTROLLER_MAC_1, CONTROLLER_MAC_2,
                          CONTROLLER_MAC_3, CONTROLLER_MAC_4, CONTROLLER_MAC_5};
-bool g_comms_ap = false;  // STA join by default
+bool g_comms_ap = true;   // AP hotspot by default (NVS "wifimode" overrides)
 
 static void seedDefaults() {
   g_comms_espnow = (ENABLE_ESPNOW != 0);
   const uint8_t seed[6] = {CONTROLLER_MAC_0, CONTROLLER_MAC_1, CONTROLLER_MAC_2,
                            CONTROLLER_MAC_3, CONTROLLER_MAC_4, CONTROLLER_MAC_5};
   memcpy(g_peer_mac, seed, 6);
-  g_comms_ap = false;
+  g_comms_ap = true;
 }
 
 static void macToStr(const uint8_t m[6], char out[18]) {
@@ -49,7 +53,7 @@ void loadCommsFromNVS() {
   g_comms_espnow = (mode == "espnow");
   uint8_t m[6];
   if (strToMac(p.getString("mac", ""), m)) memcpy(g_peer_mac, m, 6);
-  String wm = p.getString("wifimode", "sta");
+  String wm = p.getString("wifimode", "ap");
   wm.toLowerCase();
   g_comms_ap = (wm == "ap");
   p.end();
@@ -95,7 +99,7 @@ bool setStagedComms(const String& name, const String& value, String& err) {
   if (name == "wifimode" || name == "wifi") {
     if (v == "sta") { g_comms_ap = false; return true; }
     if (v == "ap") { g_comms_ap = true; return true; }
-    err = "wifimode must be sta or ap (sta by default)";
+    err = "wifimode must be sta or ap (ap by default)";
     return false;
   }
   err = "unknown key. keys: mode mac wifimode";
@@ -108,6 +112,6 @@ void printCommsToSerial() {
   Serial.println("--- comms (live) ---");
   Serial.printf("link    : %s\n", g_comms_espnow ? "espnow (external controller)" : "ws (WebUI :80/:81)");
   Serial.printf("peer    : %s\n", mac);
-  Serial.printf("wifimode: %s\n", g_comms_ap ? "ap (hotspot)" : "sta (join, default)");
+  Serial.printf("wifimode: %s\n", g_comms_ap ? "ap (hotspot, default)" : "sta (join)");
   Serial.printf("source  : %s\n", commsHasNvsOverrides() ? "NVS overrides" : "defaults");
 }

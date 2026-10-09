@@ -97,6 +97,8 @@ void broadcastState();
 void broadcastTelemetry();
 void broadcastTelemetryImmediate();  // Force immediate broadcast (e.g. failsafe events)
 void broadcastConsoleMessage(const String& message);
+void cliConsoleOut(const String& chunk);  // sanitized WS sink for the CLI tee
+void queueWsCliLine(const String& line);  // UI console input -> loop-context dispatch
 void handleWebSocketLoop();
 
 #endif

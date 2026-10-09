@@ -1,5 +1,5 @@
-// stick.js — single joystick canvas + mappings per vehicle + select-bug fix listeners.
-// Depends on state.js (state, vehicle, isConnected, maxRollPitchAngle).
+// stick.js — single joystick canvas + balancing-robot mapping + select-bug fix listeners.
+// Depends on state.js (state, isConnected, maxRollPitchAngle, yawDeadzoneDeg).
 var stickCanvas = document.getElementById('joystick1');
 var stickCtx = stickCanvas.getContext('2d');
 var stickMax = 100;
@@ -78,7 +78,7 @@ function drawStick() {
   stickCtx.stroke();
   // yaw deadzone rails (about fore-aft): lean past them to yaw
   var dzDraw = (typeof yawDeadzoneDeg === 'number' && isFinite(yawDeadzoneDeg)) ? yawDeadzoneDeg : 10;
-  if (typeof vehicle !== 'undefined' && vehicle === 'balancing' && dzDraw > 0) {
+  if (dzDraw > 0) {
     stickCtx.save();
     stickCtx.strokeStyle = 'rgba(138,138,138,0.35)';
     stickCtx.lineWidth = 1;
@@ -193,7 +193,7 @@ function odStop() {
   if (odTimer) { clearInterval(odTimer); odTimer = null; }
 }
 function odWatch(mag) {
-  if (vehicle === 'balancing' && stickDragging && mag > 0.95) {
+  if (stickDragging && mag > 0.95) {
     if (!odTimer) { odStart = Date.now(); odFactor = 1; odTimer = setInterval(odTick, 100); }
   } else {
     odStop();
@@ -201,20 +201,12 @@ function odWatch(mag) {
 }
 function applyStickOutput() {
   var normX = odNormX, normY = odNormY;
-  if (vehicle === 'balancing') {
-    // Y -> pitch / speed setpoint, X -> yaw. Throttle held at arm value.
-    // Negated: canvas Y is down-positive, lean target is forward-positive.
-    state.pitch = -normY * maxRollPitchAngle * odFactor;
-    state.roll = 0;
-    state.yaw = yawWithDeadzone(normX, normY, yawRate() * odFactor);
-    state.throttle = state.armed ? 0.2 : 0;
-  } else {
-    // rccar: Y -> throttle 0-100%, X -> yaw / steer
-    state.throttle = Math.max(0, Math.min(1, (1 - normY) / 2));
-    state.yaw = normX * 45;
-    state.pitch = 0;
-    state.roll = 0;
-  }
+  // Y -> pitch / speed setpoint, X -> yaw. Throttle held at arm value.
+  // Negated: canvas Y is down-positive, lean target is forward-positive.
+  state.pitch = -normY * maxRollPitchAngle * odFactor;
+  state.roll = 0;
+  state.yaw = yawWithDeadzone(normX, normY, yawRate() * odFactor);
+  state.throttle = state.armed ? 0.2 : 0;
   updateDisplay();
   drawStick();
 }
@@ -222,12 +214,8 @@ function stickReset() {
   stickDragging = false;
   odStop();
   if (stickCanvas.width) { stickX = stickCanvas.width / 2; stickY = stickCanvas.height / 2; }
-  if (vehicle === 'balancing') {
-    state.pitch = 0; state.yaw = 0; state.roll = 0;
-    state.throttle = state.armed ? 0.2 : 0;
-  } else {
-    state.throttle = 0; state.yaw = 0; state.pitch = 0; state.roll = 0;
-  }
+  state.pitch = 0; state.yaw = 0; state.roll = 0;
+  state.throttle = state.armed ? 0.2 : 0;
   updateDisplay();
   drawStick();
 }
@@ -235,7 +223,8 @@ function updateDisplay() {
   document.getElementById('pitch-val').textContent = state.pitch.toFixed(1);
   document.getElementById('roll-val').textContent = state.roll.toFixed(1);
   document.getElementById('yaw-val').textContent = state.yaw.toFixed(0);
-  document.getElementById('throttle-val').textContent = (state.throttle * 100).toFixed(0);
+  // NOTE: state.throttle is still held (armed ? 0.2 : 0) and sent on the wire —
+  // only its quadcopter-era readout row was removed from the UI.
 }
 // Text-select bug fix: preventDefault + passive:false + touchcancel + contextmenu
 stickCanvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });

@@ -83,6 +83,7 @@ void resetCascadePID();
 // ===== Serial Commands API (see serial_commands.cpp) =====
 void printWelcomeBanner();
 void handleSerialCommand();
+void queueWsCliLine(const String& line);  // wireless CLI input, drained in loop
 void printTelemetryStatus();  // rate-limited [LOOP] status line (called from loop())
 
 #endif

@@ -2,6 +2,10 @@
 #include "wifi_ota.h"
 #include "wifi_creds.h"  // g_wifi_ssid/pass, g_ap_ssid/pass (NVS overrides)
 #include "../control/motor_control.h"  // stopMotors()
+#include "cli_tee.h"
+// Wireless CLI replies (UI console -> {"cli"}): tee USB + WS console.
+#undef Serial
+#define Serial cliTee
 
 // WiFi mode
 bool useAPMode = false;  // false = STA mode (default), true = AP mode

@@ -3,6 +3,7 @@
 #include "websocket_handler.h"
 #include "../control/motor_control.h"  // stopMotors()
 #include "../control/pid_controller.h"  // speed_x/y_setpoint, yaw_rate_target
+#include "../web/web_assets.h"
 
 // ===== WebSocket Server =====
 WebServer webServer(80);
@@ -20,10 +21,39 @@ const unsigned long TELEMETRY_INTERVAL = 100;  // Send every 100ms
 
 // ===== Initialize WebSocket Server =====
 void initWebSocket() {
-  // Setup WebSocket server
+  // Setup WebSocket server. Heartbeat closes half-open TCP clients even when
+  // Wi-Fi disappears without sending a WebSocket close frame.
   webSocket.begin();
   webSocket.onEvent(handleWebSocketEvent);
-  Serial.println("[WS] ready :81");
+  webSocket.enableHeartbeat(2000, 2000, 2);
+  Serial.println("[WS] ready :81 (heartbeat 2s/2s x2)");
+
+  // Static Web UI served from flash (see tools/gen_web_assets.py).
+  for (size_t i = 0; i < WEB_ASSET_COUNT; i++) {
+    // Copy the small fields to RAM; the body stays in PROGMEM and is
+    // streamed out via send_P().
+    String route = String(WEB_ASSETS[i].path);
+    String mime = String(WEB_ASSETS[i].mime);
+    const uint8_t* body = WEB_ASSETS[i].body;
+    size_t len = WEB_ASSETS[i].len;
+    webServer.on(route, HTTP_GET, [mime, body, len]() {
+      webServer.sendHeader("Cache-Control", "no-cache");
+      webServer.send_P(200, mime.c_str(), (PGM_P)body, len);
+    });
+  }
+  webServer.on("/", HTTP_GET, []() {
+    for (size_t i = 0; i < WEB_ASSET_COUNT; i++) {
+      if (strcmp(WEB_ASSETS[i].path, "/index.html") == 0) {
+        webServer.sendHeader("Cache-Control", "no-cache");
+        webServer.send_P(200, WEB_ASSETS[i].mime, (PGM_P)WEB_ASSETS[i].body, WEB_ASSETS[i].len);
+        return;
+      }
+    }
+    webServer.send(404, "text/plain", "index not embedded");
+  });
+  webServer.onNotFound([]() { webServer.send(404, "text/plain", "Not found"); });
+  webServer.begin();
+  Serial.println("[WEB] ready :80 (UI from flash)");
 }
 
 // ===== WebSocket Event Handler =====
@@ -31,14 +61,17 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t l
   switch(type) {
     case WStype_DISCONNECTED:
       Serial.print("[WS] Client #"); Serial.print(num); Serial.println(" disconnected");
-      webSocketConnected = false;
+      // The server supports multiple browser clients. This client is already
+      // removed from the library's list when its callback runs, so preserve
+      // connectivity while any other tab remains connected.
+      webSocketConnected = webSocket.connectedClients() > 0;
       break;
 
     case WStype_CONNECTED: {
       IPAddress ip = webSocket.remoteIP(num);
       Serial.print("[WS] Client #"); Serial.print(num); Serial.print(" connected from ");
       Serial.println(ip);
-      webSocketConnected = true;
+      webSocketConnected = webSocket.connectedClients() > 0;
       // Send current state to new client
       broadcastState();
       break;
@@ -164,8 +197,7 @@ void handleWebSocketCommand(const String& jsonStr) {
   }
 
   // Handle reboot command: {"reboot":true} — disarm first, then restart
-  if (jsonStr.indexOf("\"reboot\":") != -1) {
-    motorsArmed = false;
+  if (jsonStr.indexOf("\"reboot\":") != -1) {    motorsArmed = false;
     motorsActive = false;
     throttle = 0.0f;
     pidIntegral_Pitch = 0.0f;
@@ -173,6 +205,32 @@ void handleWebSocketCommand(const String& jsonStr) {
     broadcastConsoleMessage("[INFO] Rebooting via WebSocket...");
     delay(200);
     ESP.restart();
+  }
+
+  // Wireless CLI: UI console input arrives as {"cli":"help"} — same language
+  // as the USB serial monitor. Queued for loop-context dispatch so replies
+  // stream back through the CLI tee (see cli_tee.h). Minimal JSON unescape
+  // (\" and \\) covers passwords/args; anything exotic needs USB serial.
+  if (jsonStr.indexOf("\"cli\":") != -1) {
+    int qs = jsonStr.indexOf("\"cli\":") + 6;
+    int qlen = jsonStr.length();
+    while (qs < qlen && jsonStr[qs] != '"') qs++;
+    String line = "";
+    if (qs < qlen) {
+      for (int i = qs + 1; i < qlen; i++) {
+        char c = jsonStr[i];
+        if (c == '\\' && i + 1 < qlen && (jsonStr[i + 1] == '"' || jsonStr[i + 1] == '\\')) {
+          line += jsonStr[i + 1];
+          i++;
+        } else if (c == '"') {
+          break;
+        } else {
+          line += c;
+        }
+      }
+    }
+    line.trim();
+    if (line.length()) queueWsCliLine(line);
   }
 
   // Handle PID tuning (simple string parsing)
@@ -456,8 +514,36 @@ void broadcastConsoleMessage(const String& message) {
   webSocket.broadcastTXT(output);
 }
 
+// Sanitized WS sink for the CLI tee (see cli_tee.h). Unlike
+// broadcastConsoleMessage this never touches Serial (the tee already
+// forwarded the bytes to USB) and it escapes JSON so CLI output containing
+// quotes or backslashes cannot corrupt the frame. One WS message per line;
+// blank spacing lines are dropped.
+void cliConsoleOut(const String& chunk) {
+  String s = chunk;
+  s.replace("\r", "");
+  int start = 0;
+  int total = s.length();
+  while (start <= total) {
+    int nl = s.indexOf('\n', start);
+    String line = (nl == -1) ? s.substring(start) : s.substring(start, nl);
+    if (line.length()) {
+      if (line.length() > 512) line = line.substring(0, 512);
+      line.replace("\\", "\\\\");
+      line.replace("\"", "\\\"");
+      if (webSocketConnected) webSocket.broadcastTXT("{\"console\":\"" + line + "\"}");
+    }
+    if (nl == -1) break;
+    start = nl + 1;
+  }
+}
+
 // ===== Process WebSocket in Main Loop =====
 void handleWebSocketLoop() {
   webSocket.loop();
+  webServer.handleClient();
+  // Keep the public/serial link flag derived from the actual client set. This
+  // also catches heartbeat cleanup paths that do not emit a normal UI event.
+  webSocketConnected = webSocket.connectedClients() > 0;
   broadcastTelemetry();
 }

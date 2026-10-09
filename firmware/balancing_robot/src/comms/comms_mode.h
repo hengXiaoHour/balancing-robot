@@ -21,7 +21,8 @@ bool commsHasNvsOverrides();
 // Convenience for setup()/loop() branches (replaces #if ENABLE_ESPNOW).
 inline bool commsUseEspNow() { return g_comms_espnow; }
 
-// Stage one value in RAM (validated). Name already lowercased by dispatcher.
+// Apply one validated value in RAM. The serial CLI persists it immediately;
+// the setup wizard also calls saveCommsToNVS() after prompting.
 // mode: ws|espnow, mac: AA:BB:CC:DD:EE:FF, wifimode: sta|ap.
 // Returns false + err on reject.
 bool setStagedComms(const String& name, const String& value, String& err);

@@ -2,6 +2,10 @@
 #include "motor_control.h"
 #include "../config/settings.h"  // PWM_*, PID_MAX, ROBOT_* limits
 #include "../config/pins_live.h"  // g_pin_* live pins (NVS overrides)
+#include "../comms/cli_tee.h"
+// Wireless CLI replies (UI console -> {"cli"}): tee USB + WS console.
+#undef Serial
+#define Serial cliTee
 
 // Definitions live here (were in balancing_robot.ino); externs in *_handler.h / control_task.h
 bool motorsArmed = false;
@@ -19,6 +23,10 @@ bool testMotorActive = false;  // stubs — test mode disabled in BALANCING_ROBO
 
 // ===== Stop All Motors =====
 void stopMotors() {
+  // Zero the published outputs too, so telemetry reflects "stopped" instead of
+  // freezing on the last commanded value.
+  pidOutput_Left = 0.0f;
+  pidOutput_Right = 0.0f;
   ledcWrite(g_pin_ENA, 0);
   ledcWrite(g_pin_ENB, 0);
   digitalWrite(g_pin_IN1, LOW);
@@ -110,11 +118,16 @@ void updateMotorTest() {
     Serial.println(names[phase]);
   }
 
+  // Publish each phase so the WebUI motor bars track the wheel test too.
   switch (phase) {
-    case 0: setLeftMotorSpeed(TEST_PWM);   setRightMotorSpeed(0);         break;
-    case 1: setLeftMotorSpeed(-TEST_PWM);  setRightMotorSpeed(0);         break;
-    case 2: setLeftMotorSpeed(0);          setRightMotorSpeed(TEST_PWM);  break;
-    case 3: setLeftMotorSpeed(0);          setRightMotorSpeed(-TEST_PWM); break;
+    case 0: pidOutput_Left = TEST_PWM;  pidOutput_Right = 0.0f;
+            setLeftMotorSpeed(TEST_PWM);   setRightMotorSpeed(0);         break;
+    case 1: pidOutput_Left = -TEST_PWM; pidOutput_Right = 0.0f;
+            setLeftMotorSpeed(-TEST_PWM);  setRightMotorSpeed(0);         break;
+    case 2: pidOutput_Left = 0.0f;      pidOutput_Right = TEST_PWM;
+            setLeftMotorSpeed(0);          setRightMotorSpeed(TEST_PWM);  break;
+    case 3: pidOutput_Left = 0.0f;      pidOutput_Right = -TEST_PWM;
+            setLeftMotorSpeed(0);          setRightMotorSpeed(-TEST_PWM); break;
     default:
       stopMotors();
       testMotorActive = false;
@@ -206,6 +219,13 @@ void updateVehicleMotorControl() {
 
   left_cmd = constrain(left_cmd, -PID_MAX, PID_MAX);
   right_cmd = constrain(right_cmd, -PID_MAX, PID_MAX);
+
+  // Publish the mixed commands BEFORE driving the motors. These are what the
+  // WebUI telemetry broadcasts as motor_left / motor_right — if they are not
+  // written here they stay at their initial 0.0f forever and the UI shows a
+  // dead motor pair while the wheels are actually turning.
+  pidOutput_Left = left_cmd;
+  pidOutput_Right = right_cmd;
 
   setLeftMotorSpeed(left_cmd);
   setRightMotorSpeed(right_cmd);

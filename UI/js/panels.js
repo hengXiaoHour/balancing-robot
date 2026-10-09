@@ -26,7 +26,10 @@ function showPanel(name) {
     } else {
       var c = document.getElementById('angleChart');
       if (c && window.angleChartInstance) {
-        try { window.angleChartInstance.setSize({ width: c.clientWidth, height: 300 }); } catch (e) {}
+        // Height must follow the CSS box (260px on phones): a hardcoded 300
+        // draws 40px past the container and the x tick labels bleed into the
+        // legend checkboxes below.
+        try { window.angleChartInstance.setSize({ width: c.clientWidth, height: c.clientHeight || 300 }); } catch (e) {}
       }
     }
   }
@@ -107,12 +110,8 @@ function toggleArm() {
   }
   state.armed = !state.armed;
   renderArm();
-  if (state.armed) {
-    if (vehicle === 'balancing') state.throttle = 0.2;
-    else state.throttle = 0;
-  } else {
-    state.throttle = 0;
-  }
+  // Balancing robot holds a small throttle whenever armed.
+  state.throttle = state.armed ? 0.2 : 0;
   updateDisplay();
   userJustToggledArm = true;
   setTimeout(function () { userJustToggledArm = false; }, ARM_TOGGLE_DEBOUNCE);
@@ -151,7 +150,11 @@ function drawAttitude(roll, pitch) {
   ctx.fillRect(0, 0, size, size);
   ctx.translate(center, center);
   ctx.rotate((roll * Math.PI) / 180);
-  var px = radius / 45; // px per degree: +/-45deg fills radius
+  // Pitch ladder scale. The ladder shares the disc with the fixed roll arc
+  // ticks near the rim, so +/-40deg must land well inside the tick ring or the
+  // "+40" label lands on the 45deg tick. 1/58 of the radius per degree keeps
+  // the outermost rung 69% out, leaving a clear band for the arc.
+  var px = radius / 58;
   var pitchOff = pitch * px;
   // sky (dark gray) above horizon, black ground below
   ctx.fillStyle = '#363636';
@@ -169,11 +172,12 @@ function drawAttitude(roll, pitch) {
   ctx.font = '700 9px "JetBrains Mono", monospace';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  for (var a = -40; a <= 40; a += 10) {
+  for (var a = -30; a <= 30; a += 10) {
     if (a === 0) continue;
     var y = -pitchOff - a * px;
-    if (y < -radius * 1.6 || y > radius * 1.6) continue;
+    // Only draw a rung while the whole thing (rung + label) is inside the bezel.
     var wdt = (a % 20 === 0) ? 26 : 14;
+    if (Math.abs(y) + 8 > radius - 16) continue;
     ctx.strokeStyle = 'rgba(242,242,242,0.75)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -183,7 +187,7 @@ function drawAttitude(roll, pitch) {
     ctx.fillText((a > 0 ? '+' : '') + a, wdt + 3, y);
   }
   ctx.restore();
-  // roll arc ticks (fixed to frame)
+  // roll arc ticks (fixed to frame). Kept outboard of the ladder band.
   ctx.save();
   ctx.translate(center, center);
   for (var d = -45; d <= 45; d += 15) {
@@ -384,7 +388,10 @@ function toggleDataset(datasetIndex) {
   }
 }
 function addGraphDataPoint(roll, pitch, yaw) {
-  var timestamp = Date.now();
+  // uPlot's time scale wants UNIX seconds. Storing epoch MILLISECONDS here is
+  // what used to print 1,791,525,840,000-style tick labels that overflowed
+  // onto the legend checkboxes on a phone.
+  var timestamp = Date.now() / 1000;
   graphData.labels.push(timestamp);
   graphData.roll.push(parseFloat(roll) || 0);
   graphData.pitch.push(parseFloat(pitch) || 0);
@@ -398,27 +405,10 @@ function addGraphDataPoint(roll, pitch, yaw) {
     graphData.setpoint.shift();
   }
   if (window.angleChartInstance) {
+    // Y is locked to +/-20deg (balancing angles live near zero): no auto-zoom,
+    // no stretching — a -35deg tumble clips at the rail instead of rescaling
+    // the whole graph and flattening the small oscillations that matter.
     var data = [graphData.labels.slice(), graphData.roll.slice(), graphData.pitch.slice(), graphData.yaw.slice(), graphData.setpoint.slice()];
-    try {
-      var autoZoomEl = document.getElementById('autoZoomCheck');
-      if (autoZoomEl && autoZoomEl.checked) {
-        var values = [];
-        var series = window.angleChartInstance.series || [];
-        var seriesMap = [graphData.roll, graphData.pitch, graphData.yaw];
-        for (var i = 1; i <= 3; i++) {
-          var s = series[i];
-          if (s && s.show && seriesMap[i - 1].length) values = values.concat(seriesMap[i - 1]);
-        }
-        if (values.length > 0) {
-          var min = Math.min.apply(null, values);
-          var max = Math.max.apply(null, values);
-          if (min === max) { min -= 5; max += 5; }
-          else { var pad = Math.max(5, (max - min) * 0.12); min -= pad; max += pad; }
-          try { window.angleChartInstance.setScale('y', { min: min, max: max }); }
-          catch (e) { try { window.angleChartInstance.setScale('y', [min, max]); } catch (e2) {} }
-        }
-      }
-    } catch (e) { console.warn('Auto-zoom error:', e); }
     window.angleChartInstance.setData(data, true);
   }
 }
@@ -430,20 +420,27 @@ function initializeAngleChart() {
   var opts = {
     title: 'Angle Graphs',
     width: container.clientWidth || 600,
-    height: 300,
+    // Height follows the CSS box (260px on phones): a hardcoded 300 draws past
+    // the container and the x tick labels bleed into the legend checkboxes.
+    height: container.clientHeight || 300,
     series: [
       { label: 'Time', value: function (self, rawValue) {
         if (rawValue == null) return '--';
-        return new Date(rawValue).toLocaleTimeString('en-US', { hour12: false });
+        return new Date(rawValue * 1000).toLocaleTimeString('en-US', { hour12: false });
       }},
       { label: 'Roll', stroke: '#FF0A0A', fill: 'rgba(255,10,10,0.1)', width: 2, spanGaps: false, show: true },
       { label: 'Pitch', stroke: '#F2F2F2', fill: 'rgba(242,242,242,0.1)', width: 2, spanGaps: false, show: true },
       { label: 'Yaw', stroke: '#8A8A8A', fill: 'rgba(138,138,138,0.1)', width: 2, spanGaps: false, show: false },
       { label: 'Setpoint (0\u00B0)', stroke: '#ffcc00', width: 2, dash: [4, 4], spanGaps: false, show: true }
     ],
-    scales: { x: { time: false }, y: { auto: true, range: [-180, 180] } },
+    // Y locked to the balancing envelope: values outside clip at the rail
+    // instead of rescaling the graph (see addGraphDataPoint).
+    scales: { x: { time: true }, y: { auto: false, range: [-20, 20] } },
     axes: [
-      { label: 'Time', stroke: '#8A8A8A', font: '11px Arial', grid: { stroke: 'rgba(138,138,138,0.15)', width: 0.5 } },
+      // X tick labels are wall-clock seconds fragments (:10, :15) with no
+      // meaning on a 10s rolling window — hidden entirely. The y grid plus
+      // the legend carry the reading; the cursor still tracks.
+      { show: false },
       { label: 'Angle (\u00B0)', stroke: '#8A8A8A', font: '11px Arial', grid: { stroke: 'rgba(138,138,138,0.15)', width: 0.5 } }
     ],
     legend: { show: false },

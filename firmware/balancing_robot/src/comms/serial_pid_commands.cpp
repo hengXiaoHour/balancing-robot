@@ -2,6 +2,10 @@
 #include "serial_commands.h"  // cascade vars, savePIDToPreferences(), lastPIDUpdateTime
 #include "serial_pid_commands.h"
 #include "../control/cascade_pid_controller.h"  // pitch/roll_rate_target (rate mode)
+#include "cli_tee.h"
+// Wireless CLI replies (UI console -> {"cli"}): tee USB + WS console.
+#undef Serial
+#define Serial cliTee
 
 // Definition lives here (was in balancing_robot.ino); extern in serial_commands.h
 unsigned long lastPIDUpdateTime = 0;

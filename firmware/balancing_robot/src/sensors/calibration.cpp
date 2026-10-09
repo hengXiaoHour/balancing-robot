@@ -1,5 +1,9 @@
 #include "calibration.h"
 #include "../config/settings.h"  // ACCEL_SENSITIVITY, GYRO_SENSITIVITY, ACCEL_RANGE_G
+#include "../comms/cli_tee.h"
+// Wireless CLI replies (UI console -> {"cli"}): tee USB + WS console.
+#undef Serial
+#define Serial cliTee
 
 CalibrationData calibData;
 unsigned long lastPrintTime = 0;

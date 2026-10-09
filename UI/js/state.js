@@ -1,9 +1,14 @@
 // state.js — shared state object, vehicle select + persistence, settings.
 // Plain classic script (no modules) so it works over file:// and static hosting.
 // All top-level `var` declarations are shared across the other classic scripts.
-var espIP = localStorage.getItem('espIP') || '192.168.100.27';
-var vehicle = localStorage.getItem('vehicleType') || 'balancing';
-if (['balancing', 'rccar'].indexOf(vehicle) === -1) vehicle = 'balancing';
+// When the page is served BY the robot (AP hotspot), talk to whatever host
+// served the page. File:// or static hosting falls back to the last default.
+var servedHost = (typeof location !== 'undefined' && location.hostname) ? location.hostname : '';
+var espIP = localStorage.getItem('espIP') || servedHost || '192.168.100.27';
+// Single-vehicle build: the stick is always the balancing-robot mapping.
+// Kept as a variable (not a literal at each use site) so the mapping code
+// reads the same as it did when a second vehicle existed.
+var vehicle = 'balancing';
 var maxRollPitchAngle = parseFloat(localStorage.getItem('maxAngle') || '10');
 if (!isFinite(maxRollPitchAngle)) maxRollPitchAngle = 10;
 maxRollPitchAngle = Math.max(5, Math.min(15, maxRollPitchAngle));
@@ -13,6 +18,12 @@ var yawRateMax = parseFloat(localStorage.getItem('yawRate') || '100');
 if (!isFinite(yawRateMax)) yawRateMax = 100;
 
 var ws = null;
+var wsGeneration = 0;
+var wsAutoReconnect = false;
+var wsWatchdogTimer = null;
+var wsLastMessageAt = 0;
+var wsWatchdogInterval = 250;
+var wsWatchdogTimeout = 1500;
 var isConnected = false;
 // Link transport: 'ws' (Wi-Fi WebSocket :81) or 'serial' (USB Web Serial 115200).
 // Same stick semantics, same telemetry render — only the wire format differs
@@ -37,41 +48,20 @@ var localState = { roll: 0, pitch: 0, yaw: 0, throttle: 0, armed: false };
 var userJustToggledArm = false;
 var ARM_TOGGLE_DEBOUNCE = 1500;
 
-// ===== Vehicle selector =====
-var VEHICLE_HINTS = {
-  balancing: 'Stick Y = speed setpoint, X = yaw. Throttle held at arm value.',
-  rccar: 'Stick Y = throttle 0-100%, X = steer.'
-};
-function onVehicleChange(v) {
-  vehicle = v;
-  localStorage.setItem('vehicleType', v);
-  applyVehicleUI();
-  resetStickState();
-}
+// ===== Vehicle badge (fixed: balancing robot only) =====
+var VEHICLE_HINT = 'Stick Y = speed setpoint, X = yaw. Throttle held at arm value.';
 function applyVehicleUI() {
-  var sel = document.getElementById('vehicleSelect');
-  if (sel) sel.value = vehicle;
-  var hint = document.getElementById('vehicleHint');
-  if (hint) hint.textContent = VEHICLE_HINTS[vehicle] || '';
   var badge = document.getElementById('vehicleBadge');
   if (badge) {
-    var labels = { balancing: 'BALANCING', rccar: 'RC CAR' };
-    badge.textContent = labels[vehicle] || vehicle;
-    badge.title = VEHICLE_HINTS[vehicle] || '';
+    badge.textContent = 'BALANCING';
+    badge.title = VEHICLE_HINT;
   }
   var title = document.getElementById('stickTitle');
-  if (title) {
-    title.textContent = vehicle === 'balancing' ? 'CONTROL STICK (SPEED / YAW)'
-      : 'CONTROL STICK (THROTTLE / STEER)';
-  }
+  if (title) title.textContent = 'CONTROL STICK (SPEED / YAW)';
 }
 function resetStickState() {
   state.roll = 0; state.pitch = 0; state.yaw = 0;
-  if (vehicle === 'balancing') {
-    state.throttle = state.armed ? 0.2 : 0;
-  } else {
-    state.throttle = 0;
-  }
+  state.throttle = state.armed ? 0.2 : 0;
   updateDisplay();
   drawStick();
 }

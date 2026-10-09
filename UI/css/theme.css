@@ -216,7 +216,7 @@ button.control-btn.armed { background: var(--red); border-color: var(--red); col
   .main-content:has(#panel-control.active) { padding-bottom: 12px; overflow-y: hidden; }
   .card { margin-bottom: 16px; }
   /* Touch-first sizing: min 44px targets */
-  button.control-btn, .console-clear-btn, #fullscreenBtn, #armBtn,
+  button.control-btn, .console-clear-btn, #fullscreenBtn,
   .connection-status, select, input[type="text"], input[type="number"] {
     min-height: 44px;
   }

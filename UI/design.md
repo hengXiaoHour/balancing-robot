@@ -69,10 +69,14 @@ Hierarchy is size + weight + tracking, not color. Labels are muted 11px mono tra
 - Mobile: same markup becomes fixed bottom bar via CSS only — row direction, icon-over-label, red top indicator, toggle/spacer hidden (`theme.css:123-166`).
 
 ### 5.2 Header data plate
-- `UI/css/panels.css:1-21` — Flat black bar, bottom hairline, brand left (display 15px, red span on second word), status cluster right.
+- `UI/css/panels.css:1-21` — Flat black bar, bottom hairline. Single row everywhere:
+  battery indicator, link pill (flex-1 middle stretch), 44x44 fullscreen square right.
+  The old ARM pill + BALANCING badge are gone (arm lives on CONTROL's hold button).
 - Connection pill: ghost outline; connected = teal text/border, disconnected = muted gray (`panels.css:33-35`).
-- ARM button: disarmed = ghost (muted), armed = solid red fill white text, hover red-hot (`panels.css:37-41`).
 - Battery indicator: black plate, hairline border, mono 11px uppercase (`panels.css:56-69`).
+- Header (mobile): one nowrap row, every item 44px tall; fullscreen is a 44x44 square pinned right (`panels.css` mobile block).
+- Fullscreen on a phone: header gains `max(28px, safe-area)` top padding so the
+  hole-punch camera never covers it; normal view untouched (`:fullscreen` rule).
 
 ### 5.3 Buttons
 - Primary (`button.control-btn`): solid `#CC0000` fill, white 12px mono 700 uppercase, 0.16em tracking, `8px 14px` padding. Hover: red-hot. Disabled: ghost + muted (`theme.css:56-70`).
@@ -82,18 +86,40 @@ Hierarchy is size + weight + tracking, not color. Labels are muted 11px mono tra
 ### 5.4 Telemetry data plates
 - `.card`: surface bg, 1px border, 14px padding (`panels.css:71-77`). Card titles display 14px white uppercase; subtitles muted mono 12px.
 - `.telemetry-item`: hairline bottom divider, muted uppercase micro-label, white `<strong>`, teal live `<span>` values (`panels.css:106-110`).
-- Vehicle selector row: flex wrap, muted mono label + ghost select (`panels.css:95-104`).
+- Header (mobile): two even rows, every pill 44px tall; fullscreen is a 44x44 square pinned right (`panels.css` mobile block).
 
 ### 5.5 Joystick instrument
 - `UI/css/stick.css` — `#joystick1` black plate, 1px border, crosshair cursor, 280px desktop / 240px mobile height, full-width `100dvh`-derived height on small phones (`stick.css:39-47`).
+- Landscape phone (incl. fullscreen): side-by-side grid — stick sized to the short
+  viewport (`minmax(150px, 100dvh-200px)`) with readout + arm beside it, no scroll.
+  Link pill right-packs next to the fullscreen icon (`margin-left: auto`).
+- Portrait CONTROL fills the column (flex `space-evenly`) so the arm button lands
+  just above the tab bar instead of floating mid-screen.
 - Text-select bug fix baked in: `user-select: none`, `-webkit-touch-callout: none`, `touch-action: none`, `overscroll-behavior: none` on wrap + canvas; JS uses preventDefault + `{ passive: false }` + touchcancel + contextmenu block (`UI/js/stick.js`).
-- Readout line: centered muted mono uppercase, teal values (`stick.css:24-34`).
+- Readout rows: Pitch / Roll / Yaw only. The quadcopter-era Throttle row, THR % KPI
+  and telemetry Throttle row are removed; `state.throttle` is still held and sent.
 
 ### 5.6 Console
 - `#serialConsole`: black plate, hairline border, 180px scroll region, 11px mono teal text (`panels.css:125-136`).
+  Lines carry NO timestamps (they ate a third of every phone line); typed `>>>`
+  echoes render bold white (`.out`), errors red. Wrapping is `overflow-wrap:
+  anywhere` with a hanging indent — `break-all` chopped words mid-glyph.
+- Console input row (`.console-input-row`): Arduino-IDE-monitor input — text field
+  (44px) + red Send; Enter sends too. USB serial writes the raw line; Wi-Fi sends
+  `{"cli"}` and the firmware runs it through the real CLI dispatcher, streaming
+  replies back as console frames. Firmware side: `src/comms/cli_tee.h` (a `Print`
+  tee — USB always, plus WS while serving a line; it forwards to the real
+  Serial device, CDC or UART, so both build configs work),
+  `queueWsCliLine` drained in loop context, `cliConsoleOut` sanitizes + escapes
+  JSON per line. `{"cli"}` is parsed next to the reboot handler.
 
 ### 5.7 Graph + gauges
-- `#angleChart`: full width, 300px desktop / 260px mobile. Legend muted mono uppercase (`panels.css:152-165`).
+- `#angleChart`: full width, CSS-box height (300px desktop / 260px mobile, JS sizes
+  from `clientHeight` — a hardcoded height overflowed tick labels into the legend).
+  Legend muted mono uppercase (`panels.css:152-165`), 12px gap, chart clips overflow.
+- Y locked to ±20° (`auto: false`): tumbles clip at the rail, never rescale. No Auto Zoom.
+  X axis hidden (`{ show: false }`) — wall-clock seconds fragments (`:10`, `:15`)
+  are meaningless on a 10s rolling window.
 - Attitude/compass canvases: black square plates, hairline border, wrap in flex row that stacks on mobile (`panels.css:167-170`).
 
 ### 5.8 Forms (PID / trim / settings)
@@ -108,12 +134,12 @@ Hierarchy is size + weight + tracking, not color. Labels are muted 11px mono tra
 | `UI/index.html` | ~250 | Shell markup, sidebar/header/panels, css/js/manifest links, font links |
 | `UI/css/theme.css` | ~167 | Tokens, reset, buttons, inputs, error bar, mobile tab-bar + touch rules |
 | `UI/css/sidebar.css` | ~80 | Rail, toggle, nav items, active states |
-| `UI/css/panels.css` | ~186 | Header, pills, ARM, battery, cards, telemetry, PID, console, graph, gauges |
+| `UI/css/panels.css` | ~186 | Header (one-line), pills, battery, cards, telemetry, PID, console, graph, gauges |
 | `UI/css/stick.css` | ~47 | Joystick plate, readout, phone sizing |
-| `UI/js/state.js` | ~84 | State object, vehicle select + persistence, settings |
+| `UI/js/state.js` | ~84 | State object, fixed balancing vehicle, settings |
 | `UI/js/link.js` | ~193 | WebSocket connect/reconnect, message parse, telemetry render, console |
-| `UI/js/stick.js` | ~112 | Stick canvas, per-vehicle mapping, select-bug fix listeners |
-| `UI/js/panels.js` | ~385 | Panel switching, PID/trim/calibration actions, gauges, battery, ARM, fullscreen |
+| `UI/js/stick.js` | ~112 | Stick canvas, balancing-robot mapping, select-bug fix listeners |
+| `UI/js/panels.js` | ~385 | Panel switching, PID/trim/calibration actions, gauges, battery, fullscreen |
 | `UI/manifest.webmanifest` | ~10 | Install metadata: fullscreen, landscape |
 
 Rules: plain `<script>` tags in dependency order (no modules, works over file://). Element ids are the JS contract — rename in both or neither. WS message shapes must match `firmware/balancing_robot/src/comms/websocket_handler.cpp`.

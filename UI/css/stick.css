@@ -65,6 +65,21 @@
   .control-grid { grid-template-columns: 1fr; }
   .joystick-wrap { margin: 0 auto; }
 }
+/* Landscape phone (incl. fullscreen): stick left, readout + arm right.
+   The stacked portrait layout would scroll a ~390px-tall viewport and shrink
+   the stick; side-by-side keeps the thumb on the stick with readout and arm
+   beside it. After the 1fr collapse so it wins in landscape. */
+@media (max-width: 1023px) and (orientation: landscape) {
+  .control-grid {
+    grid-template-columns: minmax(150px, calc(100dvh - 200px)) minmax(190px, 1fr);
+    gap: 12px;
+    align-items: center;
+  }
+  .joystick-wrap { margin: 0; width: 100%; max-width: none; }
+  #panel-control .card { min-height: 0; }
+  .stick-readout { line-height: 1.5; }
+  .arm-wide { min-height: 44px; }
+}
 @media (max-width: 768px) {
   /* Control tab never scrolls: natural-height card, stick capped to fit */
   #panel-control .card { min-height: 0; margin-bottom: 0; padding: 10px; }

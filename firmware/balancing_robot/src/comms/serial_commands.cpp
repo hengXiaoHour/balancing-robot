@@ -10,6 +10,17 @@
 #include "../system/imu.h"  // mpu live-driver pointer ('debug imu') + printImuStatus()
 #include "wifi_creds.h"  // wifi show / wifi set / wifi save|reset (NVS, passwords masked)
 #include "comms_mode.h"  // comms show / set / save|reset (NVS link selection)
+#include "esp_now_handler.h"  // ESP-NOW connection and RSSI status
+#include "cli_tee.h"  // wireless CLI reply routing (UI console -> {"cli"})
+// Wireless CLI state: {"cli"} lines are queued by the WS task and drained in
+// loop context so replies stream back through the tee, same task as USB.
+CliTee cliTee;
+static String pendingWsCli;
+static bool hasPendingWsCli = false;
+void queueWsCliLine(const String& line) { pendingWsCli = line; hasPendingWsCli = true; }
+// Every Serial.* print below tees USB + (while serving {"cli"}) WS console.
+#undef Serial
+#define Serial cliTee
 
 // Definitions live here (were in balancing_robot.ino); externs in serial_commands.h
 float accel_z_world_mps2 = 0.0f;
@@ -93,8 +104,8 @@ void printWelcomeBanner() {
   Serial.println("  setup [step]   - Bring-up wizard (Enter skips); step = pins|imu|motor|led|link|wifi|cal to jump in");
   Serial.println("  abort setup    - Cancel the setup wizard (quit/exit work too)");
   Serial.println("  comms show     - Show link selection (ws/espnow, peer MAC, sta/ap)");
-  Serial.println("  comms set <mode|mac|wifimode> <value> - Stage link selection");
-  Serial.println("  comms save     - Persist link selection to NVS (reboot to apply)");
+  Serial.println("  comms set <mode|mac|wifimode> <value> - Set + immediately save to NVS (reboot to apply)");
+  Serial.println("  comms save     - Re-save current link selection to NVS (optional compatibility)");
   Serial.println("  comms reset    - Clear link overrides back to defaults");
   Serial.println("  reset_pid      - Reset PID to defaults");
   Serial.println("  reset_calibration - Reset calibration to defaults");
@@ -656,10 +667,8 @@ static void setupWizardHandle(const String& command, const String& raw) {
   }
 }
 
-void handleSerialCommand() {
-  if (Serial.available() > 0) {
-    String raw = Serial.readStringUntil('\n');
-    raw.trim();
+static void dispatchSerialLine(String raw) {
+  raw.trim();
     String command = raw;  // lowercased dispatch copy; raw keeps case for wifi creds
     command.trim();
     command.toLowerCase();
@@ -921,7 +930,8 @@ void handleSerialCommand() {
       Serial.println("[COMMS] overrides cleared, defaults restored - reboot to apply");
     }
     else if (command.startsWith("comms set ")) {
-      // Staged in RAM only; 'comms save' persists, reboot applies.
+      // Apply and persist each valid value immediately. The communication
+      // stack is selected during setup(), so a reboot is still required.
       String args = command.substring(10);
       args.trim();
       int sp = args.indexOf(' ');
@@ -934,7 +944,9 @@ void handleSerialCommand() {
         cval.trim();
         String cerr;
         if (setStagedComms(kname, cval, cerr)) {
-          Serial.printf("[COMMS] %s staged (unsaved - 'comms save' + reboot)\n", kname.c_str());
+          saveCommsToNVS();
+          Serial.printf("[COMMS] %s='%s' saved to NVS (reboot to apply)\n",
+                        kname.c_str(), cval.c_str());
         } else {
           Serial.print("[COMMS] rejected: ");
           Serial.println(cerr);
@@ -1016,6 +1028,24 @@ void handleSerialCommand() {
     }    else if (command != "") {
       Serial.println("[ERROR] Unknown command: " + command);
     }
+}
+
+void handleSerialCommand() {
+  // Wireless CLI first: run the queued {"cli"} line here (loop task) with the
+  // tee open, then close it and flush the remainder as a final console line.
+  if (hasPendingWsCli) {
+    hasPendingWsCli = false;
+    String line = pendingWsCli;
+    pendingWsCli = "";
+    cliTee.active = true;
+    dispatchSerialLine(line);
+    cliTee.active = false;
+    cliTee.teeFlush();
+    return;
+  }
+  if (Serial.available() > 0) {
+    String raw = Serial.readStringUntil('\n');
+    dispatchSerialLine(raw);
   }
 }
 
@@ -1046,6 +1076,30 @@ void printTelemetryStatus() {
     Serial.print("B (min: "); Serial.print(minFreeHeap); Serial.print("B) | Load: ");
     float cpuLoad = (avgFilterTime / 10000.0) * 100.0;
     Serial.print(cpuLoad, 1); Serial.println("%");
+
+    Serial.print("[LINK] Mode: ");
+    if (commsUseEspNow()) {
+      const bool linkConnected = isESPNOWConnected();
+      Serial.print("ESP-NOW | State: ");
+      Serial.print(linkConnected ? "CONNECTED" : "WAITING");
+      Serial.print(" | Peer: ");
+      Serial.printf("%02X:%02X:%02X:%02X:%02X:%02X",
+                    g_peer_mac[0], g_peer_mac[1], g_peer_mac[2],
+                    g_peer_mac[3], g_peer_mac[4], g_peer_mac[5]);
+      Serial.print(" | RSSI: ");
+      if (linkConnected) {
+        Serial.print(getESPNOWRSSI());
+        Serial.print("dBm");
+      } else {
+        Serial.print("n/a");
+      }
+    } else {
+      Serial.print("WS | State: ");
+      Serial.print(webSocketConnected ? "CONNECTED" : "DISCONNECTED");
+      Serial.print(" | WiFi: ");
+      Serial.print(WiFi.getMode() == WIFI_STA ? "STA" : "AP");
+    }
+    Serial.println();
   }
 
   // ===== Rate-limited [IMU] raw-sensor stream ('debug imu' toggle) =====
